@@ -1,0 +1,15 @@
+{
+  "name": "echoes-backend",
+  "version": "1.0.0",
+  "description": "Echoes（往事可追忆）项目后端服务器",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "uuid": "^9.0.0"
+  }
+}

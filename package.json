@@ -1,0 +1,13 @@
+{
+  "name": "echoes",
+  "version": "1.0.0",
+  "description": "Echoes（往事可追忆）— 一个温暖的故事记录与分享平台",
+  "private": true,
+  "scripts": {
+    "start": "cd backend && node server.js",
+    "dev": "cd backend && node server.js",
+    "install:all": "cd backend && npm install"
+  },
+  "keywords": ["echoes", "story", "memories"],
+  "license": "MIT"
+}
