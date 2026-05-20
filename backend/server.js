@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const https = require('https');
 
 const app = express();
 const PORT = 3000;
@@ -22,7 +23,6 @@ if (!fs.existsSync(STORIES_FILE)) {
 // ---------- 内存存储 ----------
 let stories = [];
 
-// 启动时从 JSON 文件加载到内存
 function loadStories() {
   try {
     const raw = fs.readFileSync(STORIES_FILE, 'utf-8');
@@ -33,48 +33,244 @@ function loadStories() {
   }
 }
 
-// 将内存数据持久化到 JSON 文件
 function saveStories() {
   fs.writeFileSync(STORIES_FILE, JSON.stringify(stories, null, 2), 'utf-8');
 }
 
-// 初始加载
 loadStories();
 
 // ---------- 中间件 ----------
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // 提供前端静态文件
 const frontendPath = path.resolve(__dirname, '..', 'web', 'frontend');
 app.use(express.static(frontendPath));
 
-// ---------- API 路由：故事管理 ----------
+// ==========================================
+// AI 采访 - 对接 DeepSeek API
+// ==========================================
+
+// AI 采访的系统提示词 - 模拟一位温暖、有经验的访谈者
+const INTERVIEW_SYSTEM_PROMPT = `你是一位温暖、耐心的回忆采访者，正在帮助一位老人回忆他/她的人生故事。
+
+## 你的角色
+- 你像一位经验丰富的纪录片访谈导演，也像一位亲切的老朋友
+- 你的目标是引导对方自然地讲述回忆，而不是机械地提问
+- 你具备出色的倾听能力和共情能力
+
+## 采访原则
+1. **顺着话题深入**：对方提到什么，你就深入追问什么，不要生硬切换话题
+2. **有情感回应**：对方说到开心的事，你跟着开心；说到难过的事，你给予温暖安慰
+3. **自然引导**：用"后来呢？""那时候您是什么感觉？"这样的方式推进
+4. **避免冷冰冰的提问**：不要像问卷调查一样问"请描述您的童年"
+5. **记笔记**：记住对方之前说过的人和事，后续可以呼应
+
+## 语气风格
+- 温暖、亲切、有耐心
+- 用"您"尊称
+- 适当使用语气词（"嗯"、"那"、"真好"）
+- 回复不要超过100字，保持口语化
+
+## 示例对话
+用户说："我小时候住在乡下，门口有棵大槐树。"
+你应该回应："嗯，大槐树…一到夏天树荫肯定特别凉快吧？您那时候是不是经常在树底下玩？"
+
+用户说："我老伴走了三年了。"
+你应该回应："三年了…您一定很想她吧。能跟我聊聊你们是怎么认识的吗？如果您愿意说的话。"
+
+用户说："今天不太想聊了。"
+你应该回应："没关系，咱就不聊了。回忆这事儿什么时候想说再说，您别勉强。要不要去看看您以前保存的照片？"`;
+
+// 调用 DeepSeek API
+function callDeepSeek(messages) {
+  return new Promise((resolve, reject) => {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) {
+      // 如果没有 API Key，使用模拟回复
+      resolve(generateMockReply(messages));
+      return;
+    }
+
+    const data = JSON.stringify({
+      model: 'deepseek-chat',
+      messages: messages,
+      temperature: 0.8,
+      max_tokens: 200
+    });
+
+    const options = {
+      hostname: 'api.deepseek.com',
+      path: '/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let body = '';
+      res.on('data', chunk => body += chunk);
+      res.on('end', () => {
+        try {
+          const result = JSON.parse(body);
+          if (result.choices && result.choices[0]) {
+            resolve(result.choices[0].message.content);
+          } else {
+            console.error('DeepSeek API 返回异常:', body);
+            resolve(generateMockReply(messages));
+          }
+        } catch (e) {
+          console.error('解析 DeepSeek 响应失败:', e.message);
+          resolve(generateMockReply(messages));
+        }
+      });
+    });
+
+    req.on('error', (e) => {
+      console.error('DeepSeek API 请求失败:', e.message);
+      resolve(generateMockReply(messages));
+    });
+
+    req.write(data);
+    req.end();
+  });
+}
+
+// 备用：模拟回复（当 API 不可用时）
+function generateMockReply(messages) {
+  const lastUserMsg = messages[messages.length - 1].content;
+  
+  const replies = {
+    '童年': '小时候的事儿总是特别清晰呢。您那时候最喜欢跟谁一起玩呀？',
+    '学校': '上学的时候总有一些特别难忘的事。您还记得您的第一位老师吗？',
+    '工作': '第一份工作总是让人印象深刻的。当时是怎么找到那份工作的呢？',
+    '结婚': '结婚那天一定很特别吧？能跟我聊聊那天最难忘的细节吗？',
+    '孩子': '孩子是父母最大的牵挂。孩子小时候有没有什么让您特别开心的事？',
+    '父母': '说起父母，总让人心里暖暖的。您觉得您最像他们哪一点？',
+    '朋友': '老朋友最珍贵了。您跟这位朋友是怎么认识的？',
+    '老家': '老家总是充满了回忆。您现在还会经常想起那里的样子吗？',
+    'default': '嗯，我在认真听。您能再多说说那段时光吗？那时候您是什么感觉？'
+  };
+
+  for (const [keyword, reply] of Object.entries(replies)) {
+    if (lastUserMsg.includes(keyword)) {
+      return reply;
+    }
+  }
+  return replies['default'];
+}
+
+// POST /api/ai/interview - 真正的 AI 采访对话
+app.post('/api/ai/interview', async (req, res) => {
+  const { message, history } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: 'message 为必填项' });
+  }
+
+  try {
+    // 构建消息历史
+    const messages = [
+      { role: 'system', content: INTERVIEW_SYSTEM_PROMPT }
+    ];
+
+    // 加入对话历史（最多保留最近10轮）
+    if (history && Array.isArray(history)) {
+      const recentHistory = history.slice(-10);
+      recentHistory.forEach(msg => {
+        messages.push({
+          role: msg.role === 'ai' ? 'assistant' : 'user',
+          content: msg.content
+        });
+      });
+    }
+
+    // 加入当前用户消息
+    messages.push({ role: 'user', content: message });
+
+    // 调用 AI
+    const reply = await callDeepSeek(messages);
+
+    res.json({
+      reply,
+      timestamp: new Date().toISOString()
+    });
+
+    // 自动保存有价值的回忆（超过15个字）
+    if (message.length > 15) {
+      // 检测是否包含年份信息
+      const yearMatch = message.match(/(\d{4})年/);
+      const year = yearMatch ? yearMatch[1] : String(new Date().getFullYear());
+
+      // 检测主题
+      const topics = ['童年','小学','求学','工作','结婚','恋爱','孩子','父母','老家','朋友','退休'];
+      let topic = '';
+      for (const t of topics) {
+        if (message.includes(t)) { topic = t; break; }
+      }
+
+      const newStory = {
+        id: uuidv4(),
+        date: `${year}-01-01`,
+        era: topic || '其他',
+        content: message,
+        type: 'interview',
+        photos: [],
+        tags: topic ? [topic] : [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      stories.push(newStory);
+      saveStories();
+    }
+  } catch (err) {
+    console.error('AI 采访出错:', err);
+    res.status(500).json({ error: 'AI 采访服务暂时不可用' });
+  }
+});
+
+// ==========================================
+// API 路由：故事管理
+// ==========================================
 
 // GET /api/stories - 获取所有故事
 app.get('/api/stories', (req, res) => {
   res.json(stories);
 });
 
+// GET /api/stories/:id - 获取单个故事
+app.get('/api/stories/:id', (req, res) => {
+  const story = stories.find(s => s.id === req.params.id);
+  if (!story) return res.status(404).json({ error: '故事未找到' });
+  res.json(story);
+});
+
 // POST /api/stories - 新增故事
 app.post('/api/stories', (req, res) => {
-  const { title, content, author, tags } = req.body;
+  const { content, date, era, type, photos, tags, isSubStory, parentStory } = req.body;
 
-  if (!title || !content) {
-    return res.status(400).json({ error: 'title 和 content 为必填项' });
+  if (!content) {
+    return res.status(400).json({ error: 'content 为必填项' });
   }
 
   const newStory = {
     id: uuidv4(),
-    title,
+    date: date || new Date().toISOString().split('T')[0],
+    era: era || '',
     content,
-    author: author || '匿名',
+    type: type || 'text',
+    photos: photos || [],
+    audioUrl: null,
+    isSubStory: isSubStory || false,
+    parentStory: parentStory || null,
     tags: tags || [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
 
-  stories.push(newStory);
+  stories.unshift(newStory);
   saveStories();
 
   res.status(201).json(newStory);
@@ -83,33 +279,27 @@ app.post('/api/stories', (req, res) => {
 // PUT /api/stories/:id - 更新故事
 app.put('/api/stories/:id', (req, res) => {
   const { id } = req.params;
-  const { title, content, author, tags } = req.body;
+  const updates = req.body;
 
   const index = stories.findIndex(s => s.id === id);
   if (index === -1) {
     return res.status(404).json({ error: '故事未找到' });
   }
 
-  const existing = stories[index];
-  const updatedStory = {
-    ...existing,
-    title: title !== undefined ? title : existing.title,
-    content: content !== undefined ? content : existing.content,
-    author: author !== undefined ? author : existing.author,
-    tags: tags !== undefined ? tags : existing.tags,
+  stories[index] = {
+    ...stories[index],
+    ...updates,
+    id: stories[index].id, // 不允许改 ID
     updatedAt: new Date().toISOString()
   };
 
-  stories[index] = updatedStory;
   saveStories();
-
-  res.json(updatedStory);
+  res.json(stories[index]);
 });
 
 // DELETE /api/stories/:id - 删除故事
 app.delete('/api/stories/:id', (req, res) => {
   const { id } = req.params;
-
   const index = stories.findIndex(s => s.id === id);
   if (index === -1) {
     return res.status(404).json({ error: '故事未找到' });
@@ -121,48 +311,60 @@ app.delete('/api/stories/:id', (req, res) => {
   res.json({ message: '删除成功', story: deleted });
 });
 
-// ---------- API 路由：AI 采访 ----------
-
-// POST /api/ai/interview - AI 采访对话（模拟回复）
-app.post('/api/ai/interview', (req, res) => {
-  const { message, history } = req.body;
-
-  if (!message) {
-    return res.status(400).json({ error: 'message 为必填项' });
-  }
-
-  // 模拟 AI 回复
-  const sampleReplies = [
-    '那真是一段难忘的时光，能跟我多聊聊那天的细节吗？',
-    '听起来对你影响很大。当时你有什么样的感受？',
-    '回忆总是带着特殊的温度。还有别的故事想和我分享吗？',
-    '很有意思！这件事让你现在想起还觉得温暖吗？',
-    '我理解。有些记忆虽然过去了，但永远留在心里。',
-    '能说说那之后发生了什么吗？我很想继续听下去。'
-  ];
-
-  const reply = sampleReplies[Math.floor(Math.random() * sampleReplies.length)];
-
-  // 模拟延迟（100~500ms）
-  setTimeout(() => {
-    res.json({
-      reply,
-      timestamp: new Date().toISOString()
-    });
-  }, Math.floor(Math.random() * 400) + 100);
+// GET /api/stories/timeline - 按时间轴获取故事
+app.get('/api/stories/timeline', (req, res) => {
+  const sorted = [...stories].sort((a, b) => a.date.localeCompare(b.date));
+  res.json(sorted);
 });
 
-// ---------- API 路由：微信登录 ----------
+// ==========================================
+// API 路由：AI 分析
+// ==========================================
 
-// POST /api/auth/wechat - 微信登录（模拟）
+// POST /api/ai/analyze - AI 分析回忆内容（提取关键信息、生成标题等）
+app.post('/api/ai/analyze', async (req, res) => {
+  const { content } = req.body;
+  if (!content) {
+    return res.status(400).json({ error: 'content 为必填项' });
+  }
+
+  try {
+    const messages = [
+      { role: 'system', content: '你是一个回忆分析助手。请从以下回忆文字中提取关键信息，返回JSON格式：{ "emotion": "喜悦|感动|怀念|平静|感伤", "keyPeople": ["人物1", "人物2"], "keyPlaces": ["地点1"], "decade": "年代(如1980年代)", "suggestion": "一个用于继续引导回忆的问题" }' },
+      { role: 'user', content }
+    ];
+
+    const reply = await callDeepSeek(messages);
+    
+    // 尝试解析JSON
+    try {
+      const jsonMatch = reply.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const analysis = JSON.parse(jsonMatch[0]);
+        res.json(analysis);
+      } else {
+        res.json({ emotion: '未知', keyPeople: [], keyPlaces: [], decade: '', suggestion: '能再多聊聊吗？' });
+      }
+    } catch {
+      res.json({ emotion: '未知', keyPeople: [], keyPlaces: [], decade: '', suggestion: '能再多聊聊吗？' });
+    }
+  } catch (err) {
+    console.error('AI 分析出错:', err);
+    res.status(500).json({ error: '分析服务暂时不可用' });
+  }
+});
+
+// ==========================================
+// API 路由：微信登录
+// ==========================================
+
+// POST /api/auth/wechat - 微信登录
 app.post('/api/auth/wechat', (req, res) => {
   const { code } = req.body;
-
   if (!code) {
     return res.status(400).json({ error: 'code 为必填项' });
   }
 
-  // 模拟微信登录验证
   console.log(`收到微信登录请求，code: ${code}`);
 
   const mockUser = {
@@ -172,21 +374,38 @@ app.post('/api/auth/wechat', (req, res) => {
     token: 'mock_token_' + uuidv4()
   };
 
+  res.json({ success: true, user: mockUser });
+});
+
+// ==========================================
+// 健康检查
+// ==========================================
+app.get('/api/health', (req, res) => {
   res.json({
-    success: true,
-    user: mockUser
+    status: 'ok',
+    storiesCount: stories.length,
+    version: '1.0.0',
+    aiPowered: !!process.env.DEEPSEEK_API_KEY
   });
 });
 
-// ---------- 根路径：返回前端 index.html ----------
+// ==========================================
+// 根路径：返回前端 index.html
+// ==========================================
 app.get('/', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-// ---------- 启动服务器 ----------
+// ==========================================
+// 启动服务器
+// ==========================================
 app.listen(PORT, () => {
-  console.log(`🎉 Echoes（往事可追忆）后端服务器已启动`);
-  console.log(`📡 监听端口: http://localhost:${PORT}`);
-  console.log(`📁 前端静态文件: ${frontendPath}`);
-  console.log(`💾 数据持久化目录: ${DATA_DIR}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('  🎉 Echoes（往事可追忆）已启动');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log(`  📡 地址:      http://localhost:${PORT}`);
+  console.log(`  📁 前端:      ${frontendPath}`);
+  console.log(`  💾 数据:      ${DATA_DIR}`);
+  console.log(`  🤖 AI采访:    ${process.env.DEEPSEEK_API_KEY ? '✅ 已连接 DeepSeek' : '⚠️ 未配置 API Key（使用模拟回复）'}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 });
