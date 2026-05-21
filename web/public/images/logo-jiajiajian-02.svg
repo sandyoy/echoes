@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5abe7b"/>
+      <stop offset="100%" style="stop-color:#3a8e5b"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a9e6b"/>
+      <stop offset="100%" style="stop-color:#2d8659"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景圆 -->
+  <circle cx="200" cy="195" r="190" fill="url(#g2)" opacity="0.05"/>
+
+  <!-- 叶子主体 - 左 -->
+  <path d="M200 290 Q130 260 105 180 Q90 130 110 95 Q130 65 155 80 Q175 90 185 120 Q195 155 200 200" fill="url(#g1)" opacity="0.3"/>
+  <path d="M200 290 Q130 260 105 180 Q90 130 110 95 Q130 65 155 80 Q175 90 185 120 Q195 155 200 200" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- 叶子主体 - 右 -->
+  <path d="M200 290 Q270 260 295 180 Q310 130 290 95 Q270 65 245 80 Q225 90 215 120 Q205 155 200 200" fill="url(#g1)" opacity="0.3"/>
+  <path d="M200 290 Q270 260 295 180 Q310 130 290 95 Q270 65 245 80 Q225 90 215 120 Q205 155 200 200" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- 叶脉中线 -->
+  <line x1="200" y1="290" x2="200" y2="80" stroke="url(#g2)" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- 中心圆点（家/核） -->
+  <circle cx="200" cy="200" r="28" fill="url(#g2)" opacity="0.15"/>
+  <circle cx="200" cy="200" r="20" fill="none" stroke="url(#g2)" stroke-width="3"/>
+
+  <!-- 房子小图标 -->
+  <path d="M190 190 L200 178 L210 190 L210 210 L190 210Z" fill="url(#g2)" opacity="0.6"/>
+
+  <!-- 文字：家家健 -->
+  <text x="200" y="345" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="48" font-weight="700" fill="url(#g2)" letter-spacing="8">家家健</text>
+
+  <!-- 英文 -->
+  <text x="200" y="378" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#6b9e7b" letter-spacing="3">JIAJIAJIAN HEALTH</text>
+</svg>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" style="stop-color:#2d8659"/>
+      <stop offset="100%" style="stop-color:#5abe7b"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a9e6b"/>
+      <stop offset="100%" style="stop-color:#3a8e5b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 背景圆 -->
+  <circle cx="200" cy="195" r="190" fill="url(#g2)" opacity="0.05"/>
+
+  <!-- 双手托举 -->
+  <!-- 左手 -->
+  <path d="M90 260 Q100 200 125 170 Q140 152 155 165 Q162 172 158 190 Q152 215 140 240 Q130 260 110 270 Q95 278 90 260Z" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round"/>
+  <!-- 右手 -->
+  <path d="M310 260 Q300 200 275 170 Q260 152 245 165 Q238 172 242 190 Q248 215 260 240 Q270 260 290 270 Q305 278 310 260Z" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- 手掌底托 -->
+  <path d="M110 270 Q160 290 200 295 Q240 290 290 270" fill="none" stroke="url(#g1)" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- 中间的爱心 -->
+  <path d="M200 150 Q200 130 215 130 Q230 130 230 148 Q230 168 200 195 Q170 168 170 148 Q170 130 185 130 Q200 130 200 150Z" fill="url(#g1)" opacity="0.5"/>
+  <path d="M200 150 Q200 130 215 130 Q230 130 230 148 Q230 168 200 195 Q170 168 170 148 Q170 130 185 130 Q200 130 200 150Z" fill="none" stroke="url(#g1)" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- 心形内的小人 -->
+  <circle cx="200" cy="158" r="8" fill="url(#g1)" opacity="0.7"/>
+  <line x1="200" y1="166" x2="200" y2="180" stroke="url(#g1)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <line x1="190" y1="173" x2="210" y2="173" stroke="url(#g1)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- 文字：家家健 -->
+  <text x="200" y="345" text-anchor="middle" font-family="'PingFang SC','Microsoft YaHei',sans-serif" font-size="48" font-weight="700" fill="url(#g1)" letter-spacing="8">家家健</text>
+
+  <!-- 英文 -->
+  <text x="200" y="378" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#6b9e7b" letter-spacing="3">JIAJIAJIAN HEALTH</text>
+</svg>
