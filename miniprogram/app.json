@@ -4,6 +4,11 @@
     "pages/interview/interview",
     "pages/timeline/timeline",
     "pages/story/story",
+    "pages/learn/learn",
+    "pages/learn/pinyin/pinyin",
+    "pages/learn/pinyin/flashcard/flashcard",
+    "pages/learn/pinyin/lookup/lookup",
+    "pages/learn/math/math",
     "pages/mine/mine"
   ],
   "window": {
@@ -29,6 +34,12 @@
         "iconPath": "images/timeline.png",
         "selectedIconPath": "images/timeline-active.png",
         "text": "时光轴"
+      },
+      {
+        "pagePath": "pages/learn/learn",
+        "iconPath": "images/learn.png",
+        "selectedIconPath": "images/learn-active.png",
+        "text": "学习"
       },
       {
         "pagePath": "pages/mine/mine",
