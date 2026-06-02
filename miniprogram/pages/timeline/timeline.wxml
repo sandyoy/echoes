@@ -1,0 +1,34 @@
+<!-- 时间轴页面 -->
+<view class="page">
+  
+  <view class="page-title">📖 我的回忆时光轴</view>
+  
+  <view wx:if="{{stories.length === 0}}" class="empty-state">
+    <text class="icon">🕰️</text>
+    <text class="text">还没有记录任何回忆
+去首页开始记录吧</text>
+  </view>
+
+  <view class="timeline" wx:else>
+    <view wx:for="{{timelineData}}" wx:key="year" class="timeline-year-group">
+      
+      <!-- 年份标题 -->
+      <view class="year-header">
+        <view class="year-dot"></view>
+        <text class="year-text">{{item.year}}</text>
+      </view>
+
+      <!-- 该年的故事 -->
+      <view wx:for="{{item.stories}}" wx:key="id" class="timeline-story" bindtap="goStory" data-id="{{item.id}}">
+        <view class="tl-line"></view>
+        <view class="tl-card">
+          <view class="tl-date">{{item.date}}</view>
+          <view class="tl-era" wx:if="{{item.era}}">{{item.era}}</view>
+          <view class="tl-content">{{item.content}}</view>
+        </view>
+      </view>
+
+    </view>
+  </view>
+
+</view>

@@ -1,0 +1,70 @@
+<!-- AI采访页面 -->
+<view class="page">
+  
+  <view class="chat-container">
+    
+    <!-- 对话列表 -->
+    <scroll-view class="chat-list" scroll-y scroll-into-view="bottom" scroll-with-animation>
+      <view wx:for="{{messages}}" wx:key="index" id="bottom">
+        <!-- AI消息 -->
+        <view class="msg-row msg-ai" wx:if="{{item.role === 'ai'}}">
+          <view class="msg-avatar">🤖</view>
+          <view class="msg-bubble ai-bubble">
+            <text>{{item.content}}</text>
+          </view>
+        </view>
+        
+        <!-- 用户消息 -->
+        <view class="msg-row msg-user" wx:else>
+          <view class="msg-bubble user-bubble">
+            <text>{{item.content}}</text>
+          </view>
+          <view class="msg-avatar">👤</view>
+        </view>
+      </view>
+      
+      <!-- 正在输入 -->
+      <view class="msg-row msg-ai" wx:if="{{isThinking}}">
+        <view class="msg-avatar">🤖</view>
+        <view class="msg-bubble ai-bubble thinking">
+          <text class="dot">.</text><text class="dot">.</text><text class="dot">.</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 开始采访的引导 -->
+    <view class="start-guide" wx:if="{{messages.length === 0 && !isThinking}}">
+      <view class="guide-icon">🎙️</view>
+      <view class="guide-title">让AI陪你聊聊往事</view>
+      <view class="guide-desc">你可以说：</view>
+      <view class="guide-suggestions">
+        <view class="suggestion-tag" bindtap="sendSuggestion" data-text="聊聊我小时候的事">👶 聊聊我小时候的事</view>
+        <view class="suggestion-tag" bindtap="sendSuggestion" data-text="说说我的老家">🏠 说说我的老家</view>
+        <view class="suggestion-tag" bindtap="sendSuggestion" data-text="我最难忘的一位老师">👨‍🏫 我最难忘的一位老师</view>
+        <view class="suggestion-tag" bindtap="sendSuggestion" data-text="我第一份工作的经历">💼 我第一份工作的经历</view>
+      </view>
+    </view>
+
+  </view>
+
+  <!-- 底部输入栏 -->
+  <view class="input-bar">
+    <view class="input-wrapper">
+      <input 
+        class="text-input"
+        placeholder="打字告诉AI你的回忆..."
+        bindinput="onInput"
+        value="{{inputText}}"
+        bindconfirm="sendMessage"
+        confirm-type="send"
+      />
+    </view>
+    <button class="send-btn" bindtap="sendMessage" disabled="{{!inputText.trim() || isThinking}}">
+      <text>发送</text>
+    </button>
+    <button class="voice-btn" bindtap="startVoiceInput">
+      <text>🎤</text>
+    </button>
+  </view>
+
+</view>

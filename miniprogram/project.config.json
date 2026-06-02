@@ -1,0 +1,26 @@
+{
+  "description": "往事可追忆 - 微信小程序",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "preloadBackgroundData": false,
+    "minified": true,
+    "newFeature": true,
+    "autoAudits": false,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": true,
+    "scopeDataCheck": false,
+    "useCompilerModule": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.6.0",
+  "appid": "wx800bcf18e915dfde",
+  "projectname": "echoes-miniprogram",
+  "condition": {}
+}

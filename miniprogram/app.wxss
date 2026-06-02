@@ -1,0 +1,92 @@
+/* 全局样式 - 温暖复古风格 */
+page {
+  --bg-primary: #faf6f0;
+  --bg-card: #ffffff;
+  --text-primary: #3d2e1e;
+  --text-secondary: #8c7a6b;
+  --text-muted: #bbb0a5;
+  --accent: #c4956a;
+  --accent-light: #f0e4d6;
+  --border: #e8e0d8;
+  --shadow: 0 2px 8px rgba(0,0,0,0.06);
+  
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+/* 卡片 */
+.card {
+  background: var(--bg-card);
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin: 20rpx 30rpx;
+  box-shadow: var(--shadow);
+}
+
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 40rpx;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:active {
+  opacity: 0.85;
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 2rpx solid var(--accent);
+}
+
+/* 标题 */
+.page-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 30rpx 30rpx 20rpx;
+}
+.page-subtitle {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  padding: 0 30rpx 20rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx 40rpx;
+  color: var(--text-muted);
+}
+.empty-state .icon {
+  font-size: 100rpx;
+  margin-bottom: 24rpx;
+}
+.empty-state .text {
+  font-size: 28rpx;
+  text-align: center;
+  line-height: 1.8;
+}
+
+/* 加载 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60rpx;
+  color: var(--text-muted);
+}

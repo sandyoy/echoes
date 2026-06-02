@@ -1,0 +1,93 @@
+<!-- 首页 -->
+<view class="page">
+  
+  <!-- 录音入口区域 -->
+  <view class="recording-section">
+    <view class="title">今天想聊些什么？</view>
+    <view class="subtitle">按住按钮，说出你的回忆</view>
+
+    <!-- 录音按钮 -->
+    <view class="recording-btn-wrapper">
+      <button 
+        class="recording-btn {{isRecording ? 'recording-active' : ''}}"
+        bindtouchstart="startRecording"
+        bindtouchend="stopRecording"
+        bindtouchcancel="stopRecording"
+        hover-class="none"
+      >
+        <text class="icon">{{isRecording ? '🔴' : '🎤'}}</text>
+        <text class="label">{{isRecording ? '正在录音...' : '按住说话'}}</text>
+      </button>
+    </view>
+
+    <!-- 模式切换 -->
+    <view class="mode-switch">
+      <view 
+        class="mode-btn {{currentMode === 'self' ? 'active' : ''}}"
+        bindtap="switchMode" data-mode="self"
+      >
+        <text>🎙️ 自述</text>
+      </view>
+      <view 
+        class="mode-btn {{currentMode === 'interview' ? 'active' : ''}}"
+        bindtap="switchMode" data-mode="interview"
+      >
+        <text>🤖 AI采访</text>
+      </view>
+      <view 
+        class="mode-btn {{currentMode === 'type' ? 'active' : ''}}"
+        bindtap="switchMode" data-mode="type"
+      >
+        <text>✏️ 打字</text>
+      </view>
+    </view>
+
+    <!-- AI采访提示 -->
+    <view class="mode-hint" wx:if="{{currentMode === 'interview'}}">
+      <text>AI会像老朋友一样陪你聊，帮你回忆往事</text>
+    </view>
+
+    <!-- 文字输入模式 -->
+    <view class="type-input-area" wx:if="{{currentMode === 'type'}}">
+      <textarea 
+        class="type-input" 
+        placeholder="写下你想记录的回忆..."
+        maxlength="2000"
+        bindinput="onTypeInput"
+        value="{{typeContent}}"
+      />
+      <button class="btn btn-primary submit-btn" bindtap="submitType" disabled="{{!typeContent.trim()}}">
+        保存
+      </button>
+    </view>
+  </view>
+
+  <!-- 最近回忆 -->
+  <view class="recent-section">
+    <view class="section-header">
+      <text class="section-title">最近回忆</text>
+      <text class="section-more" bindtap="goTimeline">查看全部 →</text>
+    </view>
+
+    <view wx:if="{{stories.length === 0}}" class="empty-state">
+      <text class="icon">📝</text>
+      <text class="text">还没有回忆记录
+点击上面的按钮开始吧</text>
+    </view>
+
+    <view wx:for="{{stories}}" wx:key="id" class="story-card" bindtap="goStory" data-id="{{item.id}}">
+      <view class="story-card-header">
+        <text class="story-tag">{{item.era || '其他'}}</text>
+        <text class="story-date">{{item.date}}</text>
+      </view>
+      <view class="story-content">{{item.content}}</view>
+    </view>
+  </view>
+
+  <!-- 录音进度提示 (Toast) -->
+  <view class="recording-toast {{showRecordingToast ? 'show' : ''}}">
+    <text class="toast-icon">🎤</text>
+    <text class="toast-text">录音中... 松手即保存</text>
+  </view>
+
+</view>
