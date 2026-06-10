@@ -1,0 +1,98 @@
+/* 个人中心样式 */
+.page {
+  min-height: 100vh;
+}
+
+.user-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 30rpx 40rpx;
+  background: linear-gradient(180deg, #f0e4d6, var(--bg-primary));
+}
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+.user-name {
+  font-size: 34rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}
+.login-btn {
+  padding: 12rpx 40rpx;
+  border-radius: 40rpx;
+  background: var(--accent);
+  color: #fff;
+  font-size: 26rpx;
+  border: none;
+}
+
+.stats-section {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background: var(--bg-card);
+  margin: 0 30rpx;
+  border-radius: 20rpx;
+  padding: 30rpx 20rpx;
+  box-shadow: var(--shadow);
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.stat-num {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--accent);
+}
+.stat-label {
+  font-size: 22rpx;
+  color: var(--text-muted);
+  margin-top: 6rpx;
+}
+.stat-divider {
+  width: 2rpx;
+  height: 60rpx;
+  background: var(--border);
+}
+
+.menu-section {
+  margin: 30rpx;
+  background: var(--bg-card);
+  border-radius: 20rpx;
+  box-shadow: var(--shadow);
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  border-bottom: 2rpx solid var(--border);
+}
+.menu-item:last-child {
+  border-bottom: none;
+}
+.menu-icon {
+  font-size: 32rpx;
+  margin-right: 20rpx;
+}
+.menu-text {
+  flex: 1;
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+.menu-arrow {
+  font-size: 36rpx;
+  color: var(--text-muted);
+}

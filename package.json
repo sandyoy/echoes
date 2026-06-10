@@ -8,6 +8,13 @@
     "dev": "cd backend && node server.js",
     "install:all": "cd backend && npm install"
   },
-  "keywords": ["echoes", "story", "memories"],
-  "license": "MIT"
+  "keywords": [
+    "echoes",
+    "story",
+    "memories"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "localtunnel": "^2.0.2"
+  }
 }

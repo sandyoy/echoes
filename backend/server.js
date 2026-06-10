@@ -378,6 +378,58 @@ app.post('/api/auth/wechat', (req, res) => {
 });
 
 // ==========================================
+// API 路由：音频上传（微信小程序）
+// ==========================================
+
+const multer = require('multer');
+const AUDIO_DIR = path.join(DATA_DIR, 'audio');
+
+// 确保音频目录存在
+if (!fs.existsSync(AUDIO_DIR)) {
+  fs.mkdirSync(AUDIO_DIR, { recursive: true });
+}
+
+// Multer 配置 - 音频上传
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, AUDIO_DIR),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.mp3';
+    cb(null, `${uuidv4()}${ext}`);
+  }
+});
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 30 * 1024 * 1024 } // 30MB 限制
+});
+
+// POST /api/stories/audio - 上传录音
+app.post('/api/stories/audio', upload.single('audio'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: '请上传音频文件' });
+  }
+
+  const { type, era, duration } = req.body;
+
+  const newStory = {
+    id: uuidv4(),
+    date: new Date().toISOString().split('T')[0],
+    era: era || '',
+    content: `[语音回忆 ${duration || '?'}秒]`,
+    type: 'audio',
+    audioUrl: `/data/audio/${req.file.filename}`,
+    duration: parseInt(duration) || 0,
+    tags: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  stories.unshift(newStory);
+  saveStories();
+
+  res.status(201).json(newStory);
+});
+
+// ==========================================
 // 健康检查
 // ==========================================
 app.get('/api/health', (req, res) => {

@@ -1,0 +1,63 @@
+<!-- 学习首页 -->
+<view class="page">
+
+  <view class="page-title">🎓 苏格拉底学伴</view>
+  <view class="page-subtitle">不直接给答案，陪你想通它</view>
+
+  <!-- 功能卡片 -->
+  <view class="card-grid">
+
+    <!-- 拼音闪电卡 -->
+    <view class="feature-card" bindtap="goPinyin">
+      <view class="card-icon-area pinyin-bg">
+        <text class="card-icon">🆎</text>
+      </view>
+      <view class="card-info">
+        <text class="card-title">拼音闪电卡</text>
+        <text class="card-desc">声母韵母整体认读，每天10分钟快速过关</text>
+      </view>
+      <text class="card-arrow">›</text>
+    </view>
+
+    <!-- 数学运算律 -->
+    <view class="feature-card" bindtap="goMath">
+      <view class="card-icon-area math-bg">
+        <text class="card-icon">🔢</text>
+      </view>
+      <view class="card-info">
+        <text class="card-title">数学运算律</text>
+        <text class="card-desc">交换律·结合律·分配律，用苏格拉底式对话学会它</text>
+      </view>
+      <text class="card-arrow">›</text>
+    </view>
+
+  </view>
+
+  <!-- 今日学习统计 -->
+  <view class="stats-card">
+    <view class="stats-header">
+      <text class="stats-title">📊 今日学习</text>
+    </view>
+    <view class="stats-body">
+      <view class="stat-row">
+        <text>拼音练习</text>
+        <text class="stat-val">{{todayStats.pinyin}} 次</text>
+      </view>
+      <view class="stat-row">
+        <text>数学题</text>
+        <text class="stat-val">{{todayStats.math}} 题</text>
+      </view>
+      <view class="stat-row">
+        <text>学习时长</text>
+        <text class="stat-val">{{todayStats.minutes}} 分钟</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 学习小贴士 -->
+  <view class="tip-card">
+    <text class="tip-title">💡 苏格拉底小贴士</text>
+    <text class="tip-text">"我知道我不知道"是智慧的开始。不会的题别怕，我们一起想通它。</text>
+  </view>
+
+</view>
