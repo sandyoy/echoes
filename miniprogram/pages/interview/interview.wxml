@@ -1,16 +1,31 @@
-<!-- AI采访页面 -->
+<!-- AI采访页面 - 支持语音朗读 + 语音输入 -->
 <view class="page">
   
   <view class="chat-container">
     
     <!-- 对话列表 -->
-    <scroll-view class="chat-list" scroll-y scroll-into-view="bottom" scroll-with-animation>
+    <scroll-view class="chat-list" scroll-y scroll-into-view="bottom" scroll-with-animation lower-threshold="50">
       <view wx:for="{{messages}}" wx:key="index" id="bottom">
         <!-- AI消息 -->
         <view class="msg-row msg-ai" wx:if="{{item.role === 'ai'}}">
           <view class="msg-avatar">🤖</view>
-          <view class="msg-bubble ai-bubble">
-            <text>{{item.content}}</text>
+          <view class="msg-content">
+            <view class="msg-bubble ai-bubble">
+              <text>{{item.content}}</text>
+            </view>
+            <!-- 语音播放按钮 -->
+            <view class="voice-play-bar" wx:if="{{item.ttsUrl || item.ttsLoading}}" catchtap="onPlayTTS" data-index="{{index}}">
+              <view class="play-btn {{item.ttsPlaying ? 'playing' : ''}}" wx:if="{{!item.ttsLoading}}">
+                <text class="play-icon">{{item.ttsPlaying ? '⏸' : '🔊'}}</text>
+              </view>
+              <view class="play-btn loading" wx:elif="{{item.ttsLoading}}">
+                <text class="play-icon">⏳</text>
+              </view>
+              <text class="play-label" wx:if="{{!item.ttsLoading}}">
+                {{item.ttsPlaying ? '点击暂停' : '点击收听'}}
+              </text>
+              <text class="play-label" wx:elif="{{item.ttsLoading}}">生成语音中...</text>
+            </view>
           </view>
         </view>
         
@@ -62,9 +77,24 @@
     <button class="send-btn" bindtap="sendMessage" disabled="{{!inputText.trim() || isThinking}}">
       <text>发送</text>
     </button>
-    <button class="voice-btn" bindtap="startVoiceInput">
-      <text>🎤</text>
-    </button>
+    <!-- 语音输入按钮 - 按住说话 -->
+    <view 
+      class="voice-btn {{voicePress ? 'voice-active' : ''}}"
+      bindtouchstart="onVoiceStart"
+      bindtouchend="onVoiceEnd"
+      bindtouchmove="onVoiceMove"
+      catchtouchcancel="onVoiceEnd"
+    >
+      <text>{{voicePress ? '🎤' : '🎤'}}</text>
+    </view>
+  </view>
+
+  <!-- 录音状态提示 -->
+  <view class="voice-status {{voicePress ? 'voice-status-show' : ''}}">
+    <view class="voice-status-dot {{voiceCancel ? 'cancel' : ''}}"></view>
+    <text class="voice-status-text">
+      {{voiceCancel ? '松手取消' : '正在录音...'}}
+    </text>
   </view>
 
 </view>

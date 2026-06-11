@@ -1,4 +1,4 @@
-/* AI采访样式 */
+/* AI采访样式 - 支持语音朗读 + 语音输入 */
 .page {
   display: flex;
   flex-direction: column;
@@ -16,6 +16,8 @@
   flex: 1;
   padding: 20rpx 30rpx;
 }
+
+/* ============= 消息气泡 ============= */
 
 .msg-row {
   display: flex;
@@ -46,6 +48,12 @@
   margin-left: 16rpx;
 }
 
+.msg-content {
+  max-width: 520rpx;
+  display: flex;
+  flex-direction: column;
+}
+
 .msg-bubble {
   max-width: 520rpx;
   padding: 20rpx 28rpx;
@@ -66,7 +74,57 @@
   border-top-right-radius: 4rpx;
 }
 
-/* 正在输入动画 */
+/* ============= AI语音播放按钮 ============= */
+
+.voice-play-bar {
+  display: flex;
+  align-items: center;
+  margin-top: 8rpx;
+  padding-left: 8rpx;
+}
+
+.play-btn {
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 50%;
+  background: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8rpx;
+  transition: all 0.2s;
+}
+
+.play-btn:active {
+  transform: scale(0.9);
+}
+
+.play-btn.playing {
+  background: var(--accent);
+  animation: pulse 1.5s infinite;
+}
+
+.play-btn.loading {
+  background: var(--border);
+}
+
+.play-icon {
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.play-label {
+  font-size: 22rpx;
+  color: var(--text-muted);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* ============= 正在输入动画 ============= */
+
 .thinking {
   display: flex;
   align-items: center;
@@ -86,7 +144,8 @@
   50% { opacity: 1; }
 }
 
-/* 开始引导 */
+/* ============= 开始引导 ============= */
+
 .start-guide {
   display: flex;
   flex-direction: column;
@@ -127,7 +186,8 @@
   background: var(--accent-light);
 }
 
-/* 底部输入栏 */
+/* ============= 底部输入栏 ============= */
+
 .input-bar {
   display: flex;
   align-items: center;
@@ -162,6 +222,9 @@
   background: var(--border);
   color: var(--text-muted);
 }
+
+/* ============= 语音输入按钮 ============= */
+
 .voice-btn {
   width: 72rpx;
   height: 72rpx;
@@ -171,4 +234,62 @@
   background: var(--bg-primary);
   font-size: 32rpx;
   padding: 0;
+  transition: all 0.15s;
+}
+
+.voice-btn:active {
+  transform: scale(1.15);
+}
+
+.voice-btn.voice-active {
+  background: var(--accent);
+  transform: scale(1.2);
+  box-shadow: 0 0 20rpx rgba(255, 107, 53, 0.5);
+}
+
+/* ============= 录音状态提示 ============= */
+
+.voice-status {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 24rpx;
+  padding: 40rpx 60rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+
+.voice-status-show {
+  opacity: 1;
+}
+
+.voice-status-dot {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: record-pulse 0.8s infinite;
+}
+
+.voice-status-dot.cancel {
+  background: #ff4d4f;
+}
+
+.voice-status-text {
+  color: #fff;
+  font-size: 28rpx;
+  white-space: nowrap;
+}
+
+@keyframes record-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
 }

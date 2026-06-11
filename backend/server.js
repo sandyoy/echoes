@@ -48,6 +48,75 @@ const frontendPath = path.resolve(__dirname, '..', 'web', 'frontend');
 app.use(express.static(frontendPath));
 
 // ==========================================
+// TTS 语音合成（调用边缘 TTS）
+// ==========================================
+
+const { execSync } = require('child_process');
+const TTS_CACHE_DIR = path.join(DATA_DIR, 'tts_cache');
+if (!fs.existsSync(TTS_CACHE_DIR)) {
+  fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
+}
+
+const ttsEnabled = (function() {
+  try {
+    execSync('python3 -c "import edge_tts"', { stdio: 'ignore' });
+    return true;
+  } catch(e) {
+    return false;
+  }
+})();
+
+if (!ttsEnabled) {
+  console.log('  🔊 TTS语音:    ⚠️ edge-tts 未安装，语音功能不可用');
+}
+
+// POST /api/ai/tts - 文字转语音
+app.post('/api/ai/tts', (req, res) => {
+  const { text } = req.body;
+  
+  if (!text || !text.trim()) {
+    return res.status(400).json({ error: 'text 为必填项' });
+  }
+
+  if (!ttsEnabled) {
+    return res.status(503).json({ error: 'TTS 服务未启用' });
+  }
+
+  // 限制长度
+  const ttsText = text.trim().substring(0, 500);
+  
+  try {
+    // 调用 Python TTS 脚本
+    const result = execSync(`python3 "${__dirname}/tts.py" ${JSON.stringify(ttsText)}`, {
+      encoding: 'utf-8',
+      timeout: 30000,
+      maxBuffer: 1024 * 1024
+    });
+    
+    const parsed = JSON.parse(result.trim());
+    const audioPath = parsed.filepath;
+    
+    if (!fs.existsSync(audioPath)) {
+      return res.status(500).json({ error: '语音生成失败' });
+    }
+
+    // 返回音频文件（流式响应，不缓存到内存）
+    const stat = fs.statSync(audioPath);
+    res.writeHead(200, {
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': stat.size,
+      'Cache-Control': 'public, max-age=31536000',
+      'X-TTS-Cached': parsed.cached ? 'true' : 'false'
+    });
+    const readStream = fs.createReadStream(audioPath);
+    readStream.pipe(res);
+  } catch (err) {
+    console.error('TTS 生成失败:', err.message);
+    res.status(500).json({ error: '语音生成失败' });
+  }
+});
+
+// ==========================================
 // AI 采访 - 对接 DeepSeek API
 // ==========================================
 
@@ -427,6 +496,41 @@ app.post('/api/stories/audio', upload.single('audio'), (req, res) => {
   saveStories();
 
   res.status(201).json(newStory);
+});
+
+// POST /api/ai/asr - 语音转文字（用于语音输入）
+app.post('/api/ai/asr', upload.single('audio'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: '请上传音频文件' });
+  }
+
+  const audioPath = req.file.path;
+  
+  try {
+    const result = execSync(`python3 "${__dirname}/asr.py" "${audioPath}"`, {
+      encoding: 'utf-8',
+      timeout: 30000,
+      maxBuffer: 1024 * 1024
+    });
+    
+    const parsed = JSON.parse(result.trim());
+    
+    if (parsed.error && !parsed.mock) {
+      console.error('ASR 识别失败:', parsed.error);
+      return res.status(500).json({ error: parsed.error });
+    }
+    
+    res.json({
+      text: parsed.text || '(未能识别)',
+      source: parsed.source || 'mock'
+    });
+  } catch (err) {
+    console.error('ASR 处理失败:', err.message);
+    res.status(500).json({ error: '语音识别失败' });
+  } finally {
+    // 清理临时音频文件
+    try { fs.unlinkSync(audioPath); } catch(e) {}
+  }
 });
 
 // ==========================================

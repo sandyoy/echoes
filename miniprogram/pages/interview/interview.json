@@ -1,4 +1,5 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "AI采访"
+  "navigationBarTitleText": "AI采访",
+  "navigationBarTextStyle": "white"
 }
