@@ -11,55 +11,65 @@
   <title>Echoes · 往事可追忆</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body class="elder-mode">
 
-  <!-- ========== 顶部导航 ========== -->
+  <!-- ========== 顶部导航（两个模式共用） ========== -->
   <nav class="nav-bar">
     <div class="logo">
       <span class="icon">📖</span>
       <span>Echoes</span>
     </div>
     <div class="nav-actions">
-      <button class="btn btn-ghost btn-icon" onclick="toggleElderMode()" title="老人版/普通版">👓</button>
+      <button class="btn btn-ghost btn-icon" id="modeToggleBtn" onclick="toggleElderMode()" title="切换模式">👓</button>
       <button class="btn btn-ghost btn-icon" onclick="showLogin()" title="登录">👤</button>
     </div>
   </nav>
 
   <!-- ========== 首页 - 录音入口 ========== -->
   <div id="page-home" class="page active">
-    <div class="recording-section">
-      <div class="title">今天想聊些什么？</div>
-      <div class="subtitle">按住按钮，说出你的回忆</div>
-
-      <!-- 大大的录音按钮 -->
-      <button class="recording-btn" id="recordBtn" ontouchstart="startRecording()" ontouchend="stopRecording()" onmousedown="startRecording()" onmouseup="stopRecording()">
+    <!-- 老人模式：大录音按钮居中 -->
+    <div class="elder-record-section" id="elderRecordSection">
+      <div class="elder-welcome" id="elderWelcome">今天想聊些什么？</div>
+      <button class="elder-record-btn" id="recordBtnElder">
         🎤
-        <span class="btn-label">按住说话</span>
       </button>
-
-      <!-- 记录模式切换 -->
-      <div class="mode-switch">
-        <button class="mode-btn active" onclick="switchMode('self', this)">
-          🗣️ 自述
-        </button>
-        <button class="mode-btn" onclick="switchMode('interview', this)">
+      <div class="elder-actions" id="elderActions">
+        <button class="elder-action-btn" id="elderInterviewBtn" onclick="startElderInterview()">
           🤖 AI采访
         </button>
-        <button class="mode-btn" onclick="switchMode('type', this)">
-          ✏️ 打字
-        </button>
       </div>
     </div>
 
-    <!-- 最近回忆快速入口 -->
-    <div style="padding: 0 20px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h3 style="font-family:var(--font-main);font-size:1.1rem;color:var(--text-primary);">最近回忆</h3>
-        <button class="btn btn-ghost" style="font-size:0.85rem;" onclick="navigateTo('timeline')">查看全部 →</button>
+    <!-- 普通模式首页内容 -->
+    <div class="normal-home-content" id="normalHomeContent">
+      <div class="recording-section">
+        <div class="title">今天想聊些什么？</div>
+        <div class="subtitle">按住按钮，说出你的回忆</div>
+        <button class="recording-btn" id="recordBtn">
+          🎤
+          <span class="btn-label">按住说话</span>
+        </button>
+        <div class="mode-switch">
+          <button class="mode-btn active" onclick="switchMode('self', this)">
+            🗣️ 自述
+          </button>
+          <button class="mode-btn" onclick="switchMode('interview', this)">
+            🤖 AI采访
+          </button>
+          <button class="mode-btn" onclick="switchMode('type', this)">
+            ✏️ 打字
+          </button>
+        </div>
       </div>
-      <div id="recent-stories" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <div style="padding: 0 20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h3 style="font-family:var(--font-main);font-size:1.1rem;color:var(--text-primary);">最近回忆</h3>
+          <button class="btn btn-ghost" style="font-size:0.85rem;" onclick="navigateTo('timeline')">查看全部 →</button>
+        </div>
+        <div id="recent-stories" style="display:flex;flex-direction:column;gap:10px;"></div>
+      </div>
+      <div style="height: 80px;"></div>
     </div>
-    <div style="height: 80px;"></div>
   </div>
 
   <!-- ========== 时间轴页面 ========== -->
@@ -68,9 +78,7 @@
       <h2>📊 时间轴</h2>
       <button class="btn btn-primary" onclick="showNewStoryModal()">+ 新回忆</button>
     </div>
-    <div class="timeline" id="timeline-container">
-      <!-- 时间轴项由 JS 动态渲染 -->
-    </div>
+    <div class="timeline" id="timeline-container"></div>
     <div style="height: 80px;"></div>
   </div>
 
@@ -138,8 +146,8 @@
     <div style="height: 80px;"></div>
   </div>
 
-  <!-- ========== 底部导航 ========== -->
-  <nav class="bottom-nav">
+  <!-- ========== 底部导航（普通模式） ========== -->
+  <nav class="bottom-nav" id="bottomNav">
     <button class="nav-item active" onclick="navigateTo('home')" data-page="home">
       <span class="nav-icon">🏠</span>
       <span>首页</span>

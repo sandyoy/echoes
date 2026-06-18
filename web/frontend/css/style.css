@@ -57,11 +57,13 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
   font-size: 16px;
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -70,31 +72,186 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 /* ========================================
-   老人版 - 全局放大
+   老人版模式样式（默认进入）
    ======================================== */
 body.elder-mode {
   font-size: 20px;
 }
 
-body.elder-mode .btn,
-body.elder-mode button {
-  font-size: 1.2rem;
-  padding: 16px 32px;
+body.elder-mode .elder-record-section {
+  display: flex;
 }
 
-body.elder-mode .recording-btn {
+body.elder-mode .normal-home-content {
+  display: none;
+}
+
+body.elder-mode #bottomNav {
+  display: none;
+}
+
+/* 非老人模式：相反 */
+body:not(.elder-mode) .elder-record-section {
+  display: none;
+}
+
+body:not(.elder-mode) .normal-home-content {
+  display: block;
+}
+
+body:not(.elder-mode) #bottomNav {
+  display: flex;
+}
+
+/* ===== 老人模式 - 录音区域 ===== */
+.elder-record-section {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 70px);
+  padding: 20px;
+  text-align: center;
+}
+
+.elder-welcome {
+  font-family: var(--font-main);
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 40px;
+  line-height: 1.5;
+}
+
+.elder-record-btn {
   width: 160px;
   height: 160px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  border: 4px solid rgba(255,255,255,0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  color: white;
+  box-shadow: 0 12px 40px rgba(196,149,106,0.45);
+  transition: all 0.25s ease;
+  position: relative;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.elder-record-btn:active {
+  transform: scale(0.92);
+  box-shadow: 0 4px 16px rgba(196,149,106,0.3);
+}
+
+.elder-record-btn.recording {
+  animation: pulse-elder 1.5s ease-in-out infinite;
+  background: linear-gradient(135deg, var(--danger), #ff6b6b);
+  box-shadow: 0 0 50px rgba(229,57,53,0.5);
+  border-color: rgba(255,255,255,0.6);
+}
+
+@keyframes pulse-elder {
+  0% { box-shadow: 0 0 0 0 rgba(229,57,53,0.5); }
+  50% { box-shadow: 0 0 0 40px rgba(229,57,53,0); }
+  100% { box-shadow: 0 0 0 0 rgba(229,57,53,0); }
+}
+
+.elder-actions {
+  margin-top: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.elder-action-btn {
+  width: 100%;
+  padding: 20px 32px;
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--primary-light);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 1.3rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.elder-action-btn:active {
+  transform: scale(0.97);
+  background: var(--bg-warm);
+  border-color: var(--primary);
+}
+
+/* 老人模式下按钮、输入框放大 */
+body.elder-mode .btn,
+body.elder-mode button:not(.elder-action-btn):not(.elder-record-btn):not(.nav-item) {
+  font-size: 1.1rem;
+  padding: 14px 28px;
 }
 
 body.elder-mode input,
 body.elder-mode textarea,
 body.elder-mode select {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   padding: 14px 18px;
+}
+
+body.elder-mode .page-header h2 {
+  font-size: 1.6rem;
+}
+
+body.elder-mode .recording-btn {
+  width: 140px;
+  height: 140px;
+  font-size: 3.5rem;
+}
+
+body.elder-mode .recording-section .title {
+  font-size: 1.8rem;
+}
+
+body.elder-mode .recording-section .subtitle {
+  font-size: 1.1rem;
+}
+
+body.elder-mode .chat-box .bubble {
+  font-size: 1.15rem;
+  padding: 14px 22px;
+}
+
+body.elder-mode .interview-container .chat-input input {
+  font-size: 1.15rem;
+  padding: 16px 22px;
+}
+
+/* 老人模式导航栏也放大 */
+body.elder-mode .nav-bar {
+  padding: 14px 20px;
+}
+
+body.elder-mode .nav-bar .logo {
+  font-size: 1.5rem;
+}
+
+body.elder-mode .btn-icon {
+  width: 52px;
+  height: 52px;
+  font-size: 1.6rem;
 }
 
 /* ========================================
@@ -152,6 +309,11 @@ body.elder-mode select {
   cursor: pointer;
   transition: var(--transition);
   text-decoration: none;
+  touch-action: manipulation;
+}
+
+.btn:active {
+  transform: scale(0.96);
 }
 
 .btn-primary {
@@ -163,6 +325,10 @@ body.elder-mode select {
   background: var(--primary-dark);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active {
+  transform: scale(0.96);
 }
 
 .btn-secondary {
@@ -204,7 +370,7 @@ body.elder-mode select {
 }
 
 /* ========================================
-   录音按钮（核心交互）
+   录音按钮（普通模式）
    ======================================== */
 .recording-section {
   display: flex;
@@ -243,6 +409,9 @@ body.elder-mode select {
   box-shadow: 0 8px 32px rgba(196,149,106,0.4);
   transition: var(--transition);
   position: relative;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .recording-btn:hover {
@@ -651,36 +820,6 @@ body.elder-mode select {
 }
 
 /* ========================================
-   模式切换
-   ======================================== */
-.mode-switcher {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 100;
-}
-
-.mode-switcher button {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
-  background: var(--bg-card);
-  box-shadow: var(--shadow-md);
-  cursor: pointer;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition);
-}
-
-.mode-switcher button:hover {
-  transform: scale(1.1);
-  box-shadow: var(--shadow-lg);
-}
-
-/* ========================================
    底部导航
    ======================================== */
 .bottom-nav {
@@ -710,6 +849,7 @@ body.elder-mode select {
   font-size: 0.7rem;
   transition: var(--transition);
   font-family: var(--font-sans);
+  touch-action: manipulation;
 }
 
 .bottom-nav .nav-item .nav-icon {
@@ -720,15 +860,8 @@ body.elder-mode select {
   color: var(--primary);
 }
 
-/* ========================================
-   响应式
-   ======================================== */
-@media (max-width: 480px) {
-  .recording-btn {
-    width: 100px;
-    height: 100px;
-    font-size: 2.5rem;
-  }
+.bottom-nav .nav-item:active {
+  transform: scale(0.92);
 }
 
 /* ========================================
@@ -789,4 +922,30 @@ body.elder-mode select {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   响应式
+   ======================================== */
+@media (max-width: 480px) {
+  .recording-btn {
+    width: 100px;
+    height: 100px;
+    font-size: 2.5rem;
+  }
+
+  body.elder-mode .elder-record-btn {
+    width: 150px;
+    height: 150px;
+    font-size: 3.5rem;
+  }
+
+  body.elder-mode .elder-welcome {
+    font-size: 1.3rem;
+  }
+
+  body.elder-mode .elder-action-btn {
+    font-size: 1.1rem;
+    padding: 18px 28px;
+  }
 }

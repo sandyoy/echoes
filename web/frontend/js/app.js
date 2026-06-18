@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderRecentStories();
   renderTimeline();
   initElderMode();
+  initElderRecordButton();
 });
 
 // ========== 页面导航 ==========
@@ -30,6 +31,114 @@ function navigateTo(pageName) {
   if (pageName === 'album') renderAlbum();
   if (pageName === 'interview') scrollToBottom();
   if (pageName === 'home') renderRecentStories();
+}
+
+// ========== 老人模式切换 ==========
+function initElderMode() {
+  const isElder = Storage.getSetting('elderMode');
+  // 默认进入老人模式
+  if (isElder !== false) {
+    document.body.classList.add('elder-mode');
+  }
+  updateModeUI();
+}
+
+function toggleElderMode() {
+  document.body.classList.toggle('elder-mode');
+  const isElder = document.body.classList.contains('elder-mode');
+  Storage.setSetting('elderMode', isElder);
+  updateModeUI();
+  // 切回首页
+  navigateTo('home');
+}
+
+function updateModeUI() {
+  const isElder = document.body.classList.contains('elder-mode');
+  const toggleBtn = document.getElementById('modeToggleBtn');
+  if (toggleBtn) {
+    toggleBtn.textContent = isElder ? '👓' : '👓';
+  }
+}
+
+// ========== 老人模式录音 ==========
+let elderIsRecording = false;
+let elderTouchId = null;
+
+function initElderRecordButton() {
+  const btn = document.getElementById('recordBtnElder');
+  if (!btn) return;
+
+  // 触摸事件（优先于鼠标）
+  btn.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    if (!elderIsRecording) {
+      elderIsRecording = true;
+      elderTouchId = e.changedTouches[0].identifier;
+      startRecording();
+      this.classList.add('recording');
+    }
+  }, { passive: false });
+
+  btn.addEventListener('touchend', function(e) {
+    // 只响应对应触摸点
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === elderTouchId) {
+        if (elderIsRecording) {
+          elderIsRecording = false;
+          elderTouchId = null;
+          stopRecording();
+          this.classList.remove('recording');
+        }
+        break;
+      }
+    }
+  });
+
+  btn.addEventListener('touchcancel', function(e) {
+    if (elderIsRecording) {
+      elderIsRecording = false;
+      elderTouchId = null;
+      stopRecording();
+      this.classList.remove('recording');
+    }
+  });
+
+  // 鼠标事件（桌面端备用）
+  btn.addEventListener('mousedown', function(e) {
+    if (!elderIsRecording && !('ontouchstart' in window)) {
+      elderIsRecording = true;
+      startRecording();
+      this.classList.add('recording');
+    }
+  });
+
+  btn.addEventListener('mouseup', function(e) {
+    if (elderIsRecording && !('ontouchstart' in window)) {
+      elderIsRecording = false;
+      stopRecording();
+      this.classList.remove('recording');
+    }
+  });
+
+  btn.addEventListener('mouseleave', function(e) {
+    if (elderIsRecording && !('ontouchstart' in window)) {
+      elderIsRecording = false;
+      stopRecording();
+      this.classList.remove('recording');
+    }
+  });
+}
+
+// ========== 老人模式AI采访 ==========
+function startElderInterview() {
+  navigateTo('interview');
+  // 自动开始AI采访对话
+  setTimeout(() => {
+    const aiMessage = '你好呀！我是你的回忆小助手 🎙️ 今天想聊聊哪段时光呢？比如小时候、工作、或者某个难忘的人？';
+    // 如果聊天框只有初始消息，就什么也不做（已经有初始消息）
+    // 如果用户之前聊过，就继续对话
+    scrollToBottom();
+  }, 300);
 }
 
 // ========== 录音功能 ==========
@@ -61,8 +170,14 @@ function startRecording() {
     return;
   }
 
-  document.getElementById('recordBtn').classList.add('recording');
-  document.getElementById('recordBtn').querySelector('.btn-label').textContent = '松开停止';
+  // 更新普通模式按钮
+  const recordBtn = document.getElementById('recordBtn');
+  if (recordBtn) {
+    recordBtn.classList.add('recording');
+    const label = recordBtn.querySelector('.btn-label');
+    if (label) label.textContent = '松开停止';
+  }
+
   document.getElementById('recordingIndicator').style.display = 'block';
   recordingSeconds = 0;
   updateRecordingTimer();
@@ -92,8 +207,14 @@ function startRecording() {
 }
 
 function stopRecording() {
-  document.getElementById('recordBtn').classList.remove('recording');
-  document.getElementById('recordBtn').querySelector('.btn-label').textContent = '按住说话';
+  // 更新普通模式按钮
+  const recordBtn = document.getElementById('recordBtn');
+  if (recordBtn) {
+    recordBtn.classList.remove('recording');
+    const label = recordBtn.querySelector('.btn-label');
+    if (label) label.textContent = '按住说话';
+  }
+
   document.getElementById('recordingIndicator').style.display = 'none';
   
   if (recordingTimer) {
@@ -116,7 +237,7 @@ function processRecording(audioBlob) {
   // 保存录音到本地（作为演示，实际会调用语音识别API）
   const audioUrl = URL.createObjectURL(audioBlob);
   
-  // 这里模拟语音识别结果
+  // 模拟语音识别结果
   const mockTranscriptions = [
     '我记得小时候，门口有一棵很大的槐花树，每到春天满院子都是香味...',
     '那年我去当兵，走的时候我妈哭了一路，我坐在车上不敢回头...',
@@ -129,7 +250,6 @@ function processRecording(audioBlob) {
 }
 
 function showTranscriptionDialog(text, audioUrl) {
-  // 用模态框展示识别结果
   const modal = document.getElementById('storyModal');
   document.getElementById('storyDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('storyContent').value = text;
@@ -175,7 +295,7 @@ function sendChatMessage() {
   // 检测话题
   detectTopic(text);
 
-  // AI 生成回复（模拟对话，实际会调用后端 API）
+  // AI 生成回复
   setTimeout(() => {
     const aiReply = generateInterviewReply(text);
     appendChatMessage('ai', aiReply);
@@ -221,11 +341,9 @@ function generateInterviewReply(userText) {
   const hasContent = userText.length > 5;
   
   if (hasContent) {
-    // 顺着话题深入引导
     const followUps = interviewPrompts[currentInterviewTopic] || interviewPrompts['default'];
     const prompt = followUps[Math.floor(Math.random() * followUps.length)];
     
-    // 根据用户回答内容给出回应
     if (userText.includes('开心') || userText.includes('快乐') || userText.includes('幸福')) {
       return '听您这么说真温暖 😊 那段时光一定很美好。' + prompt;
     } else if (userText.includes('难过') || userText.includes('遗憾') || userText.includes('哭')) {
@@ -253,14 +371,12 @@ function autoSaveMemory(userText, aiReply) {
       type: 'interview'
     });
 
-    // 刷新时间轴
     renderTimeline();
     renderRecentStories();
   }
 }
 
 function startVoiceChat() {
-  // 切换到自述模式进行语音输入
   navigateTo('home');
   const selfBtn = document.querySelector('.mode-btn');
   if (selfBtn) switchMode('self', selfBtn);
@@ -283,16 +399,15 @@ function renderTimeline() {
     return;
   }
 
-  // 按日期排序（最新的在下面，符合时间轴从早到晚）
   const sorted = [...stories].sort((a, b) => a.date.localeCompare(b.date));
 
   container.innerHTML = sorted.map(story => {
     const dateObj = new Date(story.date);
     const dateStr = `${dateObj.getFullYear()}年${dateObj.getMonth() + 1}月`;
     
-    const dotClass = story.photos.length > 0 ? 'photo' : story.audioUrl ? 'audio' : '';
+    const dotClass = story.photos && story.photos.length > 0 ? 'photo' : story.audioUrl ? 'audio' : '';
     const eraTag = story.era ? `<span class="era">${story.era}</span>` : '';
-    const photoPreview = story.photos.length > 0 
+    const photoPreview = story.photos && story.photos.length > 0 
       ? `<div class="media-preview">${story.photos.map(p => `<img src="${p}" alt="照片" onclick="viewPhoto('${p}')">`).join('')}</div>`
       : '';
 
@@ -357,9 +472,8 @@ function editStory(id) {
   document.getElementById('storyEra').value = story.era;
   document.querySelector('#storyModal h3').textContent = '✏️ 编辑回忆';
 
-  // 显示已有照片
   const preview = document.getElementById('photoPreview');
-  preview.innerHTML = story.photos.map((p, i) => `
+  preview.innerHTML = (story.photos || []).map((p, i) => `
     <div style="position:relative;">
       <img src="${p}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;">
       <button onclick="removePhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:none;background:var(--danger);color:white;font-size:12px;cursor:pointer;">×</button>
@@ -432,7 +546,6 @@ function renderAlbum() {
   const stories = Storage.getAllStories();
   if (stories.length === 0) return;
 
-  // 从故事生成画册
   if (!currentAlbum) {
     currentAlbum = Storage.generateAlbumFromStories(stories.map(s => s.id));
   }
@@ -451,7 +564,6 @@ function showAlbumPage(index) {
   const backImg = document.querySelector('#albumPhotoBack img');
   const backText = document.getElementById('albumTextBack');
 
-  // 当前页
   if (page.photo) {
     frontImg.src = page.photo;
     frontImg.style.display = 'block';
@@ -467,7 +579,6 @@ function showAlbumPage(index) {
     <p>${page.text}</p>
   `;
 
-  // 下一页（如果有）
   const nextPage = currentAlbum.pages[index + 1];
   if (nextPage) {
     if (nextPage.photo) {
@@ -542,20 +653,17 @@ function restorePhoto(event) {
     document.getElementById('restoreBefore').src = e.target.result;
     document.getElementById('restorePreview').style.display = 'block';
     
-    // 模拟修复效果（实际会调用AI修复API）
     setTimeout(() => {
-      document.getElementById('restoreAfter').src = e.target.result; // 这里会替换为修复后的图片
+      document.getElementById('restoreAfter').src = e.target.result;
       document.getElementById('restoreModal').classList.add('active');
     }, 500);
   };
   reader.readAsDataURL(file);
 
-  // 提示用户
   alert('✨ AI 老照片修复功能即将上线！\n\n后续版本将支持一键修复模糊老照片、上色、去划痕等。');
 }
 
 function useRestoredPhoto() {
-  // 将修复后的照片用于当前编辑的故事
   const restoredSrc = document.getElementById('restoreAfter').src;
   const preview = document.getElementById('photoPreview');
   const img = document.createElement('div');
@@ -582,21 +690,6 @@ function wechatLogin() {
 function phoneLogin() {
   alert('📱 手机号登录即将上线！\n\n后续版本将支持短信验证码登录。');
   closeModal('loginModal');
-}
-
-// ========== 老人版模式切换 ==========
-function initElderMode() {
-  const isElder = Storage.getSetting('elderMode');
-  if (isElder) {
-    document.body.classList.add('elder-mode');
-  }
-}
-
-function toggleElderMode() {
-  document.body.classList.toggle('elder-mode');
-  const isElder = document.body.classList.contains('elder-mode');
-  Storage.setSetting('elderMode', isElder);
-  alert(isElder ? '👓 已切换到老人版' : '👓 已切换到普通版');
 }
 
 // ========== 照片查看 ==========
