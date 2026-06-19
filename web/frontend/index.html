@@ -2,285 +2,136 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#faf6f0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f7f7">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/svg+xml" href="/images/echoes-icon.svg">
-  <title>Echoes · 往事可追忆</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <title>Echoes</title>
+  <link rel="stylesheet" href="/css/echoes.css">
 </head>
-<body class="elder-mode">
+<body>
 
-  <!-- ========== 顶部导航（两个模式共用） ========== -->
-  <nav class="nav-bar">
-    <div class="logo">
-      <span class="icon">📖</span>
-      <span>Echoes</span>
-    </div>
-    <div class="nav-actions">
-      <button class="btn btn-ghost btn-icon" id="modeToggleBtn" onclick="toggleElderMode()" title="切换模式">👓</button>
-      <button class="btn btn-ghost btn-icon" onclick="showLogin()" title="登录">👤</button>
-    </div>
-  </nav>
+<!-- ========== 老人模式 ========== -->
+<div id="mode-elder" class="mode mode-elder">
+  <div class="elder-bar">
+    <span class="elder-logo">Echoes</span>
+    <button class="elder-switch" id="elderToNormal">标准模式</button>
+  </div>
+  <div class="elder-body">
+    <p class="elder-prompt">今天想聊些什么？</p>
+    <button class="elder-mic" id="elderMic">🎤</button>
+    <p class="elder-hint" id="elderHint">按住说话</p>
+    <button class="elder-interview" id="elderAI">🤖 AI采访</button>
+  </div>
+</div>
 
-  <!-- ========== 首页 - 录音入口 ========== -->
-  <div id="page-home" class="page active">
-    <!-- 老人模式：大录音按钮居中 -->
-    <div class="elder-record-section" id="elderRecordSection">
-      <div class="elder-welcome" id="elderWelcome">今天想聊些什么？</div>
-      <button class="elder-record-btn" id="recordBtnElder">
-        🎤
-      </button>
-      <div class="elder-actions" id="elderActions">
-        <button class="elder-action-btn" id="elderInterviewBtn" onclick="startElderInterview()">
-          🤖 AI采访
+<!-- ========== 标准模式 ========== -->
+<div id="mode-normal" class="mode mode-normal" style="display:none">
+  <!-- 顶栏 -->
+  <div class="nav-bar">
+    <span class="nav-title">Echoes</span>
+    <div class="nav-right">
+      <button class="nav-btn" id="normalToElder">👓</button>
+      <button class="nav-btn" id="loginBtn">登录</button>
+    </div>
+  </div>
+
+  <!-- 页面容器 -->
+  <div class="pages" id="pages">
+
+    <!-- 首页 -->
+    <div class="page active" id="page-home">
+      <div class="home-hero">
+        <button class="home-mic" id="normalMic">
+          <span class="home-mic-icon">🎤</span>
+          <span class="home-mic-label">按住录音</span>
         </button>
       </div>
+      <div class="home-tabs">
+        <button class="home-tab active" data-tab="self">自述</button>
+        <button class="home-tab" data-tab="interview">AI采访</button>
+        <button class="home-tab" data-tab="type">打字</button>
+      </div>
+      <div class="section-title">最近记录</div>
+      <div class="story-list" id="storyList"><div class="empty-state">还没有记录</div></div>
     </div>
 
-    <!-- 普通模式首页内容 -->
-    <div class="normal-home-content" id="normalHomeContent">
-      <div class="recording-section">
-        <div class="title">今天想聊些什么？</div>
-        <div class="subtitle">按住按钮，说出你的回忆</div>
-        <button class="recording-btn" id="recordBtn">
-          🎤
-          <span class="btn-label">按住说话</span>
-        </button>
-        <div class="mode-switch">
-          <button class="mode-btn active" onclick="switchMode('self', this)">
-            🗣️ 自述
-          </button>
-          <button class="mode-btn" onclick="switchMode('interview', this)">
-            🤖 AI采访
-          </button>
-          <button class="mode-btn" onclick="switchMode('type', this)">
-            ✏️ 打字
-          </button>
-        </div>
-      </div>
-      <div style="padding: 0 20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h3 style="font-family:var(--font-main);font-size:1.1rem;color:var(--text-primary);">最近回忆</h3>
-          <button class="btn btn-ghost" style="font-size:0.85rem;" onclick="navigateTo('timeline')">查看全部 →</button>
-        </div>
-        <div id="recent-stories" style="display:flex;flex-direction:column;gap:10px;"></div>
-      </div>
-      <div style="height: 80px;"></div>
+    <!-- 时间轴 -->
+    <div class="page" id="page-timeline">
+      <div class="page-head">时间轴</div>
+      <div class="timeline-list" id="timelineList"><div class="empty-state">还没有记录</div></div>
     </div>
+
+    <!-- AI采访 -->
+    <div class="page" id="page-interview">
+      <div class="page-head">AI采访</div>
+      <div class="chat-wrap">
+        <div class="chat-box" id="chatBox"></div>
+      </div>
+      <div class="chat-foot">
+        <input class="chat-input" id="chatInput" placeholder="输入回答…">
+        <button class="chat-send" id="chatSend">发送</button>
+      </div>
+    </div>
+
+    <!-- 画册 -->
+    <div class="page" id="page-album">
+      <div class="page-head">画册</div>
+      <div class="empty-state" style="margin-top:60px">记录足够后自动生成</div>
+    </div>
+
   </div>
 
-  <!-- ========== 时间轴页面 ========== -->
-  <div id="page-timeline" class="page">
-    <div class="page-header">
-      <h2>📊 时间轴</h2>
-      <button class="btn btn-primary" onclick="showNewStoryModal()">+ 新回忆</button>
-    </div>
-    <div class="timeline" id="timeline-container"></div>
-    <div style="height: 80px;"></div>
+  <!-- 底部栏 -->
+  <div class="tab-bar">
+    <button class="tab-item active" data-page="home"><span class="tab-icon">🏠</span><span class="tab-label">首页</span></button>
+    <button class="tab-item" data-page="timeline"><span class="tab-icon">📊</span><span class="tab-label">时间轴</span></button>
+    <button class="tab-item" data-page="interview"><span class="tab-icon">🎙️</span><span class="tab-label">采访</span></button>
+    <button class="tab-item" data-page="album"><span class="tab-icon">📖</span><span class="tab-label">画册</span></button>
   </div>
+</div>
 
-  <!-- ========== AI 采访页面 ========== -->
-  <div id="page-interview" class="page">
-    <div class="page-header">
-      <h2>🤖 AI 采访</h2>
-      <button class="btn btn-ghost" onclick="navigateTo('home')">返回</button>
-    </div>
-    <div class="interview-container">
-      <div class="chat-box" id="chatBox">
-        <div class="message ai">
-          <div class="bubble">你好呀！我是你的回忆小助手 🎙️ 今天想聊聊哪段时光呢？比如小时候、工作、或者某个难忘的人？</div>
-        </div>
-      </div>
-      <div class="chat-input">
-        <input type="text" id="chatInput" placeholder="打字回答，或者按住话筒说话..." onkeypress="if(event.key==='Enter') sendChatMessage()">
-        <button class="btn btn-primary" onclick="sendChatMessage()">发送</button>
-        <button class="btn btn-secondary btn-icon" onclick="startVoiceChat()" title="语音输入">🎤</button>
-      </div>
-    </div>
-    <div style="height: 80px;"></div>
+<!-- ========== 录音浮层 ========== -->
+<div class="rec-overlay" id="recOverlay" style="display:none">
+  <div class="rec-body">
+    <div class="rec-icon">🎤</div>
+    <div class="rec-status">正在录音…</div>
+    <div class="rec-timer" id="recTimer">0:00</div>
   </div>
+</div>
 
-  <!-- ========== 画册页面 ========== -->
-  <div id="page-album" class="page">
-    <div class="page-header">
-      <h2>📖 回忆画册</h2>
-      <div>
-        <button class="btn btn-secondary" onclick="exportPDF()">📄 PDF</button>
-        <button class="btn btn-secondary" onclick="exportVideo()">🎬 短视频</button>
-      </div>
+<!-- ========== 登录弹窗 ========== -->
+<div class="dialog-overlay" id="loginDialog" style="display:none">
+  <div class="dialog">
+    <div class="dialog-hd">
+      <span class="dialog-title">登录</span>
+      <button class="dialog-close" id="loginClose">✕</button>
     </div>
-    <div class="album-container">
-      <div class="album" id="albumView">
-        <div class="page-wrapper" id="albumPage">
-          <div class="page-face" id="albumFront">
-            <div class="photo-area" id="albumPhoto">
-              <img src="/images/placeholder.svg" alt="照片">
-            </div>
-            <div class="text-area" id="albumText">
-              <h3>回忆从这里开始</h3>
-              <p>点击下方添加回忆，生成你的专属画册</p>
-            </div>
-          </div>
-          <div class="page-face back" id="albumBack">
-            <div class="photo-area" id="albumPhotoBack">
-              <img src="/images/placeholder.svg" alt="照片">
-            </div>
-            <div class="text-area" id="albumTextBack">
-              <p>继续翻页...</p>
-            </div>
-          </div>
-        </div>
-        <div class="page-nav">
-          <button class="btn btn-secondary" onclick="prevAlbumPage()">← 上一页</button>
-          <span id="albumPageNum">第 1 / 1 页</span>
-          <button class="btn btn-secondary" onclick="nextAlbumPage()">下一页 →</button>
-        </div>
+    <div class="dialog-bd">
+      <p class="dialog-desc">登录后数据永久保存</p>
+      <div class="field"><input class="field-input" id="phoneInput" placeholder="手机号" type="tel" maxlength="11"></div>
+      <div class="field field-row">
+        <input class="field-input flex-1" id="codeInput" placeholder="验证码" type="text" maxlength="6">
+        <button class="field-btn" id="sendCode">获取验证码</button>
       </div>
-      <div style="text-align:center;margin-top:16px;">
-        <button class="btn btn-primary" onclick="showPayModal()">🖨️ 打印实体画册</button>
-      </div>
-    </div>
-    <div style="height: 80px;"></div>
-  </div>
-
-  <!-- ========== 底部导航（普通模式） ========== -->
-  <nav class="bottom-nav" id="bottomNav">
-    <button class="nav-item active" onclick="navigateTo('home')" data-page="home">
-      <span class="nav-icon">🏠</span>
-      <span>首页</span>
-    </button>
-    <button class="nav-item" onclick="navigateTo('timeline')" data-page="timeline">
-      <span class="nav-icon">📊</span>
-      <span>时间轴</span>
-    </button>
-    <button class="nav-item" onclick="navigateTo('interview')" data-page="interview">
-      <span class="nav-icon">🎙️</span>
-      <span>AI采访</span>
-    </button>
-    <button class="nav-item" onclick="navigateTo('album')" data-page="album">
-      <span class="nav-icon">📖</span>
-      <span>画册</span>
-    </button>
-  </nav>
-
-  <!-- ========== 新建回忆模态框 ========== -->
-  <div class="modal-overlay" id="storyModal">
-    <div class="modal-content">
-      <h3>📝 新回忆</h3>
-      <div class="story-editor">
-        <div class="field">
-          <label>📅 时间</label>
-          <input type="date" id="storyDate">
-        </div>
-        <div class="field">
-          <label>🏷️ 人生阶段</label>
-          <select id="storyEra">
-            <option value="">请选择...</option>
-            <option value="童年">👶 童年</option>
-            <option value="求学">📚 求学</option>
-            <option value="工作">💼 工作</option>
-            <option value="恋爱">💕 恋爱</option>
-            <option value="成家">🏠 成家</option>
-            <option value="养育">👶 养育子女</option>
-            <option value="退休">🌅 退休生活</option>
-            <option value="其他">🌟 其他</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>📝 回忆内容</label>
-          <textarea id="storyContent" placeholder="写下这段回忆..." rows="5"></textarea>
-        </div>
-        <div class="field">
-          <label>🖼️ 添加照片</label>
-          <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
-            📸 点击上传照片（可多选）
-            <input type="file" id="photoInput" accept="image/*" multiple style="display:none" onchange="handlePhotoUpload(event)">
-          </div>
-          <div id="photoPreview" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"></div>
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-secondary" onclick="closeModal('storyModal')">取消</button>
-          <button class="btn btn-primary" onclick="saveStory()">保存</button>
-        </div>
-      </div>
+      <button class="dialog-btn" id="loginSubmit">登录</button>
     </div>
   </div>
+</div>
 
-  <!-- ========== 登录模态框 ========== -->
-  <div class="modal-overlay" id="loginModal">
-    <div class="modal-content" style="text-align:center;">
-      <h3>👋 欢迎来到 Echoes</h3>
-      <p style="color:var(--text-secondary);margin-bottom:24px;">登录后保存你的回忆，永不丢失</p>
-      <button class="btn btn-primary" style="width:100%;padding:16px;font-size:1.1rem;" onclick="wechatLogin()">
-        💬 微信一键登录
-      </button>
-      <button class="btn btn-secondary" style="width:100%;margin-top:12px;" onclick="phoneLogin()">
-        📱 手机号登录
-      </button>
-      <div style="margin-top:16px;font-size:0.8rem;color:var(--text-light);">
-        继续即表示同意 <a href="#" style="color:var(--primary);">服务条款</a>
-      </div>
+<!-- ========== 保存弹窗 ========== -->
+<div class="dialog-overlay" id="saveDialog" style="display:none">
+  <div class="dialog">
+    <div class="dialog-hd">
+      <span class="dialog-title">保存回忆</span>
+      <button class="dialog-close" id="saveClose">✕</button>
+    </div>
+    <div class="dialog-bd">
+      <div class="field"><textarea class="field-input field-textarea" id="saveContent" placeholder="录音已转文字，可以在这里修改…" rows="4"></textarea></div>
+      <button class="dialog-btn" id="saveSubmit">保存</button>
     </div>
   </div>
+</div>
 
-  <!-- ========== 付费打印模态框 ========== -->
-  <div class="modal-overlay" id="payModal">
-    <div class="modal-content" style="text-align:center;">
-      <h3>🖨️ 打印实体画册</h3>
-      <div style="margin:20px 0;padding:20px;background:var(--bg-warm);border-radius:var(--radius-md);">
-        <div style="font-size:2rem;font-weight:700;color:var(--primary);">¥69</div>
-        <div style="color:var(--text-secondary);font-size:0.9rem;">精装回忆画册 · 包邮</div>
-      </div>
-      <div style="text-align:left;margin-bottom:16px;">
-        <div style="margin-bottom:8px;">✅ 硬壳精装，可长期保存</div>
-        <div style="margin-bottom:8px;">✅ 包含所有照片和回忆文字</div>
-        <div style="margin-bottom:8px;">✅ 3-5个工作日发货</div>
-        <div style="margin-bottom:8px;">✅ 支持编辑修改后再打印</div>
-      </div>
-      <button class="btn btn-primary" style="width:100%;padding:16px;font-size:1.1rem;" onclick="startPayment()">
-        💳 立即下单
-      </button>
-      <button class="btn btn-ghost" style="margin-top:12px;" onclick="closeModal('payModal')">稍后再说</button>
-    </div>
-  </div>
-
-  <!-- ========== 老照片修复模态框 ========== -->
-  <div class="modal-overlay" id="restoreModal">
-    <div class="modal-content" style="text-align:center;">
-      <h3>✨ AI 老照片修复</h3>
-      <div class="photo-upload" onclick="document.getElementById('restoreInput').click()" style="margin:16px 0;">
-        📸 选择需要修复的老照片
-        <input type="file" id="restoreInput" accept="image/*" style="display:none" onchange="restorePhoto(event)">
-      </div>
-      <div id="restorePreview" style="display:none;">
-        <div style="display:flex;gap:16px;margin:16px 0;justify-content:center;">
-          <div>
-            <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:4px;">修复前</div>
-            <img id="restoreBefore" style="width:120px;height:120px;object-fit:cover;border-radius:8px;">
-          </div>
-          <div>
-            <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:4px;">修复后</div>
-            <img id="restoreAfter" style="width:120px;height:120px;object-fit:cover;border-radius:8px;">
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="useRestoredPhoto()">使用修复后的照片</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ========== 录音状态指示器 ========== -->
-  <div id="recordingIndicator" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:300;text-align:center;">
-    <div style="width:80px;height:80px;margin:0 auto;border-radius:50%;background:linear-gradient(135deg,var(--danger),#ff6b6b);display:flex;align-items:center;justify-content:center;font-size:2rem;color:white;box-shadow:0 0 40px rgba(229,57,53,0.4);animation:pulse 1.5s ease-in-out infinite;">
-      🎤
-    </div>
-    <div style="margin-top:12px;color:white;font-weight:500;text-shadow:0 2px 4px rgba(0,0,0,0.3);">正在录音...</div>
-    <div id="recordingTimer" style="color:white;font-size:0.9rem;margin-top:4px;text-shadow:0 2px 4px rgba(0,0,0,0.3);">0:00</div>
-  </div>
-
-  <script src="/js/app.js"></script>
-  <script src="/js/storage.js"></script>
+<script src="/js/echoes.js"></script>
 </body>
 </html>
