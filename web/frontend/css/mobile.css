@@ -1,0 +1,392 @@
+/* ========================================
+   Echoes · 往事可追忆 — 移动端样式
+   从零重写，只考虑手机
+   ======================================== */
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  width:100%; overflow-x:hidden;
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #faf6f0;
+  color: #2c1810;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ========== 老人模式 ========== */
+.mode-elder {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #faf6f0;
+}
+
+.elder-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  padding-top: max(16px, env(safe-area-inset-top));
+}
+
+.elder-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #a07850;
+}
+
+.mode-switch-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid #e8d5b7;
+  background: white;
+  color: #8b6f5e;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* 老人模式主区域 */
+.elder-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 20px 80px;
+}
+
+.elder-hint {
+  font-size: 20px;
+  color: #6b5a4e;
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+/* 大录音按钮 - 150px */
+.elder-record {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #c4956a, #d4a574);
+  color: white;
+  font-size: 60px;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(196,149,106,0.4);
+  transition: all 0.2s;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.elder-record:active {
+  transform: scale(0.92);
+  box-shadow: 0 4px 15px rgba(196,149,106,0.3);
+}
+
+.elder-record.recording {
+  animation: pulse-rec 1.5s infinite;
+  background: linear-gradient(135deg, #e53935, #ff6b6b);
+  box-shadow: 0 0 40px rgba(229,57,53,0.4);
+}
+
+@keyframes pulse-rec {
+  0% { box-shadow: 0 0 0 0 rgba(229,57,53,0.4); }
+  50% { box-shadow: 0 0 0 25px rgba(229,57,53,0); }
+  100% { box-shadow: 0 0 0 0 rgba(229,57,53,0); }
+}
+
+.elder-label {
+  font-size: 15px;
+  color: #a09080;
+  margin-top: 18px;
+  margin-bottom: 50px;
+}
+
+/* AI采访按钮（老人模式） */
+.elder-interview {
+  padding: 14px 40px;
+  border-radius: 30px;
+  border: 1px solid #e8d5b7;
+  background: white;
+  color: #6b5a4e;
+  font-size: 17px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.2s;
+}
+
+.elder-interview:active {
+  background: #f5ede4;
+  transform: scale(0.97);
+}
+
+/* ========== 普通模式 ========== */
+.mode-normal {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #faf6f0;
+}
+
+.normal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  background: rgba(250,246,240,0.95);
+  border-bottom: 1px solid #e8d5b7;
+}
+
+.normal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #a07850;
+}
+
+/* 页面容器 */
+.page-container {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.page {
+  display: none;
+  padding: 16px;
+  padding-bottom: 80px;
+}
+.page.active { display: block; }
+
+.page-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c1810;
+  margin-bottom: 16px;
+}
+
+/* 首页 */
+.home-header {
+  font-size: 20px;
+  color: #6b5a4e;
+  text-align: center;
+  margin: 20px 0 30px;
+}
+
+.home-record {
+  display: block;
+  width: 200px;
+  margin: 0 auto 20px;
+  padding: 16px 0;
+  border-radius: 30px;
+  border: none;
+  background: linear-gradient(135deg, #c4956a, #d4a574);
+  color: white;
+  font-size: 17px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(196,149,106,0.3);
+  touch-action: manipulation;
+}
+
+.home-record:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+.home-modes {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.hmode {
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 1px solid #e8d5b7;
+  background: white;
+  color: #8b6f5e;
+  font-size: 14px;
+  cursor: pointer;
+}
+.hmode.active {
+  background: #c4956a;
+  color: white;
+  border-color: #c4956a;
+}
+
+.home-recent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 底部导航 */
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 6px 0;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  background: white;
+  border-top: 1px solid #e8d5b7;
+  flex-shrink: 0;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  background: transparent;
+  color: #a09080;
+  font-size: 11px;
+  padding: 4px 16px;
+  cursor: pointer;
+  font-size: 20px;
+}
+.nav-item span { font-size: 11px; }
+.nav-item.active { color: #c4956a; }
+
+/* AI采访 */
+.chat-box {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  border: 1px solid #e8d5b7;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input-row input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 20px;
+  border: 1px solid #e8d5b7;
+  font-size: 15px;
+  background: white;
+}
+
+.chat-send {
+  padding: 12px 20px;
+  border-radius: 20px;
+  border: none;
+  background: #c4956a;
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* 消息气泡 */
+.message { margin-bottom: 12px; }
+.message.ai { text-align: left; }
+.message.user { text-align: right; }
+.message .bubble {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 12px;
+  max-width: 80%;
+  line-height: 1.6;
+  font-size: 15px;
+}
+.message.ai .bubble {
+  background: #f5ede4;
+  color: #2c1810;
+  border-bottom-left-radius: 4px;
+}
+.message.user .bubble {
+  background: #c4956a;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+/* 录音浮层 */
+#recordingOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.rec-indicator {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e53935, #ff6b6b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  color: white;
+  animation: pulse-rec 1.5s infinite;
+  margin-bottom: 16px;
+}
+
+.rec-text {
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  margin-bottom: 8px;
+}
+
+.rec-timer {
+  color: white;
+  font-size: 14px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* ========== 回复示例卡片 ========== */
+.recent-card {
+  background: white;
+  border-radius: 10px;
+  padding: 12px 14px;
+  border: 1px solid rgba(196,149,106,0.15);
+}
+.recent-card .date {
+  font-size: 12px;
+  color: #c4956a;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.recent-card .preview {
+  font-size: 14px;
+  color: #2c1810;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ========== 时间轴条目 ========== */
+.tl-item {
+  padding-left: 16px;
+  border-left: 2px solid #e8d5b7;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+}
+.tl-item .tl-date {
+  font-size: 12px;
+  color: #c4956a;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.tl-item .tl-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #2c1810;
+}
