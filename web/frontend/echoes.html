@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Echoes 往事可追忆 — 记录你的人生故事，打印成实体纪念册</title>
+  <meta name="description" content="Echoes是广州圆爱康生物科技旗下的人生档案记录平台。用语音、文字、AI采访记录人生故事，自动生成时间轴和电子画册，可打印成实体纪念册。">
+  <meta name="keywords" content="回忆录,人生故事,纪念册,AI采访,往事可追忆,圆爱康">
+  <meta property="og:title" content="Echoes 往事可追忆">
+  <meta property="og:description" content="记录你的人生故事，打印成实体纪念册">
+  <meta property="og:type" content="website">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg: #faf6f0;
+      --bg-card: #ffffff;
+      --bg-warm: #f5ede4;
+      --text: #3d2e1e;
+      --text-light: #8c7a6b;
+      --text-muted: #bbb0a5;
+      --accent: #c4956a;
+      --accent-dark: #a07850;
+      --accent-light: #f0e4d6;
+      --border: #e8e0d8;
+      --shadow: 0 4px 24px rgba(0,0,0,0.06);
+      --shadow-lg: 0 8px 40px rgba(0,0,0,0.1);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* ===== 导航 ===== */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(250,246,240,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .container {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    nav .logo {
+      font-size: 22px; font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+    nav .logo span { color: var(--accent); }
+    nav .nav-links { display: flex; gap: 32px; align-items: center; }
+    nav .nav-links a {
+      color: var(--text-light); text-decoration: none;
+      font-size: 15px; transition: color 0.2s;
+    }
+    nav .nav-links a:hover { color: var(--accent-dark); }
+    nav .nav-links .btn-primary {
+      background: var(--accent); color: white;
+      padding: 8px 20px; border-radius: 20px;
+      font-size: 14px; font-weight: 500;
+    }
+    nav .nav-links .btn-primary:hover {
+      background: var(--accent-dark); color: white;
+    }
+
+    /* ===== Hero ===== */
+    .hero {
+      padding: 140px 0 80px;
+      text-align: center;
+      background: linear-gradient(180deg, #faf6f0 0%, #f5ede4 100%);
+    }
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero .subtitle {
+      font-size: 20px;
+      color: var(--text-light);
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+    .hero .cta-buttons {
+      display: flex; gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .hero .cta-btn {
+      display: inline-block;
+      height: 52px; line-height: 52px;
+      padding: 0 36px;
+      border-radius: 26px;
+      font-size: 16px; font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .hero .cta-btn.primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 16px rgba(196,149,106,0.3);
+    }
+    .hero .cta-btn.primary:hover { background: var(--accent-dark); transform: translateY(-2px); }
+    .hero .cta-btn.outline {
+      background: transparent;
+      color: var(--accent-dark);
+      border: 2px solid var(--accent-light);
+    }
+    .hero .cta-btn.outline:hover { background: var(--accent-light); }
+
+    .hero .hero-img {
+      margin-top: 60px;
+      max-width: 800px;
+      width: 100%;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ===== 特色 ===== */
+    .features {
+      padding: 100px 0;
+    }
+    .features h2 {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 60px;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s;
+    }
+    .feature-card:hover { transform: translateY(-4px); }
+    .feature-card .icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+    .feature-card h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .feature-card p {
+      color: var(--text-light);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* ===== 纪念册流程 ===== */
+    .process {
+      padding: 100px 0;
+      background: var(--bg-warm);
+    }
+    .process h2 {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .process .desc {
+      text-align: center;
+      color: var(--text-light);
+      max-width: 500px;
+      margin: 0 auto 60px;
+      font-size: 16px;
+    }
+    .process-steps {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      counter-reset: step;
+    }
+    .step {
+      flex: 1;
+      min-width: 200px;
+      max-width: 280px;
+      text-align: center;
+      position: relative;
+    }
+    .step .num {
+      width: 48px; height: 48px; line-height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      font-size: 20px; font-weight: 700;
+      margin: 0 auto 16px;
+    }
+    .step h4 { font-size: 18px; margin-bottom: 8px; }
+    .step p { color: var(--text-light); font-size: 14px; line-height: 1.6; }
+
+    /* ===== 关于 ===== */
+    .about {
+      padding: 100px 0;
+    }
+    .about .content {
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .about h2 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+    .about p {
+      color: var(--text-light);
+      font-size: 16px;
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+
+    /* ===== 隐私 & 备案 ===== */
+    .privacy {
+      padding: 80px 0;
+      background: var(--bg-warm);
+      font-size: 14px;
+      color: var(--text-light);
+    }
+    .privacy .content {
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+      line-height: 2;
+    }
+    .privacy a { color: var(--accent-dark); text-decoration: none; }
+
+    /* ===== Footer ===== */
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 2;
+    }
+    footer .icp a { color: var(--text-muted); text-decoration: none; }
+    footer .icp a:hover { color: var(--accent); }
+    footer .beian {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    footer .beian img {
+      width: 16px; height: 16px;
+      vertical-align: middle;
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 32px; }
+      .hero .subtitle { font-size: 17px; padding: 0 16px; }
+      .container { padding: 0 16px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .process-steps { gap: 24px; }
+      nav .nav-links { gap: 16px; }
+      nav .nav-links a { font-size: 14px; }
+    }
+
+    @media (max-width: 480px) {
+      .hero { padding: 120px 0 60px; }
+      .hero h1 { font-size: 28px; }
+      .features { padding: 60px 0; }
+      .process { padding: 60px 0; }
+      .about { padding: 60px 0; }
+      .step { min-width: 150px; }
+      .features h2, .process h2, .about h2 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 导航 -->
+<nav>
+  <div class="container">
+    <a href="/" class="logo">Echoes<span>.</span></a>
+    <div class="nav-links">
+      <a href="#features">特色</a>
+      <a href="#process">如何制作</a>
+      <a href="#about">关于</a>
+      <a href="/app" class="btn-primary">开始记录</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <h1>往事<span>可追忆</span></h1>
+    <p class="subtitle">
+      用语音、文字或AI采访记录你的人生故事，<br>
+      自动生成时间轴，一键打印成实体纪念册。
+    </p>
+    <div class="cta-buttons">
+      <a href="/app" class="cta-btn primary">🎤 开始记录</a>
+      <a href="/memorial-book.html" class="cta-btn outline">📖 预览画册</a>
+    </div>
+  </div>
+</section>
+
+<!-- 特色 -->
+<section class="features" id="features">
+  <div class="container">
+    <h2>为什么选择 Echoes？</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">🎙️</div>
+        <h3>语音记录</h3>
+        <p>像发语音消息一样简单，按住说话就能记录一段回忆。支持语音转文字，方便后续查看和编辑。</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🤖</div>
+        <h3>AI采访</h3>
+        <p>不知道从何说起？让AI采访助手引导你聊天。像和老朋友谈心一样，自然而然地讲出你的故事。</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📅</div>
+        <h3>时间轴</h3>
+        <p>所有回忆按时间排列，一眼看到你的人生轨迹。童年、求学、工作、家庭……每一段都清晰可见。</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📖</div>
+        <h3>纪念画册</h3>
+        <p>将你的回忆整理成精美的电子画册，支持翻页预览和PDF导出。可打印成实体书送给家人。</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔒</div>
+        <h3>隐私保护</h3>
+        <p>你的故事只属于你。数据存储在本地，可随时删除。不收集任何个人敏感信息。</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">👴</div>
+        <h3>老人友好</h3>
+        <p>专为长者设计的超大按钮和简洁界面。无需注册、无需学习，打开就能用。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 流程 -->
+<section class="process" id="process">
+  <div class="container">
+    <h2>一本纪念册的诞生</h2>
+    <p class="desc">从第一段故事到一本完整的实体书，只需四步</p>
+    <div class="process-steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h4>记录故事</h4>
+        <p>通过录音、打字或AI采访，讲述你的人生经历。想起来什么就说什么，不用刻意编排。</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h4>自动整理</h4>
+        <p>系统自动按时间排序，提取关键词、生成标题。你的故事像翻开一本日记一样自然。</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h4>预览画册</h4>
+        <p>在线预览翻页书效果，调整排版和内容。满意后再决定是否打印，0成本预览。</p>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <h4>打印成册</h4>
+        <p>一键下单，将你的回忆打印成实体纪念册。送给自己、赠予子女，让记忆有温度地传递。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 关于 -->
+<section class="about" id="about">
+  <div class="container">
+    <div class="content">
+      <h2>关于 Echoes</h2>
+      <p>
+        Echoes（往事可追忆）是广州圆爱康生物科技有限公司旗下的人生档案记录平台。
+      </p>
+      <p>
+        我们相信每个人的人生都值得被记录。无论是长辈的口述历史，还是自己的成长轨迹，
+        Echoes 提供了一个温暖、简单的方式来保存这些珍贵的记忆，并让它们以实体书的形式代代相传。
+      </p>
+      <p>
+        <strong>广州圆爱康生物科技有限公司</strong><br>
+        专注于居家康复技术和人生档案服务，致力于用科技让生活更有温度。
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- 隐私 -->
+<section class="privacy">
+  <div class="container">
+    <div class="content">
+      <p>📋 Echoes 重视你的隐私。所有数据默认存储在本地浏览器中，不上传服务器。</p>
+      <p>如需帮助或反馈，请联系我们</p>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p class="icp">
+      © 2026 广州圆爱康生物科技有限公司 &nbsp;|&nbsp;
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">粤ICP备2026085792号</a>
+    </p>
+    <div class="beian">
+      <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=4401060200xxxx" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:4px;color:var(--text-muted);text-decoration:none;">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23bbb0a5'%3E%3Cpath d='M12 2L2 7v5c0 4.4 3.6 8.7 10 11 6.4-2.3 10-6.6 10-11V7l-10-5z'/%3E%3C/svg%3E" alt="">
+        <span>粤公网安备 4401060200xxxx号</span>
+      </a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
