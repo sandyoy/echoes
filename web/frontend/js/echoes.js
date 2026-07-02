@@ -259,3 +259,45 @@ function initLogin() {
 
   if (Store.isLogin()) $('loginBtn').textContent = '👤 已登录';
 }
+
+// ========== 纪念册 ==========
+function openMemorialBook(mode) {
+  // 获取当前存储的故事
+  const stories = Store.stories();
+  if (stories.length === 0) {
+    alert('还没有回忆记录，先去记录一些故事吧！');
+    return;
+  }
+
+  // 构建数据
+  const bookData = {
+    title: '往事可追忆',
+    subtitle: 'ECHOES · MEMORY ALBUM',
+    totalStories: stories.length,
+    pages: stories.map(s => ({
+      date: s.date || s.ts || '',
+      era: s.era || (s.tags && s.tags[0]) || '',
+      content: s.content || '',
+      type: s.type || 'text',
+    }))
+  };
+
+  // 编码后传参
+  const encoded = btoa(encodeURIComponent(JSON.stringify(bookData)));
+  const url = `/memorial-book.html?data=${encoded}${mode === 'print' ? '&print=1' : ''}`;
+  window.open(url, '_blank');
+}
+
+// 画册页面加载时显示统计
+document.addEventListener('DOMContentLoaded', () => {
+  // 延迟执行，等Store初始化完
+  setTimeout(() => {
+    const el = document.getElementById('albumStats');
+    if (el) {
+      const cnt = Store.stories().length;
+      el.textContent = cnt > 0
+        ? `已收录 ${cnt} 段回忆，点击下方按钮预览`
+        : '还没有回忆记录，去首页录制吧';
+    }
+  }, 100);
+});

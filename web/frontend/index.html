@@ -123,11 +123,27 @@
     </div>
     <div class="page__bd page__bd_spacing">
       <div class="weui-panel weui-panel_access">
-        <div class="weui-panel__hd">已完成的画册</div>
+        <div class="weui-panel__hd">纪念册预览</div>
+        <div class="weui-panel__bd" id="albumPreview">
+          <div class="weui-media-box weui-media-box_text">
+            <h4 class="weui-media-box__title">📖 往事可追忆 · 纪念册</h4>
+            <p class="weui-media-box__desc" id="albumStats">加载中...</p>
+          </div>
+        </div>
+      </div>
+      <button class="weui-btn weui-btn_primary" id="openBookBtn" style="margin-top:16px;" onclick="openMemorialBook()">
+        📖 预览纪念册
+      </button>
+      <button class="weui-btn weui-btn_default" id="printBookBtn" style="margin-top:8px;" onclick="openMemorialBook('print')">
+        🖨️ 导出PDF打印
+      </button>
+      <div class="weui-panel weui-panel_access" style="margin-top:24px;">
+        <div class="weui-panel__hd">关于实体纪念册</div>
         <div class="weui-panel__bd">
           <div class="weui-media-box weui-media-box_text">
-            <h4 class="weui-media-box__title">暂无画册</h4>
-            <p class="weui-media-box__desc">积累足够回忆后，可一键生成并下单打印</p>
+            <p class="weui-media-box__desc">📚 将你的回忆整理成实体画册，送给自己或家人。<br><br>
+            💰 暂未开放在线下单，即将上线<br>
+            💡 可先预览电子版或导出PDF自行打印</p>
           </div>
         </div>
       </div>

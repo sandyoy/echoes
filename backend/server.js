@@ -5,6 +5,9 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const https = require('https');
 
+// ---------- 纪念册模块 ----------
+const { generateBookData, encodeBookData } = require('./memorial-book');
+
 // ---------- 加载 .env 环境变量 ----------
 try {
   const envPath = path.join(__dirname, '.env');
@@ -555,6 +558,23 @@ app.post('/api/ai/asr', upload.single('audio'), (req, res) => {
     // 清理临时音频文件
     try { fs.unlinkSync(audioPath); } catch(e) {}
   }
+});
+
+// ==========================================
+// 纪念册导出
+// ==========================================
+
+// GET /api/memorial-book - 获取纪念册数据（翻页书用）
+app.get('/api/memorial-book', (req, res) => {
+  const bookData = generateBookData(stories);
+  res.json(bookData);
+});
+
+// GET /api/memorial-book/encoded - 获取编码后的数据（嵌入翻页书URL）
+app.get('/api/memorial-book/encoded', (req, res) => {
+  const bookData = generateBookData(stories);
+  const encoded = encodeBookData(bookData);
+  res.json({ url: `/memorial-book.html?data=${encoded}`, encoded });
 });
 
 // ==========================================
