@@ -1,0 +1,5 @@
+# 财务记账工具 — 依赖清单
+fastapi>=0.100.0
+uvicorn[standard]>=0.20.0
+openpyxl>=3.0.0
+python-multipart>=0.0.5

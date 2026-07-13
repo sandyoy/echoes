@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财务记账工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div id="loginPage" class="page">
+        <div class="login-card">
+            <div class="login-icon">💰</div>
+            <h1>财务记账工具</h1>
+            <p class="login-subtitle">导入账单 · 自动分类 · 一目了然</p>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="loginUsername" placeholder="请输入用户名" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="loginPassword" placeholder="请输入密码" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">登 录</button>
+                <p class="login-error" id="loginError"></p>
+            </form>
+            <p class="login-footer">默认管理员：admin / admin123</p>
+        </div>
+    </div>
+
+    <!-- 主页面 -->
+    <div id="mainPage" class="page" style="display:none">
+        <header>
+            <div class="header-left">
+                <h1>💰 财务记账工具</h1>
+                <span class="user-badge" id="userDisplay"></span>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-outline" onclick="showUpload()">📥 上传账单</button>
+                <button class="btn btn-outline" onclick="logout()">退出</button>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- 上传区域 -->
+            <div id="uploadSection" class="card" style="display:none">
+                <div class="card-header">
+                    <h2>📥 上传微信账单</h2>
+                    <button class="btn btn-sm btn-outline" onclick="hideUpload()">✕ 关闭</button>
+                </div>
+                <div class="upload-area" id="dropZone">
+                    <div class="upload-icon">📄</div>
+                    <p>将微信账单文件拖到这里，或点击选择文件</p>
+                    <p class="upload-hint">支持 .xlsx 格式（微信支付导出的账单）</p>
+                    <input type="file" id="fileInput" accept=".xlsx" style="display:none">
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">选择文件</button>
+                </div>
+                <div id="uploadProgress" class="upload-progress" style="display:none">
+                    <div class="spinner"></div>
+                    <span>正在解析账单，请稍候...</span>
+                </div>
+                <div id="uploadResult" class="upload-result" style="display:none"></div>
+            </div>
+
+            <!-- 概览卡片 -->
+            <div class="overview-cards" id="overviewCards">
+                <div class="card card-income">
+                    <div class="card-label">总收入</div>
+                    <div class="card-value" id="totalIncome">--</div>
+                    <div class="card-count" id="incomeCount"></div>
+                </div>
+                <div class="card card-expense">
+                    <div class="card-label">总支出</div>
+                    <div class="card-value" id="totalExpense">--</div>
+                    <div class="card-count" id="expenseCount"></div>
+                </div>
+                <div class="card card-net">
+                    <div class="card-label">净收支</div>
+                    <div class="card-value" id="netAmount">--</div>
+                </div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="charts-row">
+                <div class="card chart-card">
+                    <h3>📊 支出分类</h3>
+                    <p class="chart-hint">点击分类查看明细</p>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+                <div class="card chart-card">
+                    <h3>📈 月度趋势</h3>
+                    <p class="chart-hint">点击月份查看当月明细</p>
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 已上传账单列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📋 已上传账单</h2>
+                </div>
+                <div id="billList" class="bill-list">
+                    <p class="empty-hint">暂无账单，上传第一份账单开始记账吧</p>
+                </div>
+            </div>
+
+            <!-- 明细筛选与列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📝 交易明细</h2>
+                    <div class="filter-bar">
+                        <input type="text" id="filterKeyword" placeholder="🔍 搜索对方/商品/分类..." class="keyword-input" oninput="applyFilters()">
+                        <select id="filterCategory" onchange="applyFilters()">
+                            <option value="">全部分类</option>
+                        </select>
+                        <select id="filterMonth" onchange="applyFilters()">
+                            <option value="">全部月份</option>
+                        </select>
+                        <select id="filterIO" onchange="applyFilters()">
+                            <option value="">全部</option>
+                            <option value="支出">只看支出</option>
+                            <option value="收入">只看收入</option>
+                        </select>
+                        <input type="number" id="filterAmountMin" placeholder="最低金额" class="amount-input" onchange="applyFilters()">
+                        <span class="amount-sep">~</span>
+                        <input type="number" id="filterAmountMax" placeholder="最高金额" class="amount-input" onchange="applyFilters()">
+                        <button class="btn btn-sm btn-outline" onclick="clearFilters()">✕ 清空</button>
+                    </div>
+                </div>
+                <div class="tx-count" id="txCount"></div>
+                <div id="txList" class="tx-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
