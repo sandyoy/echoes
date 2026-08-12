@@ -1,0 +1,37 @@
+<!-- 故事详情页 -->
+<view class="page">
+  
+  <view class="story-header">
+    <view class="story-tags">
+      <text class="tag" wx:if="{{story.era}}">{{story.era}}</text>
+      <text class="tag">{{story.type === 'audio' ? '🎤 语音' : '📝 文字'}}</text>
+    </view>
+    <view class="story-date">{{story.date}}</view>
+  </view>
+
+  <view class="story-content">
+    <text>{{story.content}}</text>
+  </view>
+
+  <view class="story-audio" wx:if="{{story.type === 'audio' && story.audioPath}}">
+    <button class="play-btn" bindtap="playAudio">
+      <text>{{isPlaying ? '⏸' : '▶️'}}</text>
+      <text>{{isPlaying ? '暂停' : '播放录音'}}</text>
+    </button>
+  </view>
+
+  <view class="story-actions">
+    <button class="action-btn" bindtap="deleteStory">
+      <text>🗑️ 删除</text>
+    </button>
+  </view>
+
+  <!-- 相关回忆 -->
+  <view class="related-section" wx:if="{{relatedStories.length > 0}}">
+    <view class="section-title">📎 相关回忆</view>
+    <view wx:for="{{relatedStories}}" wx:key="id" class="related-card" bindtap="goStory" data-id="{{item.id}}">
+      <text class="related-content">{{item.content}}</text>
+    </view>
+  </view>
+
+</view>

@@ -1,0 +1,146 @@
+/* 全局样式 - 温暖复古 · 精致情感风 */
+page {
+  --bg-primary: #f5efe6;
+  --bg-grad-a: #f7f1e8;
+  --bg-grad-b: #efe4d3;
+  --bg-card: #ffffff;
+  --text-primary: #3a2c1c;
+  --text-secondary: #8c7a6b;
+  --text-muted: #b8ab9d;
+  --accent: #b98a55;
+  --accent-deep: #9a6a38;
+  --accent-light: #f3e7d6;
+  --border: #e8ddd0;
+  --shadow-soft: 0 4px 16px rgba(58,44,28,0.06);
+  --shadow-float: 0 8px 28px rgba(58,44,28,0.10);
+  --shadow: var(--shadow-soft); /* 兼容旧页面引用 */
+  --radius-lg: 32rpx;
+  --radius-md: 24rpx;
+
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+  background-color: var(--bg-primary);
+  background-image: linear-gradient(160deg, var(--bg-grad-a) 0%, var(--bg-grad-b) 100%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-size: 28rpx;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 卡片 */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 32rpx;
+  margin: 20rpx 30rpx;
+  box-shadow: var(--shadow-soft);
+  border: 1rpx solid rgba(255,255,255,0.8);
+}
+
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22rpx 44rpx;
+  border-radius: 50rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-soft);
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-deep) 100%);
+  color: #fff;
+}
+.btn-primary:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+.btn-ghost {
+  background: rgba(255,255,255,0.7);
+  color: var(--accent);
+  border: 2rpx solid var(--accent);
+  box-shadow: none;
+}
+
+/* 标题 */
+.page-title {
+  font-size: 38rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  padding: 40rpx 40rpx 16rpx;
+  letter-spacing: 1rpx;
+}
+.page-subtitle {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  padding: 0 40rpx 24rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 110rpx 40rpx;
+  color: var(--text-muted);
+}
+.empty-state .icon {
+  font-size: 108rpx;
+  margin-bottom: 28rpx;
+  opacity: 0.7;
+}
+.empty-state .text {
+  font-size: 28rpx;
+  text-align: center;
+  line-height: 1.8;
+}
+
+/* 加载 */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60rpx;
+  color: var(--text-muted);
+}
+
+/* 语音播放按钮通用 */
+.voice-play-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 14rpx;
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  background: rgba(185,138,85,0.10);
+  border: 1rpx solid rgba(185,138,85,0.25);
+}
+.play-btn {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 26rpx;
+}
+.play-btn.loading {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.play-label {
+  font-size: 24rpx;
+  color: var(--accent-deep);
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(185,138,85,0.35); }
+  50% { box-shadow: 0 0 0 16rpx rgba(185,138,85,0); }
+}
+.play-btn.playing {
+  animation: pulse-glow 1.5s infinite;
+}

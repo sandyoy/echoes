@@ -1,0 +1,133 @@
+<!-- 数学运算律 -->
+<view class="page">
+
+  <view class="hero-section">
+    <text class="hero-icon">🔢</text>
+    <text class="hero-title">四年级运算律</text>
+    <text class="hero-desc">用苏格拉底式对话，让运算律不再难</text>
+  </view>
+
+  <!-- 知识点卡片 -->
+  <view class="topic-section">
+
+    <!-- 交换律 -->
+    <view class="topic-card" bindtap="startTopic" data-topic="jiaohuan">
+      <view class="topic-icon-area jh-bg">
+        <text class="topic-icon">🔄</text>
+      </view>
+      <view class="topic-info">
+        <text class="topic-title">加法交换律</text>
+        <text class="topic-desc">a + b = b + a，两个数相加，交换位置和不变</text>
+        <text class="topic-example">23 + 45 = 45 + 23</text>
+      </view>
+      <text class="topic-arrow">›</text>
+    </view>
+
+    <!-- 乘法交换律 -->
+    <view class="topic-card" bindtap="startTopic" data-topic="chengfa-jiaohuan">
+      <view class="topic-icon-area cf-bg">
+        <text class="topic-icon">🔄✖️</text>
+      </view>
+      <view class="topic-info">
+        <text class="topic-title">乘法交换律</text>
+        <text class="topic-desc">a × b = b × a，交换位置，积不变</text>
+        <text class="topic-example">25 × 4 = 4 × 25</text>
+      </view>
+      <text class="topic-arrow">›</text>
+    </view>
+
+    <!-- 结合律 -->
+    <view class="topic-card" bindtap="startTopic" data-topic="jiehe">
+      <view class="topic-icon-area jh-bg">
+        <text class="topic-icon">🔗</text>
+      </view>
+      <view class="topic-info">
+        <text class="topic-title">加法结合律</text>
+        <text class="topic-desc">(a+b)+c = a+(b+c)，改变运算顺序，和不变</text>
+        <text class="topic-example">(2+3)+7 = 2+(3+7)</text>
+      </view>
+      <text class="topic-arrow">›</text>
+    </view>
+
+    <!-- 乘法结合律 -->
+    <view class="topic-card" bindtap="startTopic" data-topic="chengfa-jiehe">
+      <view class="topic-icon-area cf-bg">
+        <text class="topic-icon">🔗✖️</text>
+      </view>
+      <view class="topic-info">
+        <text class="topic-title">乘法结合律</text>
+        <text class="topic-desc">(a×b)×c = a×(b×c)，改变顺序，积不变</text>
+        <text class="topic-example">(25×4)×3 = 25×(4×3)</text>
+      </view>
+      <text class="topic-arrow">›</text>
+    </view>
+
+    <!-- 乘法分配律 -->
+    <view class="topic-card featured" bindtap="startTopic" data-topic="fenpei">
+      <view class="topic-icon-area fp-bg">
+        <text class="topic-icon">🌈</text>
+      </view>
+      <view class="topic-info">
+        <text class="topic-title">乘法分配律 ⭐</text>
+        <text class="topic-desc">(a+b)×c = a×c + b×c，最常考也最容易错</text>
+        <text class="topic-example">(10+2)×5 = 10×5 + 2×5</text>
+      </view>
+      <text class="topic-arrow">›</text>
+    </view>
+
+  </view>
+
+  <!-- 苏格拉底对话区 -->
+  <view class="socrates-section" wx:if="{{showDialog}}">
+    <view class="dialog-header">
+      <text class="dialog-title">🤖 苏格拉底学伴</text>
+      <text class="dialog-close" bindtap="closeDialog">✕</text>
+    </view>
+
+    <scroll-view class="dialog-body" scroll-y scroll-into-view="dialogBottom" scroll-with-animation>
+      <view wx:for="{{dialogMessages}}" wx:key="index" id="dialogBottom">
+        <!-- AI消息 -->
+        <view class="msg-row msg-ai" wx:if="{{item.role === 'ai'}}">
+          <view class="msg-icon ai-icon">🤖</view>
+          <view class="msg-text ai-text">{{item.content}}</view>
+        </view>
+        <!-- 用户消息 -->
+        <view class="msg-row msg-user" wx:else>
+          <view class="msg-text user-text">{{item.content}}</view>
+          <view class="msg-icon user-icon">👤</view>
+        </view>
+      </view>
+
+      <!-- 正在思考 -->
+      <view class="msg-row msg-ai" wx:if="{{aiThinking}}">
+        <view class="msg-icon ai-icon">🤖</view>
+        <view class="msg-text ai-text thinking-dots">
+          <text class="dot">.</text><text class="dot">.</text><text class="dot">.</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 快捷回答按钮 -->
+    <view class="quick-answers" wx:if="{{quickAnswers.length > 0 && !aiThinking}}">
+      <view wx:for="{{quickAnswers}}" wx:for-item="qa" wx:key="index" class="quick-btn" bindtap="sendQuickAnswer" data-answer="{{qa}}">
+        <text>{{qa}}</text>
+      </view>
+    </view>
+
+    <!-- 底部输入 -->
+    <view class="dialog-input-bar">
+      <input 
+        class="dialog-input"
+        placeholder="输入你的回答..."
+        bindinput="onDialogInput"
+        value="{{dialogInput}}"
+        confirm-type="send"
+        bindconfirm="sendDialogMessage"
+      />
+      <button class="dialog-send-btn" bindtap="sendDialogMessage" disabled="{{!dialogInput.trim() || aiThinking}}">
+        发送
+      </button>
+    </view>
+  </view>
+
+</view>

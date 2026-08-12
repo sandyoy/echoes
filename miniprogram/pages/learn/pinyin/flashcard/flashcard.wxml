@@ -1,0 +1,63 @@
+<!-- 闪卡页面 -->
+<view class="page">
+
+  <!-- 顶部进度 -->
+  <view class="progress-bar">
+    <view class="progress-fill" style="width: {{progressPercent}}%"></view>
+  </view>
+  <view class="progress-text">{{currentIndex + 1}} / {{totalCards}}</view>
+
+  <!-- 闪卡 -->
+  <view class="card-area">
+    <view class="flashcard {{flipped ? 'flipped' : ''}}" bindtap="flipCard">
+      <view class="card-inner">
+        <!-- 正面 - 拼音 -->
+        <view class="card-front">
+          <text class="card-pinyin">{{currentCard.pinyin}}</text>
+          <text class="card-hint" wx:if="{{!flipped}}">👆 点击翻转看读音</text>
+        </view>
+        <!-- 背面 - 读音+例字 -->
+        <view class="card-back">
+          <text class="card-pinyin">{{currentCard.pinyin}}</text>
+          <text class="card-read">{{currentCard.read}}</text>
+          <view class="card-examples">
+            <text wx:for="{{currentCard.examples}}" wx:key="*this" class="card-example-word">{{item}}</text>
+          </view>
+          <text class="card-memo" wx:if="{{currentCard.memo}}">💡 {{currentCard.memo}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 易混提示 -->
+  <view class="confuse-hint" wx:if="{{currentCard.confuseWith && flipped}}">
+    <text>⚠️ 容易与「{{currentCard.confuseWith}}」混淆</text>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-row" wx:if="{{flipped}}">
+    <button class="action-btn wrong-btn" bindtap="markWrong" data-type="wrong">
+      <text>❌ 不熟</text>
+    </button>
+    <button class="action-btn ok-btn" bindtap="markCorrect">
+      <text>✅ 认识</text>
+    </button>
+  </view>
+
+  <!-- 练习结果 -->
+  <view class="result-area" wx:if="{{sessionDone}}">
+    <view class="result-card">
+      <text class="result-title">🎉 本轮完成！</text>
+      <view class="result-stats">
+        <text class="result-stat">✅ 正确 {{correctCount}}</text>
+        <text class="result-stat">❌ 还需复习 {{wrongList.length}}</text>
+        <text class="result-stat">⏱ 用时 {{elapsedSeconds}}秒</text>
+      </view>
+      <view class="result-actions">
+        <button class="result-btn restart-btn" bindtap="restartSession">🔄 再来一轮</button>
+        <button class="result-btn review-btn" wx:if="{{wrongList.length > 0}}" bindtap="reviewWrong">📖 复习错题</button>
+      </view>
+    </view>
+  </view>
+
+</view>

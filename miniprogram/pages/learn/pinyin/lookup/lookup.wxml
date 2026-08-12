@@ -1,0 +1,54 @@
+<!-- 查拼音 -->
+<view class="page">
+
+  <view class="input-area">
+    <view class="search-box">
+      <input 
+        class="search-input"
+        placeholder="输入汉字，查拼音..."
+        maxlength="10"
+        bindinput="onInput"
+        value="{{queryText}}"
+        bindconfirm="doLookup"
+        confirm-type="search"
+      />
+      <button class="search-btn" bindtap="doLookup" disabled="{{!queryText.trim()}}">
+        <text>🔍</text>
+      </button>
+    </view>
+  </view>
+
+  <view class="result-area" wx:if="{{result}}">
+    <view class="result-card">
+      <view class="result-char">{{result.char}}</view>
+      <view class="result-pinyin">{{result.pinyin}}</view>
+      
+      <view class="result-detail">
+        <view class="detail-section">
+          <text class="section-title">拼读拆解</text>
+          <text class="section-content">{{result.analysis}}</text>
+        </view>
+        
+        <view class="detail-section" wx:if="{{result.similars.length > 0}}">
+          <text class="section-title">容易混淆的</text>
+          <view class="similar-tags">
+            <text wx:for="{{result.similars}}" wx:key="*this" class="similar-tag">
+              {{item}}
+            </text>
+          </view>
+        </view>
+
+        <view class="detail-section">
+          <text class="section-title">例句</text>
+          <text class="section-content">{{result.example}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="no-result" wx:elif="{{searched && !result}}">
+    <text>😅 没找到「{{queryText}}」的拼音</text>
+    <text class="no-result-tip">试试输入单个汉字</text>
+  </view>
+
+</view>

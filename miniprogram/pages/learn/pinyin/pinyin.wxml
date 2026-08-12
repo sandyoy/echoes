@@ -1,0 +1,83 @@
+<!-- 拼音首页 -->
+<view class="page">
+
+  <view class="hero-section">
+    <text class="hero-icon">🆎</text>
+    <text class="hero-title">拼音闪电卡</text>
+    <text class="hero-desc">每天10分钟，声母韵母整体认读快速过关</text>
+  </view>
+
+  <!-- 学习模式 -->
+  <view class="mode-section">
+    <view class="mode-card" bindtap="goFlashcard" data-type="shengmu">
+      <view class="mode-icon-area sm-bg">
+        <text class="mode-icon">🔊</text>
+      </view>
+      <view class="mode-info">
+        <text class="mode-title">声母闪卡</text>
+        <text class="mode-desc">23个声母快速认读</text>
+      </view>
+      <text class="mode-arrow">›</text>
+    </view>
+
+    <view class="mode-card" bindtap="goFlashcard" data-type="yunmu">
+      <view class="mode-icon-area ym-bg">
+        <text class="mode-icon">🎵</text>
+      </view>
+      <view class="mode-info">
+        <text class="mode-title">韵母闪卡</text>
+        <text class="mode-desc">24个韵母快速认读</text>
+      </view>
+      <text class="mode-arrow">›</text>
+    </view>
+
+    <view class="mode-card" bindtap="goFlashcard" data-type="zhengtiren">
+      <view class="mode-icon-area ztr-bg">
+        <text class="mode-icon">📖</text>
+      </view>
+      <view class="mode-info">
+        <text class="mode-title">整体认读音节</text>
+        <text class="mode-desc">16个整体认读闪卡</text>
+      </view>
+      <text class="mode-arrow">›</text>
+    </view>
+
+    <view class="mode-card" bindtap="goFlashcard" data-type="hunhe">
+      <view class="mode-icon-area hh-bg">
+        <text class="mode-icon">⚡</text>
+      </view>
+      <view class="mode-info">
+        <text class="mode-title">混合挑战</text>
+        <text class="mode-desc">随机易混组合大乱斗</text>
+      </view>
+      <text class="mode-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 查字功能 -->
+  <view class="lookup-section">
+    <view class="lookup-card" bindtap="goLookup">
+      <text class="lookup-icon">🔍</text>
+      <view class="lookup-info">
+        <text class="lookup-title">查拼音</text>
+        <text class="lookup-desc">输入汉字，查拼音和拼读拆解</text>
+      </view>
+      <text class="lookup-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 今日打卡 -->
+  <view class="checkin-section">
+    <view class="checkin-header">
+      <text class="checkin-title">📅 今日打卡</text>
+      <text class="checkin-count">已学 {{todayCount}}/10 分钟</text>
+    </view>
+    <view class="checkin-bar">
+      <view class="checkin-progress" style="width: {{progressPercent}}%"></view>
+    </view>
+    <button class="checkin-btn {{todayDone ? 'done' : ''}}" disabled="{{todayDone}}" bindtap="doCheckin">
+      <text>{{todayDone ? '✅ 今日已完成' : '⚡ 开始今天10分钟'}}</text>
+    </button>
+  </view>
+
+</view>
