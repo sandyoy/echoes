@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" font-family="'Microsoft YaHei','PingFang SC',sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#666"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="900" fill="#f7f8fa"/>
+
+  <!-- 标题 -->
+  <text x="600" y="50" text-anchor="middle" font-size="30" font-weight="bold" fill="#1a478a">居家健康 · 养老 · 康复服务大盘</text>
+  <text x="600" y="80" text-anchor="middle" font-size="16" fill="#555">圆爱康的定位：金字塔顶层的「专业医疗级居家治疗」</text>
+
+  <!-- 金字塔各层（纵向） -->
+  <!-- 顶层 · 治疗 -->
+  <g>
+    <rect x="250" y="130" width="700" height="135" rx="10" fill="#fff3e0" stroke="#e65100" stroke-width="2.5"/>
+    <text x="600" y="158" text-anchor="middle" font-size="18" font-weight="bold" fill="#e65100">⭐ 顶层 · 居家治疗 / 康复（真医疗 · 最稀缺 · 价值最高）</text>
+    <text x="600" y="183" text-anchor="middle" font-size="13" fill="#333">盆底康复 · 心肺康复 · 神经康复 · 骨科康复 · 运动 / 数字疗法</text>
+    <!-- 圆爱康高亮 -->
+    <rect x="320" y="195" width="560" height="58" rx="8" fill="#ffeb3b" stroke="#e65100" stroke-width="2" stroke-dasharray="6,4"/>
+    <text x="600" y="218" text-anchor="middle" font-size="15" font-weight="bold" fill="#c62828">🔵 圆爱康·在这里</text>
+    <text x="600" y="240" text-anchor="middle" font-size="12" fill="#5d4037">盆底 + 心脏 ｜ 家用治疗设备 + 物联网闭环 + 六师远程共管 ｜ 让患者在家完成专业治疗</text>
+    <text x="840" y="196" text-anchor="middle" font-size="10" fill="#c62828" font-weight="bold">竞品少·蓝海</text>
+  </g>
+
+  <!-- 双层区：医护上门/远程诊疗 -->
+  <g>
+    <rect x="250" y="285" width="700" height="100" rx="10" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+    <text x="600" y="310" text-anchor="middle" font-size="16" font-weight="bold" fill="#1565c0">第三层 · 医护上门 / 远程诊疗（半医疗 · 靠人力）</text>
+    <text x="600" y="335" text-anchor="middle" font-size="13" fill="#333">护士上门 · 上门采血检验 · 远程问诊 · 家庭医生巡诊</text>
+    <text x="600" y="362" text-anchor="middle" font-size="11" fill="#666">玩家：金牌护士 · 医护到家 · 微医 · 东软熙康 · 华大基因</text>
+  </g>
+
+  <!-- 监测层 -->
+  <g>
+    <rect x="250" y="405" width="700" height="100" rx="10" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2"/>
+    <text x="600" y="430" text-anchor="middle" font-size="16" font-weight="bold" fill="#2e7d32">第二层 · 居家监测 / 慢病管理（看数据 · 不做治疗）</text>
+    <text x="600" y="455" text-anchor="middle" font-size="13" fill="#333">家用血压/血糖/心电/CGM · 智能穿戴 · 慢病随访管理</text>
+    <text x="600" y="482" text-anchor="middle" font-size="11" fill="#666">玩家：鱼跃 · 三诺 · 微泰 · 华为健康 · 智云健康</text>
+  </g>
+
+  <!-- 营养/用药层 -->
+  <g>
+    <rect x="250" y="525" width="700" height="90" rx="10" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="2"/>
+    <text x="600" y="550" text-anchor="middle" font-size="16" font-weight="bold" fill="#6a1b9a">第二.五层 · 居家营养 / 用药管理（专业给养）</text>
+    <text x="600" y="575" text-anchor="middle" font-size="13" fill="#333">医学营养 · 肠内营养 · 送药 · 用药依从性管理</text>
+    <text x="600" y="597" text-anchor="middle" font-size="11" fill="#666">玩家：费森尤斯卡比 · 叮当快药 · 京东健康 · 圆心科技</text>
+  </g>
+
+  <!-- 生活照料层 -->
+  <g>
+    <rect x="250" y="640" width="700" height="95" rx="10" fill="#eceff1" stroke="#455a64" stroke-width="2"/>
+    <text x="600" y="665" text-anchor="middle" font-size="16" font-weight="bold" fill="#455a64">底层 · 生活照料（非医疗 · 量大 · 门槛低）</text>
+    <text x="600" y="690" text-anchor="middle" font-size="13" fill="#333">助餐 · 助浴 · 助洁 · 助行 · 家政 · 日间照料 · 精神慰藉</text>
+    <text x="600" y="715" text-anchor="middle" font-size="11" fill="#666">玩家：福寿康 · 安康通 · 天与养老 · 普亲养老（人海战术 · 利润薄）</text>
+  </g>
+
+  <!-- 左侧递进标尺 -->
+  <line x1="160" y1="180" x2="160" y2="700" stroke="#888" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="150" y="200" text-anchor="end" font-size="12" fill="#888" transform="rotate(-90 150 560)" >医疗含量 / 门槛 / 价值</text>
+
+  <!-- 底部结论 -->
+  <rect x="200" y="770" width="800" height="95" rx="10" fill="#fdecea" stroke="#c62828" stroke-width="2"/>
+  <text x="600" y="795" text-anchor="middle" font-size="15" font-weight="bold" fill="#c62828">一句话定位</text>
+  <text x="600" y="820" text-anchor="middle" font-size="13" fill="#333">“市面上居家健康公司，大多在‘看数据、送服务’；</text>
+  <text x="600" y="842" text-anchor="middle" font-size="13" fill="#333">圆爱康是少数‘在家把病治了’的——医疗级设备 + 物联网闭环 + 六师远程共管，</text>
+  <text x="600" y="862" text-anchor="middle" font-size="13" fill="#333">这是整个大盘里最有医疗门槛、也最稀缺的那一格。”</text>
+</svg>
