@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300" width="200" height="300">
+  <rect width="200" height="300" fill="#f5ede4"/>
+  <text x="100" y="120" text-anchor="middle" font-size="60">📸</text>
+  <text x="100" y="180" text-anchor="middle" font-size="16" fill="#a09080" font-family="sans-serif">点击添加照片</text>
+</svg>

@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>纪念册预览 | Echoes 往事可追忆</title>
+  <!-- 字体 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- html2canvas + jsPDF (CDN) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --paper: #faf6f0;
+      --paper-dark: #f0e8dc;
+      --ink: #3d2e1e;
+      --ink-light: #8c7a6b;
+      --gold: #c4956a;
+      --gold-light: #f0e4d6;
+      --accent: #a07850;
+      --cream: #fffcf5;
+      --shadow: 0 4px 24px rgba(0,0,0,0.08);
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif;
+      background: #f0ece4;
+      color: var(--ink);
+      min-height: 100vh;
+      padding-bottom: 100px;
+    }
+
+    /* ===== 顶部工具栏 ===== */
+    .toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--gold-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      padding-top: max(12px, env(safe-area-inset-top));
+    }
+    .toolbar h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .toolbar-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .toolbar-btn {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 18px;
+      border: 1px solid var(--gold-light);
+      background: white;
+      color: var(--ink);
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      touch-action: manipulation;
+    }
+    .toolbar-btn:active { transform: scale(0.95); }
+    .toolbar-btn.primary {
+      background: var(--gold);
+      color: white;
+      border-color: var(--gold);
+    }
+    .toolbar-btn.primary:active { background: var(--accent); }
+
+    /* ===== 书籍容器 ===== */
+    .book-container {
+      max-width: 700px;
+      margin: 80px auto 40px;
+      padding: 0 16px;
+      perspective: 2000px;
+    }
+
+    /* ===== 翻页书 ===== */
+    .book {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* 页面 */
+    .flip-page {
+      display: none;
+      background: var(--cream);
+      border-radius: 4px;
+      box-shadow: var(--shadow);
+      min-height: 500px;
+      padding: 40px 36px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.3s ease;
+    }
+    .flip-page.active {
+      display: flex;
+      flex-direction: column;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* 封面页 */
+    .cover-page {
+      background: linear-gradient(135deg, #faf6f0 0%, #f0e4d6 50%, #e8d5b7 100%);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 600px;
+      padding: 60px 40px;
+    }
+    .cover-page .cover-title {
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 12px;
+      letter-spacing: 4px;
+    }
+    .cover-page .cover-subtitle {
+      font-size: 18px;
+      color: var(--ink-light);
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+    .cover-page .cover-divider {
+      width: 80px;
+      height: 2px;
+      background: var(--gold);
+      margin: 24px auto;
+    }
+    .cover-page .cover-author {
+      font-size: 16px;
+      color: var(--ink-light);
+    }
+    .cover-page .cover-date {
+      font-size: 14px;
+      color: var(--ink-light);
+      margin-top: 8px;
+    }
+
+    /* 内容页 */
+    .content-page {
+      justify-content: flex-start;
+    }
+    .content-page .page-number {
+      position: absolute;
+      bottom: 20px;
+      right: 30px;
+      font-size: 13px;
+      color: var(--ink-light);
+      font-family: sans-serif;
+    }
+    .content-page .story-date {
+      font-size: 14px;
+      color: var(--gold);
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+    .content-page .story-era {
+      display: inline-block;
+      background: var(--gold-light);
+      color: var(--accent);
+      padding: 2px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      margin-bottom: 16px;
+      font-family: sans-serif;
+    }
+    .content-page .story-content {
+      font-size: 16px;
+      line-height: 2;
+      color: var(--ink);
+      text-indent: 2em;
+    }
+    .content-page .story-content p {
+      margin-bottom: 12px;
+    }
+    .content-page .story-photo {
+      width: 100%;
+      max-height: 240px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin: 12px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    /* 尾页 */
+    .end-page {
+      background: linear-gradient(135deg, #e8d5b7 0%, #f0e4d6 50%, #faf6f0 100%);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      min-height: 500px;
+    }
+    .end-page .end-icon { font-size: 48px; margin-bottom: 16px; }
+    .end-page .end-text { font-size: 18px; color: var(--ink-light); letter-spacing: 2px; }
+
+    /* ===== 页面导航 ===== */
+    .page-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      margin-top: 12px;
+    }
+    .nav-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--gold-light);
+      background: white;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      touch-action: manipulation;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--ink);
+    }
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .nav-btn:not(:disabled):active {
+      transform: scale(0.9);
+      background: var(--gold-light);
+    }
+    .page-indicator {
+      font-size: 14px;
+      color: var(--ink-light);
+      font-family: sans-serif;
+    }
+
+    /* ===== 打印样式 ===== */
+    @media print {
+      .toolbar, .page-nav { display: none !important; }
+      .book-container { margin-top: 0; }
+      .flip-page { 
+        display: flex !important;
+        page-break-after: always;
+        box-shadow: none;
+        border: none;
+        border-radius: 0;
+        min-height: 100vh;
+        animation: none;
+      }
+      body { background: white; padding-bottom: 0; }
+      .flip-page:not(.active) { display: flex !important; }
+    }
+
+    /* ===== 加载状态 ===== */
+    .loading {
+      text-align: center;
+      padding: 100px 20px;
+      color: var(--ink-light);
+    }
+    .loading .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--gold-light);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== 空状态 ===== */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--ink-light);
+    }
+    .empty-state .empty-icon { font-size: 64px; margin-bottom: 16px; }
+    .empty-state h2 { font-size: 20px; margin-bottom: 8px; color: var(--ink); }
+    .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* ===== 导出进度 ===== */
+    .export-progress {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .export-progress.active { display: flex; }
+    .export-progress .box {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+    }
+    .export-progress .box .spinner {
+      margin: 0 auto 16px;
+    }
+    .export-progress .box p {
+      font-size: 15px;
+      color: var(--ink-light);
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 480px) {
+      .flip-page { padding: 28px 20px; min-height: 400px; }
+      .cover-page { min-height: 450px; padding: 40px 24px; }
+      .cover-page .cover-title { font-size: 28px; }
+      .content-page .story-content { font-size: 15px; }
+      .book-container { margin-top: 70px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 导出进度 -->
+<div class="export-progress" id="exportProgress">
+  <div class="box">
+    <div class="spinner"></div>
+    <p id="exportStatus">正在生成纪念册...</p>
+  </div>
+</div>
+
+<!-- 工具栏 -->
+<div class="toolbar">
+  <h1>📖 纪念册预览</h1>
+  <div class="toolbar-actions">
+    <button class="toolbar-btn" onclick="history.back()">← 返回</button>
+    <button class="toolbar-btn primary" onclick="exportPDF()">📥 导出PDF</button>
+  </div>
+</div>
+
+<div class="book-container">
+  <div class="book" id="book">
+    <!-- 由JS动态渲染 -->
+  </div>
+  <!-- 导航 -->
+  <div class="page-nav" id="pageNav" style="display:none;">
+    <button class="nav-btn" id="prevBtn" onclick="prevPage()">‹</button>
+    <span class="page-indicator" id="pageIndicator">1 / 1</span>
+    <button class="nav-btn" id="nextBtn" onclick="nextPage()">›</button>
+  </div>
+</div>
+
+<script>
+// ==========================================
+//  纪念册数据 + 翻页逻辑
+// ==========================================
+
+let stories = [];
+let currentPage = 0;
+let totalPages = 0;
+
+// 通过 URL 参数加载数据（stories JSON）
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const dataParam = params.get('data');
+  if (dataParam) {
+    try {
+      const decoded = decodeURIComponent(atob(dataParam));
+      stories = JSON.parse(decoded);
+      if (!Array.isArray(stories)) stories = [];
+    } catch(e) {
+      console.warn('URL参数解析失败，尝试从localStorage加载', e);
+      loadFromStorage();
+    }
+  } else {
+    loadFromStorage();
+  }
+  if (stories.length === 0) {
+    renderEmpty();
+  } else {
+    renderBook();
+  }
+}
+
+// 从 localStorage 加载（Web版本直接使用）
+function loadFromStorage() {
+  const prefix = 'echoes_';
+  try {
+    const raw = localStorage.getItem(prefix + 'stories');
+    if (raw) {
+      stories = JSON.parse(raw);
+    } else {
+      // 也尝试直接 e_st 前缀
+      const raw2 = localStorage.getItem('e_st');
+      if (raw2) {
+        const parsed = JSON.parse(raw2);
+        // 如果是数组就当作 stories
+        const allStories = [];
+        parsed.forEach(item => {
+          if (item.content) allStories.push(item);
+        });
+        stories = allStories;
+      }
+    }
+  } catch(e) {
+    console.warn('localStorage读取失败', e);
+    stories = [];
+  }
+  // 按时间排序
+  stories.sort((a, b) => (a.date || a.ts || '').localeCompare(b.date || b.ts || ''));
+}
+
+// 渲染空状态
+function renderEmpty() {
+  const book = document.getElementById('book');
+  book.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">📕</div>
+      <h2>还没有回忆记录</h2>
+      <p>记录你的故事后，<br>就能在这里生成纪念册了。</p>
+      <button class="toolbar-btn primary" onclick="window.location.href='/'">去记录</button>
+    </div>
+  `;
+}
+
+// 渲染翻页书
+function renderBook() {
+  const book = document.getElementById('book');
+  let html = '';
+
+  // 封面
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月`;
+  html += `
+    <div class="flip-page cover-page active" data-page="0">
+      <div class="cover-title">往事可追忆</div>
+      <div class="cover-subtitle">ECHOES · MEMORY ALBUM</div>
+      <div class="cover-divider"></div>
+      <div class="cover-author">收录 ${stories.length} 段回忆</div>
+      <div class="cover-date">${dateStr}</div>
+    </div>
+  `;
+
+  // 故事页
+  stories.forEach((story, idx) => {
+    const pageIdx = idx + 1;
+    const content = story.content || '';
+    const date = story.date || story.ts || '';
+    const era = story.era || story.tags?.[0] || '';
+    
+    // 格式化日期
+    let displayDate = date;
+    if (date && date.length >= 7) {
+      displayDate = date.substring(0, 7).replace('-', '年') + '月';
+    }
+
+    // 处理内容——段落化
+    let paragraphs = content.split('\n').filter(p => p.trim());
+    if (paragraphs.length === 0) paragraphs = [content];
+
+    html += `
+      <div class="flip-page content-page" data-page="${pageIdx}">
+        <div class="story-date">${displayDate}</div>
+        ${era ? `<span class="story-era"># ${era}</span>` : ''}
+        ${paragraphs.map(p => `<p class="story-content">${escapeHtml(p)}</p>`).join('')}
+        <div class="page-number">${pageIdx + 1}</div>
+      </div>
+    `;
+  });
+
+  // 尾页
+  const lastPage = stories.length + 2;
+  html += `
+    <div class="flip-page end-page" data-page="${stories.length + 1}">
+      <div class="end-icon">🌟</div>
+      <div class="end-text">— 未完待续 —</div>
+      <div style="margin-top:16px;color:var(--ink-light);font-size:14px;">
+        每一段回忆，都是人生中闪亮的一页
+      </div>
+    </div>
+  `;
+
+  book.innerHTML = html;
+  totalPages = stories.length + 2; // 封面 + 故事页 + 尾页
+  
+  // 初始化导航
+  currentPage = 0;
+  updateNav();
+  document.getElementById('pageNav').style.display = 'flex';
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ========== 翻页导航 ==========
+function showPage(index) {
+  const pages = document.querySelectorAll('.flip-page');
+  pages.forEach((p, i) => p.classList.toggle('active', i === index));
+  currentPage = index;
+  updateNav();
+}
+
+function nextPage() {
+  if (currentPage < totalPages - 1) {
+    showPage(currentPage + 1);
+  }
+}
+
+function prevPage() {
+  if (currentPage > 0) {
+    showPage(currentPage - 1);
+  }
+}
+
+function updateNav() {
+  document.getElementById('prevBtn').disabled = currentPage === 0;
+  document.getElementById('nextBtn').disabled = currentPage >= totalPages - 1;
+  document.getElementById('pageIndicator').textContent = `${currentPage + 1} / ${totalPages}`;
+}
+
+// 键盘导航
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') nextPage();
+  if (e.key === 'ArrowLeft') prevPage();
+});
+
+// 触摸滑动
+let touchStartX = 0;
+document.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+});
+document.addEventListener('touchend', (e) => {
+  const diff = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(diff) > 60) {
+    if (diff > 0) prevPage();
+    else nextPage();
+  }
+});
+
+// ========== 导出PDF ==========
+async function exportPDF() {
+  const progress = document.getElementById('exportProgress');
+  const status = document.getElementById('exportStatus');
+  progress.classList.add('active');
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const pages = document.querySelectorAll('.flip-page');
+    
+    for (let i = 0; i < pages.length; i++) {
+      // 临时显示当前页用于截图
+      pages.forEach((p, idx) => p.classList.toggle('active', idx === i));
+      
+      status.textContent = `正在生成第 ${i + 1}/${pages.length} 页...`;
+      await sleep(100); // 等渲染
+
+      const canvas = await html2canvas(pages[i], {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const imgWidth = pageWidth - 10; // 5mm margin each side
+      const imgHeight = (canvas.height / canvas.width) * imgWidth;
+
+      if (i > 0) pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 5, 5, imgWidth, imgHeight);
+    }
+
+    // 恢复当前页显示
+    showPage(currentPage);
+
+    // 下载PDF
+    const filename = `往事可追忆_纪念册_${new Date().toISOString().split('T')[0]}.pdf`;
+    pdf.save(filename);
+    
+    status.textContent = '✅ 导出完成！';
+    await sleep(800);
+
+  } catch (err) {
+    console.error('PDF导出失败:', err);
+    status.textContent = '❌ 导出失败，请重试';
+    await sleep(2000);
+  } finally {
+    progress.classList.remove('active');
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ========== 启动 ==========
+loadFromURL();
+
+// 接收来自父窗口的postMessage数据（用于嵌入在index.html中）
+window.addEventListener('message', (e) => {
+  if (e.data?.type === 'echoes-book-data' && Array.isArray(e.data.stories)) {
+    stories = e.data.stories;
+    if (stories.length === 0) renderEmpty();
+    else renderBook();
+  }
+});
+</script>
+</body>
+</html>

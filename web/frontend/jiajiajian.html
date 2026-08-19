@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>家家健 · 社区健康驿站</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: #f8f6f0;
+      min-height: 100vh;
+      color: #2c1810;
+    }
+
+    /* 顶部横幅 */
+    .banner {
+      background: linear-gradient(135deg, #4a9e6b, #2d8659);
+      padding: 40px 20px 30px;
+      text-align: center;
+      color: white;
+    }
+    .banner .icon { font-size: 48px; margin-bottom: 8px; }
+    .banner h1 {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .banner p {
+      font-size: 14px;
+      opacity: 0.85;
+      line-height: 1.6;
+    }
+
+    /* 主体 */
+    .container { padding: 20px 16px; max-width: 500px; margin: 0 auto; }
+
+    /* 双入口卡片 */
+    .entry-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .entry-card:active { transform: scale(0.98); }
+    .entry-card .card-icon {
+      width: 56px; height: 56px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .entry-card .card-icon.green { background: #e8f5e9; }
+    .entry-card .card-icon.blue { background: #e3f2fd; }
+    .entry-card .card-icon.orange { background: #fff3e0; }
+    .entry-card .card-icon.purple { background: #f3e5f5; }
+
+    .entry-card .card-text { flex: 1; }
+    .entry-card .card-text h3 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+    .entry-card .card-text p { font-size: 13px; color: #8a7a6e; line-height: 1.5; }
+    .entry-card .arrow { font-size: 18px; color: #c8b8a8; }
+
+    /* 近期活动 */
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section-title .more { font-size: 13px; color: #4a9e6b; }
+
+    .activity-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+      display: flex;
+      gap: 12px;
+    }
+    .activity-card .date-box {
+      width: 48px; height: 48px;
+      background: #e8f5e9;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .activity-card .date-box .day { font-size: 18px; font-weight: 700; color: #2d8659; }
+    .activity-card .date-box .month { font-size: 11px; color: #4a9e6b; }
+    .activity-card .info { flex: 1; }
+    .activity-card .info h4 { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+    .activity-card .info p { font-size: 12px; color: #8a7a6e; }
+    .activity-card .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-top: 6px;
+    }
+    .tag.free { background: #e8f5e9; color: #2d8659; }
+    .tag.limited { background: #fff3e0; color: #e65100; }
+
+    /* 底部 */
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      font-size: 12px;
+      color: #b8a898;
+      line-height: 1.8;
+    }
+    .footer .org-name { font-weight: 600; color: #8a7a6e; }
+
+    /* 授权弹窗 */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-content {
+      background: white;
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px 30px;
+      max-width: 500px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-content h3 { font-size: 18px; margin-bottom: 12px; }
+    .modal-content p { font-size: 14px; color: #6b5a4e; line-height: 1.7; margin-bottom: 12px; }
+    .modal-content .btn-group { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-content .btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .modal-content .btn.primary { background: #4a9e6b; color: white; }
+    .modal-content .btn.secondary { background: #f0ede8; color: #6b5a4e; }
+
+    /* 服务页（健康服务入口点进去后） */
+    .service-page { display: none; }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #4a9e6b;
+      font-size: 14px;
+      cursor: pointer;
+      padding: 10px 0;
+    }
+    .service-item {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .service-item .s-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .service-item .s-info { flex: 1; }
+    .service-item .s-info h4 { font-size: 15px; font-weight: 600; }
+    .service-item .s-info p { font-size: 12px; color: #8a7a6e; }
+    .service-item .s-tag {
+      font-size: 12px;
+      color: #4a9e6b;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 首页 -->
+  <div id="homePage">
+    <div class="banner">
+      <div class="icon">🏡</div>
+      <h1>家家健 · 社区健康驿站</h1>
+      <p>公益健康服务 · 专业康复指导<br>让每个家庭都有一位健康管家</p>
+    </div>
+
+    <div class="container">
+      <!-- 双入口 -->
+      <div class="entry-card" onclick="showService('public')">
+        <div class="card-icon green">📢</div>
+        <div class="card-text">
+          <h3>公益活动</h3>
+          <p>免费健康讲座、义诊、评估活动</p>
+        </div>
+        <div class="arrow">›</div>
+      </div>
+
+      <div class="entry-card" onclick="showService('health')">
+        <div class="card-icon blue">🏥</div>
+        <div class="card-text">
+          <h3>健康服务</h3>
+          <p>体态评估、专注力测评、健康咨询</p>
+        </div>
+        <div class="arrow">›</div>
+      </div>
+
+      <!-- 近期活动 -->
+      <div class="section-title">
+        <span>📅 近期活动</span>
+        <span class="more">查看全部 ›</span>
+      </div>
+
+      <div class="activity-card">
+        <div class="date-box">
+          <span class="day">26</span>
+          <span class="month">5月</span>
+        </div>
+        <div class="info">
+          <h4>🌿 免费体态评估日</h4>
+          <p>荔湾社区食堂 · 下午2:00-5:00</p>
+          <span class="tag free">免费</span>
+          <span class="tag limited">限30人</span>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="date-box">
+          <span class="day">28</span>
+          <span class="month">5月</span>
+        </div>
+        <div class="info">
+          <h4>🧒 儿童专注力趣味测评</h4>
+          <p>越秀社区党群中心 · 下午4:00-6:00</p>
+          <span class="tag free">免费</span>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="date-box">
+          <span class="day">30</span>
+          <span class="month">5月</span>
+        </div>
+        <div class="info">
+          <h4>❤️ 心脏健康公益讲座</h4>
+          <p>特邀三甲医院心内科主任主讲</p>
+          <span class="tag free">免费</span>
+        </div>
+      </div>
+
+      <!-- 数据与隐私说明 -->
+      <div style="margin-top:20px;padding:14px;background:#f0ede8;border-radius:10px;font-size:12px;color:#8a7a6e;line-height:1.7;">
+        🔒 家家健健康管理研究中心承诺：您的健康数据仅用于公益健康管理服务，未经您授权不会提供给任何第三方。
+      </div>
+
+      <div class="footer">
+        <div class="org-name">家家健健康管理研究中心</div>
+        <div>粤民非证字第XXXX号</div>
+        <div style="margin-top:8px;">合作机构：XX医疗科技有限公司</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 授权弹窗 ========== -->
+  <div class="modal-overlay" id="authModal">
+    <div class="modal-content">
+      <h3>📋 健康数据使用授权</h3>
+      <p>为了更好地为您提供健康管理服务，家家健健康管理研究中心需要您确认以下事项：</p>
+      <p>✅ 我同意将本次评估产生的健康数据（包括体态评估报告、心理测评结果等）<strong>由家家健健康管理研究中心</strong>用于：</p>
+      <p style="padding-left:16px;">
+        1. 生成个人健康档案<br>
+        2. 推送个性化的健康科普内容<br>
+        3. 推荐适合的健康管理服务
+      </p>
+      <p>📌 <strong>数据归属说明：</strong><br>
+        您的数据将存储在家家健健康管理研究中心的服务器中。<br>
+        如需第三方（如合作医疗机构）提供服务，将单独获得您的授权。
+      </p>
+      <p style="font-size:12px;color:#b8a898;">您可以随时撤回授权，详情查看《隐私政策》</p>
+      <div class="btn-group">
+        <button class="btn secondary" onclick="closeAuth()">暂不授权</button>
+        <button class="btn primary" onclick="confirmAuth()">✅ 同意并继续</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 公益活动页 ========== -->
+  <div id="publicPage" style="display:none;">
+    <div style="background:#f8f6f0;min-height:100vh;">
+      <div class="banner" style="background: linear-gradient(135deg, #4a9e6b, #2d8659);padding:20px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span onclick="backHome()" style="font-size:24px;cursor:pointer;">‹</span>
+          <h1 style="font-size:18px;">公益活动</h1>
+        </div>
+        <p style="font-size:13px;margin-top:4px;">家家健 · 让健康走进每个社区</p>
+      </div>
+      <div class="container">
+        <div class="activity-card">
+          <div class="date-box"><span class="day">26</span><span class="month">5月</span></div>
+          <div class="info">
+            <h4>🌿 免费体态评估日</h4>
+            <p>荔湾社区食堂 · 下午2:00-5:00<br>三甲医院康复师驻场</p>
+            <span class="tag free">免费</span>
+            <button style="margin-top:8px;padding:6px 16px;background:#4a9e6b;color:white;border:none;border-radius:8px;font-size:13px;">我要报名</button>
+          </div>
+        </div>
+        <div class="activity-card">
+          <div class="date-box"><span class="day">28</span><span class="month">5月</span></div>
+          <div class="info">
+            <h4>🧒 儿童专注力趣味测评</h4>
+            <p>越秀社区党群中心 · 下午4:00-6:00<br>专业心理老师指导</p>
+            <span class="tag free">免费</span>
+            <button style="margin-top:8px;padding:6px 16px;background:#4a9e6b;color:white;border:none;border-radius:8px;font-size:13px;">我要报名</button>
+          </div>
+        </div>
+        <div style="margin-top:20px;padding:16px;background:white;border-radius:12px;">
+          <h4 style="margin-bottom:8px;">🙋 成为志愿者</h4>
+          <p style="font-size:13px;color:#6b5a4e;">家家健长期招募社区健康志愿者，欢迎加入！</p>
+          <button style="margin-top:8px;padding:8px 20px;background:#4a9e6b;color:white;border:none;border-radius:8px;font-size:14px;">申请志愿者</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 健康服务页 ========== -->
+  <div id="healthPage" style="display:none;">
+    <div style="background:#f8f6f0;min-height:100vh;">
+      <div class="banner" style="background: linear-gradient(135deg, #3b82b0, #25638a);padding:20px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span onclick="backHome()" style="font-size:24px;cursor:pointer;">‹</span>
+          <h1 style="font-size:18px;">健康服务</h1>
+        </div>
+        <p style="font-size:13px;margin-top:4px;">选择您需要的健康服务</p>
+      </div>
+      <div class="container">
+        <div class="service-item" onclick="showAuth()">
+          <div class="s-icon" style="background:#e8f5e9;">🦴</div>
+          <div class="s-info">
+            <h4>体态评估</h4>
+            <p>AI体态分析 · 10分钟出报告</p>
+          </div>
+          <span class="s-tag">免费 ›</span>
+        </div>
+        <div class="service-item" onclick="showAuth()">
+          <div class="s-icon" style="background:#e3f2fd;">🧠</div>
+          <div class="s-info">
+            <h4>专注力测评</h4>
+            <p>儿童注意力评估 · 趣味游戏式</p>
+          </div>
+          <span class="s-tag">免费 ›</span>
+        </div>
+        <div class="service-item" onclick="showAuth()">
+          <div class="s-icon" style="background:#fff3e0;">❤️</div>
+          <div class="s-info">
+            <h4>血压血糖检测</h4>
+            <p>免费测量 · 建立健康档案</p>
+          </div>
+          <span class="s-tag">免费 ›</span>
+        </div>
+        <div class="service-item" onclick="showAuth()">
+          <div class="s-icon" style="background:#f3e5f5;">💬</div>
+          <div class="s-info">
+            <h4>健康咨询</h4>
+            <p>三甲医院合作 · 专业指导</p>
+          </div>
+          <span class="s-tag">免费 ›</span>
+        </div>
+
+        <div style="margin-top:24px;padding:16px;background:white;border-radius:12px;border:1px solid #e0d8cc;">
+          <h4 style="font-size:14px;color:#6b5a4e;">💼 合作机构服务</h4>
+          <p style="font-size:12px;color:#8a7a6e;margin:8px 0;">以下服务由家家健的合作机构提供，将有专人与您联系</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span style="padding:4px 10px;background:#f0ede8;border-radius:6px;font-size:12px;">居家康复训练</span>
+            <span style="padding:4px 10px;background:#f0ede8;border-radius:6px;font-size:12px;">术后管理</span>
+            <span style="padding:4px 10px;background:#f0ede8;border-radius:6px;font-size:12px;">儿童专注力训练</span>
+            <span style="padding:4px 10px;background:#f0ede8;border-radius:6px;font-size:12px;">盆底康复</span>
+          </div>
+          <button style="margin-top:10px;padding:8px 20px;background:#3b82b0;color:white;border:none;border-radius:8px;font-size:14px;width:100%;">了解详情</button>
+        </div>
+
+        <div style="margin-top:16px;padding:12px;background:#fff8e1;border-radius:10px;font-size:12px;color:#8a7a6e;border:1px solid #ffe0b2;">
+          ℹ️ 家家健为公益非营利组织，所有健康评估服务均免费。如需进阶康复服务，将由合作机构提供（需另行授权）。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showService(type) {
+      if (type === 'public') {
+        document.getElementById('publicPage').style.display = 'block';
+        document.getElementById('homePage').style.display = 'none';
+      } else {
+        document.getElementById('healthPage').style.display = 'block';
+        document.getElementById('homePage').style.display = 'none';
+      }
+    }
+    function backHome() {
+      document.getElementById('publicPage').style.display = 'none';
+      document.getElementById('healthPage').style.display = 'none';
+      document.getElementById('homePage').style.display = 'block';
+    }
+    function showAuth() {
+      document.getElementById('authModal').classList.add('active');
+    }
+    function closeAuth() {
+      document.getElementById('authModal').classList.remove('active');
+    }
+    function confirmAuth() {
+      document.getElementById('authModal').classList.remove('active');
+      alert('✅ 授权成功！您的健康档案已生成。\n\n后续我们将通过公众号为您推送个性化的健康内容和活动通知。');
+    }
+  </script>
+</body>
+</html>
