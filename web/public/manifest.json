@@ -1,0 +1,18 @@
+{
+  "name": "Echoes · 往事可追忆",
+  "short_name": "Echoes",
+  "description": "把零散的回忆，串成一生最美的故事",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf6f0",
+  "theme_color": "#c4956a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/images/echoes-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

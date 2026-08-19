@@ -1,0 +1,10 @@
+# 往日可追忆 后端服务
+fastapi>=0.104.0
+uvicorn[standard]
+python-multipart
+sqlalchemy>=2.0
+pydantic>=2.0
+openai>=1.0
+python-dotenv
+alembic
+# wkhtmltopdf (系统安装)
