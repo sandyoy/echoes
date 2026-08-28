@@ -98,3 +98,8 @@
     98|[2026-08-27 20:00:11] ✅ 自动同步结束
     99|
 [2026-08-27 23:08] daily-nudge c36: Echoes inner-test day8 nightcheck, no preview code from lbx (rev-list=0), c1+c2 already reported today (limit reached), silent tick
+[2026-08-28 08:00:01] 🔍 开始自动同步 (sandyoy/echoes/main) ...
+[2026-08-28 08:00:03] 📦 远程共 1167 个文件
+[2026-08-28 08:00:03] ======== 同步完成 ========
+[2026-08-28 08:00:03] ✅ 新增: 0 | ⏭️  已有跳过: 311 | ⏭️  非文本跳过: 856 | ❌ 失败: 0
+[2026-08-28 08:00:03] ✅ 自动同步结束
