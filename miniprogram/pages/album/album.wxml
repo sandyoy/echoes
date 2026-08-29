@@ -1,0 +1,94 @@
+<!-- 翻页画册页面 - 像翻一本真正的画册 -->
+<view class="album-page">
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-state">
+    <text class="loading-icon">📖</text>
+    <text>正在翻开画册...</text>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{!hasData}}" class="empty-state">
+    <text class="empty-icon">🖼️</text>
+    <text class="empty-title">还没有回忆可以成册</text>
+    <text class="empty-desc">去记录你的第一个故事或照片吧</text>
+    <button class="btn primary-btn" bindtap="goRecord">去记录</button>
+  </view>
+
+  <!-- 画册 -->
+  <view wx:else class="album-wrap">
+    
+    <!-- 书壳 -->
+    <view class="book-shell">
+      <swiper 
+        class="pages-swiper"
+        vertical="{{false}}"
+        circular="{{false}}"
+        current="{{current}}"
+        bindchange="onPageChange"
+        indicator-dots="{{false}}"
+      >
+        <!-- 封面 -->
+        <swiper-item wx:if="{{pages[current].type === 'cover'}}">
+          <view class="book-page cover-page">
+            <view class="cover-inner">
+              <view class="cover-title">🕰️</view>
+              <view class="cover-title-text">{{pages[current].title}}</view>
+              <view class="cover-subtitle">{{pages[current].subtitle}}</view>
+              <view class="cover-meta">共收录 {{pages[current].totalYears}} 年的人生回忆</view>
+            </view>
+          </view>
+        </swiper-item>
+
+        <!-- 年份内容页 -->
+        <swiper-item wx:elif="{{pages[current].type === 'year'}}">
+          <view class="book-page year-page">
+            <view class="page-gutter-left"></view>
+            <view class="year-page-inner">
+              <view class="year-head">
+                <text class="year-big">{{pages[current].year}}</text>
+                <text class="year-count">{{pages[current].textCount}} 段回忆 · {{pages[current].photoCount}} 张照片</text>
+              </view>
+              <scroll-view scroll-y class="page-content-scroll">
+                <view wx:for="{{pages[current].stories}}" wx:key="id" class="page-entry">
+                  <!-- 照片回忆 -->
+                  <view wx:if="{{item.type === 'photo'}}" class="entry-photo">
+                    <image class="entry-img" src="{{item.imagePath}}" mode="aspectFill" />
+                    <view class="entry-caption">{{item.content || ('那年' + item.year)}}</view>
+                  </view>
+                  <!-- 文字/语音回忆 -->
+                  <view wx:else class="entry-text">
+                    <view class="entry-date">{{item.date}}</view>
+                    <view class="entry-content">{{item.content}}</view>
+                    <view wx:if="{{item.audioPath}}" class="entry-audio-tag">🎙️ 语音回忆</view>
+                  </view>
+                </view>
+              </scroll-view>
+            </view>
+            <view class="page-gutter-right"></view>
+            <view class="page-num">{{pages[current].year}}</view>
+          </view>
+        </swiper-item>
+
+        <!-- 尾页 -->
+        <swiper-item wx:else>
+          <view class="book-page end-page">
+            <view class="end-inner">
+              <view class="end-title">{{pages[current].title}}</view>
+              <view class="end-subtitle">{{pages[current].subtitle}}</view>
+            </view>
+          </view>
+        </swiper-item>
+      </swiper>
+    </view>
+
+    <!-- 底部翻页提示 -->
+    <view class="page-hint">
+      <text wx:if="{{current === 0}}">👉 左右滑动翻页</text>
+      <text wx:elif="{{current === total - 1}}">👈 回到封面</text>
+      <text wx:else>第 {{current + 1}} / {{total}} 页</text>
+    </view>
+
+  </view>
+
+</view>

@@ -37,5 +37,10 @@ Page({
   goStory(e) {
     const id = e.currentTarget.dataset.id
     wx.navigateTo({ url: `/pages/story/story?id=${id}` })
+  },
+
+  // 进入翻页画册
+  goAlbum() {
+    wx.navigateTo({ url: '/pages/album/album' })
   }
 })

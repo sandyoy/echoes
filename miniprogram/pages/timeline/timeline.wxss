@@ -4,6 +4,44 @@
   padding-bottom: 40rpx;
 }
 
+/* 画册入口 */
+.album-entry {
+  margin: 24rpx 30rpx 8rpx;
+  padding: 24rpx 28rpx;
+  background: linear-gradient(135deg, #8a6a48 0%, #6d5036 100%);
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 8rpx 24rpx rgba(58,44,28,0.25);
+}
+.album-entry-left {
+  display: flex;
+  align-items: center;
+}
+.album-entry-icon {
+  font-size: 48rpx;
+  margin-right: 20rpx;
+}
+.album-entry-text {
+  display: flex;
+  flex-direction: column;
+}
+.album-entry-title {
+  color: #fff;
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.album-entry-sub {
+  color: rgba(255,255,255,0.75);
+  font-size: 24rpx;
+  margin-top: 4rpx;
+}
+.album-entry-arrow {
+  color: rgba(255,255,255,0.85);
+  font-size: 48rpx;
+}
+
 .timeline {
   padding: 0 30rpx;
 }

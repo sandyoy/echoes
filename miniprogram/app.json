@@ -4,7 +4,8 @@
     "pages/interview/interview",
     "pages/timeline/timeline",
     "pages/story/story",
-    "pages/mine/mine"
+    "pages/mine/mine",
+    "pages/album/album"
   ],
   "window": {
     "navigationBarBackgroundColor": "#faf6f0",
