@@ -220,24 +220,55 @@ Page({
   // ============= 语音输入 =============
 
   onVoiceStart(e) {
-    this._startY = e.touches[0].clientY
-    this._isRecording = true
-    this.setData({ voicePress: true, voiceCancel: false })
-
-    // 开启录音
-    this._recorderManager.start({
-      format: 'mp3',
-      sampleRate: 16000,
-      numberOfChannels: 1,
-      encodeBitRate: 24000
-    })
-
-    // 录音超时保护（60秒自动停止）
-    this._recordTimer = setTimeout(() => {
-      if (this._isRecording) {
-        this._stopRecording(false)
+    if (this._isRecording) return
+    
+    // 确保已获得录音权限（未授权先申请）
+    const startRec = () => {
+      if (this._isRecording) return
+      this._startY = e.touches[0].clientY
+      this._isRecording = true
+      this.setData({ voicePress: true, voiceCancel: false })
+      try {
+        this._recorderManager.start({
+          format: 'mp3',
+          sampleRate: 16000,
+          numberOfChannels: 1,
+          encodeBitRate: 24000
+        })
+      } catch (err) {
+        console.error('录音启动失败:', err)
+        this._isRecording = false
+        this.setData({ voicePress: false })
+        wx.showToast({ title: '录音启动失败', icon: 'none' })
+        return
       }
-    }, 60000)
+      // 录音超时保护（60秒自动停止）
+      this._recordTimer = setTimeout(() => {
+        if (this._isRecording) {
+          this._stopRecording(false)
+        }
+      }, 60000)
+    }
+
+    wx.getSetting({
+      success: (res) => {
+        if (res.authSetting['scope.record']) {
+          startRec()
+        } else {
+          wx.authorize({
+            scope: 'scope.record',
+            success: () => { startRec() },
+            fail: () => {
+              wx.showModal({
+                title: '需要录音权限',
+                content: '请允许使用麦克风，才能用语音跟AI聊天',
+                showCancel: false
+              })
+            }
+          })
+        }
+      }
+    })
   },
 
   onVoiceMove(e) {

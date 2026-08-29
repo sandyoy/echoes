@@ -54,34 +54,71 @@ Page({
   // 开始录音
   startRecording() {
     if (this.data.currentMode !== 'self') return
+    // 状态锁：防止重复触发 start（异步时序下 authorize 回调晚到会重复启动）
+    if (this.data.isRecording) return
     
-    // 检查录音权限
-    wx.authorize({
-      scope: 'scope.record',
-      success: () => {
-        const options = {
-          duration: 600000,     // 最长10分钟
-          sampleRate: 16000,
-          numberOfChannels: 1,
-          encodeBitRate: 48000,
-          format: 'mp3'
-        }
+    const start = () => {
+      if (this.data.isRecording) return
+      const options = {
+        duration: 600000,     // 最长10分钟
+        sampleRate: 16000,
+        numberOfChannels: 1,
+        encodeBitRate: 48000,
+        format: 'mp3'
+      }
+      try {
         this.recorderManager.start(options)
-      },
-      fail: () => {
-        wx.showModal({
-          title: '需要录音权限',
-          content: '请在设置中开启录音权限，才能记录您的声音回忆',
-          showCancel: false
-        })
+      } catch (e) {
+        console.log('start err', e)
+      }
+    }
+    
+    // 已授权过就直接开始；未授权先申请
+    wx.getSetting({
+      success: (res) => {
+        if (res.authSetting['scope.record']) {
+          start()
+        } else {
+          wx.authorize({
+            scope: 'scope.record',
+            success: () => { start() },
+            fail: () => {
+              wx.showModal({
+                title: '需要录音权限',
+                content: '请在设置中开启录音权限，才能记录您的声音回忆',
+                showCancel: false
+              })
+            }
+          })
+        }
       }
     })
   },
 
   // 停止录音
   stopRecording() {
+    // 只有确实在录音时才停止，避免授权时序导致的"空stop晚到"
     if (this.data.isRecording) {
-      this.recorderManager.stop()
+      try {
+        this.recorderManager.stop()
+      } catch (e) {
+        console.log('stop err', e)
+      }
+    }
+  },
+
+  // 页面隐藏/卸载时强制停止，防止返回主页录音器还挂着（修复"返回后自动录音"bug）
+  onHide() {
+    this.forceStopRecording()
+  },
+  onUnload() {
+    this.forceStopRecording()
+  },
+
+  forceStopRecording() {
+    if (this.data.isRecording) {
+      try { this.recorderManager.stop() } catch (e) {}
+      this.setData({ isRecording: false, showRecordingToast: false })
     }
   },
 

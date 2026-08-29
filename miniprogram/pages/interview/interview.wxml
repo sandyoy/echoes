@@ -8,7 +8,7 @@
       <view wx:for="{{messages}}" wx:key="index" id="bottom">
         <!-- AI消息 -->
         <view class="msg-row msg-ai" wx:if="{{item.role === 'ai'}}">
-          <view class="msg-avatar">🤖</view>
+          <view class="msg-avatar">🦊</view>
           <view class="msg-content">
             <view class="msg-bubble ai-bubble">
               <text>{{item.content}}</text>
@@ -40,7 +40,7 @@
       
       <!-- 正在输入 -->
       <view class="msg-row msg-ai" wx:if="{{isThinking}}">
-        <view class="msg-avatar">🤖</view>
+        <view class="msg-avatar">🦊</view>
         <view class="msg-bubble ai-bubble thinking">
           <text class="dot">.</text><text class="dot">.</text><text class="dot">.</text>
         </view>
@@ -83,7 +83,7 @@
       bindtouchstart="onVoiceStart"
       bindtouchend="onVoiceEnd"
       bindtouchmove="onVoiceMove"
-      catchtouchcancel="onVoiceEnd"
+      bindtouchcancel="onVoiceEnd"
     >
       <text>{{voicePress ? '🎤' : '🎤'}}</text>
     </view>

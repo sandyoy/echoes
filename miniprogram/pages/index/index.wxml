@@ -38,7 +38,7 @@
         class="mode-btn {{currentMode === 'interview' ? 'active' : ''}}"
         bindtap="switchMode" data-mode="interview"
       >
-        <text>🤖 AI采访</text>
+        <text>💬 AI采访</text>
       </view>
       <view 
         class="mode-btn {{currentMode === 'type' ? 'active' : ''}}"
