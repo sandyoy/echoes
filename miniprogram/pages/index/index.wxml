@@ -53,7 +53,7 @@
       <text>AI会像老朋友一样陪你聊，帮你回忆往事</text>
     </view>
 
-    <!-- 文字输入模式 -->
+    <!-- 打字输入 -->
     <view class="type-input-area" wx:if="{{currentMode === 'type'}}">
       <textarea 
         class="type-input" 
