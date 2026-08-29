@@ -193,6 +193,20 @@ Page({
     const content = this.data.typeContent.trim()
     if (!content) return
 
+    // 无论后端是否成功，都先本地保存一份，保证用户数据不丢
+    const newStory = {
+      id: Date.now().toString(),
+      date: getTodayDate(),
+      era: getEraFromContent(content),
+      content,
+      type: 'text',
+      createdAt: new Date().toISOString()
+    }
+    const stories = wx.getStorageSync('localStories') || []
+    stories.unshift(newStory)
+    wx.setStorageSync('localStories', stories.slice(0, 100))
+    app.globalData.stories = stories
+
     wx.showLoading({ title: '正在保存...' })
 
     wx.request({
@@ -207,26 +221,20 @@ Page({
       },
       success: (res) => {
         wx.hideLoading()
-        if (res.statusCode === 201) {
+        // 后端返回 200 / 201 都算保存成功
+        if (res.statusCode === 200 || res.statusCode === 201) {
           wx.showToast({ title: '回忆已保存', icon: 'success' })
-          this.setData({ typeContent: '' })
-          this.loadStories()
+        } else {
+          // 后端返回异常，但本地已保存，仍提示成功
+          wx.showToast({ title: '回忆已保存（本地）', icon: 'success' })
         }
+        this.setData({ typeContent: '' })
+        this.loadStories()
       },
       fail: () => {
         wx.hideLoading()
-        // 离线保存
-        const stories = wx.getStorageSync('localStories') || []
-        stories.unshift({
-          id: Date.now().toString(),
-          date: getTodayDate(),
-          era: getEraFromContent(content),
-          content,
-          type: 'text',
-          createdAt: new Date().toISOString()
-        })
-        wx.setStorageSync('localStories', stories.slice(0, 100))
-        wx.showToast({ title: '回忆已保存', icon: 'success' })
+        // 网络异常，本地已保存，提示成功
+        wx.showToast({ title: '回忆已保存（本地）', icon: 'success' })
         this.setData({ typeContent: '' })
         this.loadStories()
       }
