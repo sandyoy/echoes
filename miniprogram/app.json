@@ -44,10 +44,5 @@
       "desc": "用于录制您的声音回忆，语音转换成文字"
     }
   },
-  "requiredPrivateInfos": [
-    "getRecorderManager",
-    "startRecord",
-    "stopRecord"
-  ],
   "plugins": {}
 }
