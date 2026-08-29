@@ -25,7 +25,8 @@ Thumbs.db
 
 # Logs
 *.log
-
+git-pull-logs/
+.git-pull-log*.txt
 # Node
 node_modules/
-.git-pull-log*.txt
+
