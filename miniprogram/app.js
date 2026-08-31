@@ -1,5 +1,5 @@
 // app.js
-const API_BASE = 'https://yuanaikang.cn/api'
+const API_BASE = 'https://yuanaikang.cn/v1'
 
 App({
   globalData: {

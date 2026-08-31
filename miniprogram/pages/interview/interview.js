@@ -2,7 +2,7 @@
 const app = getApp()
 
 // API 基础地址
-const API_BASE = app.globalData.apiBase || 'https://yuanaikang.cn/api'
+const API_BASE = app.globalData.apiBase || 'https://yuanaikang.cn/v1'
 
 Page({
   data: {
