@@ -8,32 +8,57 @@ Page({
     typeContent: '',
     stories: [],
     showRecordingToast: false,
-    transcript: '',
-    recorderManager: null
+    transcript: ''
   },
 
   onLoad() {
     this.loadStories()
     
-    // 初始化录音管理器
-    this.recorderManager = wx.getRecorderManager()
-    this.recorderManager.onStart(() => {
-      this.setData({ isRecording: true, showRecordingToast: true })
-    })
-    this.recorderManager.onStop((res) => {
-      this.setData({ isRecording: false, showRecordingToast: false })
-      if (res.duration > 1000) { // 超过1秒才保存
-        this.saveAudioStory(res)
+    // 全局录音器：注册本页回调（本页 focus 时）
+    app.registerRecorder({
+      onStop: (res) => {
+        this.setData({ isRecording: false, showRecordingToast: false })
+        // 松手后：超过1秒才识别保存
+        if (res.duration > 1000) {
+          this.transcript = ''
+          this.setData({ transcript: '' })
+          this.saveAudioStory(res)
+        } else {
+          wx.showToast({ title: '说话时间太短', icon: 'none' })
+        }
+      },
+      onError: () => {
+        this.setData({ isRecording: false, showRecordingToast: false })
+        wx.showToast({ title: '录音失败，请重试', icon: 'none' })
       }
-    })
-    this.recorderManager.onError(() => {
-      wx.showToast({ title: '录音失败', icon: 'none' })
-      this.setData({ isRecording: false, showRecordingToast: false })
     })
   },
 
   onShow() {
     this.loadStories()
+    // 预申请录音权限：进入页面就授权好，避免按住说话时才弹授权（授权晚到会导致录音状态卡住）
+    wx.getSetting({
+      success: (res) => {
+        if (!res.authSetting['scope.record']) {
+          wx.authorize({
+            scope: 'scope.record',
+            fail: () => {
+              // 用户拒绝或未处理：仅记录，不影响页面其他功能
+              console.warn('录音权限未授权')
+            }
+          })
+        }
+      }
+    })
+  },
+  // 页面离开/卸载时强制停掉全局录音并清回调，防止录音键回主页还亮着
+  onHide() {
+    app.forceStopRecord()
+    app.unregisterRecorder()
+  },
+  onUnload() {
+    app.forceStopRecord()
+    app.unregisterRecorder()
   },
 
   // 加载故事列表（统一从本地读，本地是最终数据源，后端仅作同步）
@@ -45,94 +70,44 @@ Page({
     this.setData({ stories: list.slice(0, 5) })
   },
 
-  // 开始录音
+  // 开始录音（只在自述模式生效）
   startRecording() {
     if (this.data.currentMode !== 'self') return
-    // 状态锁：防止重复触发 start（异步时序下 authorize 回调晚到会重复启动）
-    if (this.data.isRecording) return
-    
-    const start = () => {
-      if (this.data.isRecording) return
-      const options = {
-        duration: 600000,     // 最长10分钟
-        sampleRate: 16000,
-        numberOfChannels: 1,
-        encodeBitRate: 48000,
-        format: 'mp3'
-      }
-      try {
-        this.recorderManager.start(options)
-      } catch (e) {
-        console.log('start err', e)
-      }
-    }
-    
-    // 已授权过就直接开始；未授权先申请
-    wx.getSetting({
-      success: (res) => {
-        if (res.authSetting['scope.record']) {
-          start()
-        } else {
-          wx.authorize({
-            scope: 'scope.record',
-            success: () => { start() },
-            fail: () => {
-              wx.showModal({
-                title: '需要录音权限',
-                content: '请在设置中开启录音权限，才能记录您的声音回忆',
-                showCancel: false
-              })
-            }
-          })
-        }
-      }
-    })
-  },
-
-  // 停止录音
-  stopRecording() {
-    // 只有确实在录音时才停止，避免授权时序导致的"空stop晚到"
-    if (this.data.isRecording) {
-      try {
-        this.recorderManager.stop()
-      } catch (e) {
-        console.log('stop err', e)
-      }
-    }
-  },
-
-  // 页面隐藏/卸载时强制停止，防止返回主页录音器还挂着（修复"返回后自动录音"bug）
-  onHide() {
-    this.forceStopRecording()
-  },
-  onUnload() {
-    this.forceStopRecording()
-  },
-
-  forceStopRecording() {
-    if (this.data.isRecording) {
-      try { this.recorderManager.stop() } catch (e) {}
+    // 全局互锁：别处(如采访页)正在录就不录；本页已在录也不重复
+    if (app.isRecording() || this.data.isRecording) return
+    // 立即刷新 UI（不等 onStart 回调，按下即亮，避免闪烁）
+    this.setData({ isRecording: true, showRecordingToast: true })
+    const ok = app.startRecord()
+    if (!ok) {
       this.setData({ isRecording: false, showRecordingToast: false })
     }
   },
 
-  // 保存录音故事（先转文字，再保存）
+  // 停止录音（松手/取消）
+  stopRecording() {
+    // 无论全局状态如何都尝试停，确保不残留（app.stopRecord 内部会判断）
+    app.stopRecord()
+    // UI 复位交给全局 onStop 回调；这里也兜底复位，防极个别回调丢失
+    this.setData({ isRecording: false, showRecordingToast: false })
+  },
+  // 保存录音故事（先转文字，再以文字为主保存；音频尽力上传不影响保存）
   saveAudioStory(res) {
-    const { tempFilePath, duration, fileSize } = res
+    const { tempFilePath, duration } = res
     const dur = Math.floor(duration / 1000)
-    
+
     // 第一步：调用语音识别，把语音转成文字
     wx.showLoading({ title: '识别语音中...' })
     this.asrAudio(tempFilePath).then(text => {
       wx.hideLoading()
       const content = (text && text !== '(未能识别)') ? text : `[语音回忆 ${dur}秒]`
-      // 第二步：后端保存（文字+音频），失败则本地保存
-      this.uploadStory(tempFilePath, content, dur)
+      // 第二步：以文字为主保存（后端+本地双保险，绝不因音频上传失败而丢）
+      this.uploadTextStory(tempFilePath, content, dur)
     }).catch(() => {
       wx.hideLoading()
-      // ASR失败，降级：以占位文字保存
+      // ASR失败，降级：以占位文字保存（不阻塞用户）
+      wx.showToast({ title: '语音识别失败，已按语音保存', icon: 'none' })
       const content = `[语音回忆 ${dur}秒]`
-      this.uploadStory(tempFilePath, content, dur)
+      this.uploadTextStory(tempFilePath, content, dur)
     })
   },
 
@@ -158,58 +133,69 @@ Page({
     })
   },
 
-  // 上传保存（后端优先，本地兜底）
-  uploadStory(tempFilePath, content, dur) {
-    wx.showLoading({ title: '正在保存...' })
-    wx.uploadFile({
-      url: `${app.globalData.apiBase}/stories/audio`,
-      filePath: tempFilePath,
-      name: 'audio',
-      formData: {
-        type: 'audio',
-        content: content,
-        era: getEraFromContent(content),
-        duration: dur
-      },
-      success: (resp) => {
-        wx.hideLoading()
-        if (resp.statusCode === 201 || resp.statusCode === 200) {
-          wx.showToast({ title: '回忆已保存', icon: 'success' })
-        } else {
-          // 后端暂不支持，本地保存
-          this.saveLocalStory(tempFilePath, content, dur)
-        }
-        this.loadStories()
-      },
-      fail: () => {
-        wx.hideLoading()
-        // 网络异常，本地保存
-        this.saveLocalStory(tempFilePath, content, dur)
-        this.loadStories()
-      }
-    })
-  },
-
-  // 本地保存（后端不支持时的降级方案）
-  saveLocalStory(tempFilePath, content, dur) {
-    const stories = wx.getStorageSync('localStories') || []
+  // 以文字为主保存（后端 POST + 本地双保险），音频文件尽力附带上传
+  uploadTextStory(tempFilePath, content, dur) {
     const newStory = {
       id: Date.now().toString(),
       date: getTodayDate(),
       era: getEraFromContent(content),
-      content: content,
+      content,
       type: 'audio',
       audioPath: tempFilePath,
       createdAt: new Date().toISOString()
     }
+    // 1) 先本地保存（数据必不丢）
+    const stories = wx.getStorageSync('localStories') || []
     stories.unshift(newStory)
     wx.setStorageSync('localStories', stories.slice(0, 100))
     app.globalData.stories = stories
     this.storyCache = stories
-
-    wx.hideLoading()
-    wx.showToast({ title: '回忆已保存（本地）', icon: 'success' })
     this.loadStories()
+
+    wx.showLoading({ title: '正在保存...' })
+    // 2) 后端保存文字版（实测201成功）
+    let synced = Promise.reject()
+    try {
+      synced = new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.apiBase}/stories`,
+          method: 'POST',
+          data: {
+            content,
+            date: getTodayDate(),
+            era: getEraFromContent(content),
+            type: 'audio'
+          },
+          success: (r) => (r.statusCode === 200 || r.statusCode === 201) ? resolve(r.data) : reject(r),
+          fail: reject
+        })
+      })
+    } catch (e) { synced = Promise.reject(e) }
+
+    synced.finally(() => {
+      wx.hideLoading()
+    })
+    // 3) 音频文件尽力上传（失败不影响已保存的文字）
+    synced.then(() => {
+      try {
+        wx.uploadFile({
+          url: `${app.globalData.apiBase}/stories/audio`,
+          filePath: tempFilePath,
+          name: 'audio',
+          formData: {
+            type: 'audio',
+            content: content,
+            era: getEraFromContent(content),
+            duration: dur
+          },
+          fail: () => { /* 音频上传失败静默，文字已保存 */ }
+        })
+      } catch (e) { /* ignore */ }
+      wx.showToast({ title: '回忆已保存', icon: 'success' })
+    }).catch(() => {
+      // 后端同步失败，本地已保存，仍提示成功
+      wx.showToast({ title: '已保存（本地）', icon: 'success' })
+    })
   },
 
   // 切换模式

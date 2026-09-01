@@ -19,8 +19,7 @@ Page({
   _audioCtx: null,
   _playingIndex: -1,  // 当前播放的消息索引
 
-  // 录音管理器
-  _recorderManager: null,
+  // 录音管理器（状态由全局单例统一管理）
   _startY: 0,
   _isRecording: false,
   _recordTimer: null,
@@ -51,25 +50,52 @@ Page({
       }
     })
 
-    // 初始化录音管理器
-    this._recorderManager = wx.getRecorderManager()
-    this._recorderManager.onStop((res) => {
-      if (res.duration < 500) {
-        wx.showToast({ title: '录音时间太短', icon: 'none' })
-        return
+    // 初始化录音：全部走全局单例录音器（与首页共用，杜绝多实例互扰）
+    // 本页注册回调：全局 onStop 会把识别/发送动作接在这里
+    app.registerRecorder({
+      onStop: (res) => {
+        this._isRecording = false
+        clearTimeout(this._recordTimer)
+        this.setData({ voicePress: false, voiceCancel: false })
+        if (res.duration < 500) {
+          wx.showToast({ title: '录音时间太短', icon: 'none' })
+          return
+        }
+        // 录音太短不算取消；正常转文字
+        this._uploadAudio(res.tempFilePath)
+      },
+      onError: () => {
+        this._isRecording = false
+        clearTimeout(this._recordTimer)
+        this.setData({ voicePress: false, voiceCancel: false })
+        wx.showToast({ title: '录音失败，请重试', icon: 'none' })
       }
-      this._uploadAudio(res.tempFilePath)
     })
-    this._recorderManager.onError((err) => {
-      console.error('录音失败:', err)
-      wx.showToast({ title: '录音失败，请重试', icon: 'none' })
+
+    // 预申请录音权限：进入页面就授权好，避免按住说话时才弹授权（授权晚到会导致录音状态卡住）
+    wx.getSetting({
+      success: (res) => {
+        if (!res.authSetting['scope.record']) {
+          wx.authorize({
+            scope: 'scope.record',
+            fail: () => { console.warn('录音权限未授权(采访页)') }
+          })
+        }
+      }
     })
 
     // 发送开场白
     this.sendInitialGreeting()
   },
 
+  onHide() {
+    // 离开页面：强制停录音并清理页面回调，防止录音键/声音残留
+    app.forceStopRecord()
+    app.unregisterRecorder()
+  },
   onUnload() {
+    app.forceStopRecord()
+    app.unregisterRecorder()
     // 页面卸载时停止播放
     if (this._audioCtx) {
       this._audioCtx.stop()
@@ -277,55 +303,30 @@ Page({
   // ============= 语音输入 =============
 
   onVoiceStart(e) {
-    if (this._isRecording) return
-    
-    // 确保已获得录音权限（未授权先申请）
-    const startRec = () => {
-      if (this._isRecording) return
-      this._startY = e.touches[0].clientY
-      this._isRecording = true
-      this.setData({ voicePress: true, voiceCancel: false })
-      try {
-        this._recorderManager.start({
-          format: 'mp3',
-          sampleRate: 16000,
-          numberOfChannels: 1,
-          encodeBitRate: 24000
-        })
-      } catch (err) {
-        console.error('录音启动失败:', err)
-        this._isRecording = false
-        this.setData({ voicePress: false })
-        wx.showToast({ title: '录音启动失败', icon: 'none' })
-        return
-      }
-      // 录音超时保护（60秒自动停止）
-      this._recordTimer = setTimeout(() => {
-        if (this._isRecording) {
-          this._stopRecording(false)
-        }
-      }, 60000)
-    }
+    // 全局互锁：别处（如有）正在录就不录；本页已在录也不重复
+    if (app.isRecording() || this._isRecording) return
 
-    wx.getSetting({
-      success: (res) => {
-        if (res.authSetting['scope.record']) {
-          startRec()
-        } else {
-          wx.authorize({
-            scope: 'scope.record',
-            success: () => { startRec() },
-            fail: () => {
-              wx.showModal({
-                title: '需要录音权限',
-                content: '请允许使用麦克风，才能用语音跟AI聊天',
-                showCancel: false
-              })
-            }
-          })
-        }
+    this._startY = e.touches[0].clientY
+    this._isRecording = true
+    this.setData({ voicePress: true, voiceCancel: false })
+
+    if (!app.startRecord({
+      format: 'mp3',
+      sampleRate: 16000,
+      numberOfChannels: 1,
+      encodeBitRate: 24000
+    })) {
+      this._isRecording = false
+      this.setData({ voicePress: false })
+      wx.showToast({ title: '录音启动失败', icon: 'none' })
+      return
+    }
+    // 录音超时保护（60秒自动停止）
+    this._recordTimer = setTimeout(() => {
+      if (this._isRecording) {
+        this._stopRecording(false)
       }
-    })
+    }, 60000)
   },
 
   onVoiceMove(e) {
@@ -333,11 +334,7 @@ Page({
     const moveY = e.touches[0].clientY
     const deltaY = this._startY - moveY
     // 上滑超过 50px 显示取消区域
-    if (deltaY > 50) {
-      this.setData({ voiceCancel: true })
-    } else {
-      this.setData({ voiceCancel: false })
-    }
+    this.setData({ voiceCancel: deltaY > 50 })
   },
 
   onVoiceEnd() {
@@ -349,16 +346,14 @@ Page({
   _stopRecording(cancel) {
     this._isRecording = false
     clearTimeout(this._recordTimer)
-    
-    this.setData({ voicePress: false })
-
+    // 全局停止（无论是否取消，都停；取消时不转文字）
     if (cancel) {
-      this._recorderManager.stop()
+      app.forceStopRecord()
+      this.setData({ voicePress: false, voiceCancel: false })
       wx.showToast({ title: '已取消录音', icon: 'none' })
-      return
+    } else {
+      app.stopRecord() // 正常停止，onStop 回调会转文字+发送
     }
-
-    this._recorderManager.stop()
   },
 
   _uploadAudio(tempFilePath) {
@@ -373,10 +368,8 @@ Page({
         try {
           const data = JSON.parse(res.data)
           if (data.text && data.text !== '(未能识别)') {
-            // 识别成功，填入输入框
-            this.setData({ inputText: data.text })
-            // 自动发送
-            this.sendMessage()
+            // 识别成功：直接用文字发送（不走 inputText 异步 setData，避免读到旧值发不出）
+            this.sendMessageWithText(data.text)
           } else {
             wx.showToast({ title: '未能识别语音内容', icon: 'none' })
           }
@@ -390,6 +383,29 @@ Page({
         console.error('上传录音失败:', err)
         wx.showToast({ title: '上传录音失败', icon: 'none' })
       }
+    })
+  },
+
+  // 用指定文字发送消息（语音识别专用，避开 inputText 异步 setData 的坑）
+  sendMessageWithText(text) {
+    const trimmed = (text || '').trim()
+    if (!trimmed || this.data.isThinking) return
+    // 直接以文字发消息，不依赖 inputText
+    const messages = [...this.data.messages, { role: 'user', content: trimmed }]
+    this.setData({ messages, isThinking: true, hasConversation: true })
+    // 调用AI接口
+    app.aiInterview(trimmed, messages.slice(0, -1)).then(res => {
+      const reply = res.reply
+      const msgs = [...this.data.messages, { role: 'ai', content: reply, ttsUrl: '', ttsLoading: false, ttsPlaying: false }]
+      this.setData({ messages: msgs, isThinking: false })
+      const lastIdx = msgs.length - 1
+      this._fetchTTS(lastIdx, reply)
+    }).catch(() => {
+      const mockReply = this.getMockReply(trimmed)
+      const msgs = [...this.data.messages, { role: 'ai', content: mockReply, ttsUrl: '', ttsLoading: false, ttsPlaying: false }]
+      this.setData({ messages: msgs, isThinking: false })
+      const lastIdx = msgs.length - 1
+      this._fetchTTS(lastIdx, mockReply)
     })
   },
 

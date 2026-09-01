@@ -12,8 +12,8 @@
     <view class="title">今天想聊些什么？</view>
     <view class="subtitle">按住按钮，说出你的回忆</view>
 
-    <!-- 录音按钮 -->
-    <view class="recording-btn-wrapper">
+    <!-- 录音按钮（仅自述模式显示） -->
+    <view class="recording-btn-wrapper" wx:if="{{currentMode === 'self'}}">
       <button 
         class="recording-btn {{isRecording ? 'recording-active' : ''}}"
         bindtouchstart="startRecording"
@@ -26,8 +26,8 @@
       </button>
     </view>
 
-    <!-- 转写结果展示 -->
-    <view class="transcript-panel {{transcript ? 'show' : ''}}" wx:if="{{transcript}}">
+    <!-- 转写结果展示（仅自述模式） -->
+    <view class="transcript-panel {{transcript ? 'show' : ''}}" wx:if="{{currentMode === 'self' && transcript}}">
       <view class="transcript-label">📝 语音已转为文字：</view>
       <view class="transcript-text">{{transcript}}</view>
     </view>
