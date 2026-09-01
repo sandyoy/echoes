@@ -26,6 +26,12 @@
       </button>
     </view>
 
+    <!-- 转写结果展示 -->
+    <view class="transcript-panel {{transcript ? 'show' : ''}}" wx:if="{{transcript}}">
+      <view class="transcript-label">📝 语音已转为文字：</view>
+      <view class="transcript-text">{{transcript}}</view>
+    </view>
+
     <!-- 模式切换 -->
     <view class="mode-switch">
       <view 
@@ -51,6 +57,7 @@
     <!-- AI采访提示 -->
     <view class="mode-hint" wx:if="{{currentMode === 'interview'}}">
       <text>AI会像老朋友一样陪你聊，帮你回忆往事</text>
+      <button class="btn btn-primary go-interview-btn" bindtap="goInterview">开始AI采访 →</button>
     </view>
 
     <!-- 打字输入 -->

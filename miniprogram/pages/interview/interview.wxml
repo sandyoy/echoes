@@ -62,6 +62,14 @@
 
   </view>
 
+  <!-- 保存本次采访为回忆 -->
+  <view class="save-interview-bar" wx:if="{{hasConversation}}">
+    <view class="save-interview-tip">本次采访内容还没有保存</view>
+    <button class="save-interview-btn" bindtap="saveAsStory" disabled="{{isSaving}}">
+      {{isSaving ? '保存中...' : '💾 把这段对话存为回忆'}}
+    </button>
+  </view>
+
   <!-- 底部输入栏 -->
   <view class="input-bar">
     <view class="input-wrapper">

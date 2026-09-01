@@ -2,7 +2,7 @@
 const app = getApp()
 
 // API 基础地址
-const API_BASE = app.globalData.apiBase || 'https://yuanaikang.cn/v1'
+const API_BASE = app.globalData.apiBase || 'https://yuanaikang.cn/api'
 
 Page({
   data: {
@@ -10,7 +10,9 @@ Page({
     inputText: '',
     isThinking: false,
     voicePress: false,
-    voiceCancel: false
+    voiceCancel: false,
+    hasConversation: false,
+    isSaving: false
   },
 
   // 语音播放器实例
@@ -96,7 +98,7 @@ Page({
 
     // 添加用户消息
     const messages = [...this.data.messages, { role: 'user', content: text }]
-    this.setData({ messages, inputText: '', isThinking: true })
+    this.setData({ messages, inputText: '', isThinking: true, hasConversation: true })
 
     // 调用AI接口
     app.aiInterview(text, this.data.messages.slice(0, -1)).then(res => {
@@ -124,6 +126,61 @@ Page({
     const text = e.currentTarget.dataset.text
     this.setData({ inputText: text })
     this.sendMessage()
+  },
+
+  // ============= 保存本次采访为回忆 =============
+
+  saveAsStory() {
+    if (this.data.isSaving) return
+    // 只取用户说过的内容作为正文（排除开场白和AI回复）
+    const userMsgs = this.data.messages.filter(m => m.role === 'user').map(m => m.content)
+    if (userMsgs.length === 0) {
+      wx.showToast({ title: '还没有采访内容', icon: 'none' })
+      return
+    }
+
+    this.setData({ isSaving: true })
+
+    // 从用户说的内容里提取主题标签
+    const era = getEraFromContent(userMsgs.join(' '))
+
+    // 正文：把问答串起来，保留访谈的完整感
+    const qa = this.data.messages
+      .filter(m => m.content && (m.role === 'user' || m.role === 'ai'))
+      .map(m => (m.role === 'user' ? '我：' : 'AI：') + m.content)
+      .join('\n')
+
+    const story = {
+      id: 'iv' + Date.now().toString(),
+      date: getTodayDate(),
+      era,
+      content: qa,
+      type: 'interview',
+      createdAt: new Date().toISOString()
+    }
+
+    // 本地保存（采访不是实时存，这里一次性落地）
+    const stories = wx.getStorageSync('localStories') || []
+    stories.unshift(story)
+    wx.setStorageSync('localStories', stories.slice(0, 100))
+
+    wx.showLoading({ title: '正在保存...' })
+    wx.request({
+      url: `${API_BASE}/stories`,
+      method: 'POST',
+      data: {
+        content: qa,
+        date: getTodayDate(),
+        era,
+        type: 'interview',
+        tags: []
+      },
+      complete: () => {
+        wx.hideLoading()
+        this.setData({ isSaving: false })
+        wx.showToast({ title: '已存为回忆', icon: 'success' })
+      }
+    })
   },
 
   // ============= 语音合成（TTS） =============
@@ -356,3 +413,18 @@ Page({
     return replies['default']
   }
 })
+
+// ============= 工具函数 =============
+function getTodayDate() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
+const IV_TOPICS = ['童年','小学','求学','工作','结婚','恋爱','孩子','父母','老家','朋友','退休','旅行']
+
+function getEraFromContent(text) {
+  for (const t of IV_TOPICS) {
+    if (text.includes(t)) return t
+  }
+  return '其他'
+}

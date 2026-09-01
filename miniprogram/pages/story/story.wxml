@@ -4,7 +4,7 @@
   <view class="story-header">
     <view class="story-tags">
       <text class="tag" wx:if="{{story.era}}">{{story.era}}</text>
-      <text class="tag">{{story.type === 'audio' ? '🎤 语音' : '📝 文字'}}</text>
+      <text class="tag">{{story.type === 'audio' ? '🎤 语音' : (story.type === 'interview' ? '💬 采访' : '📝 文字')}}</text>
     </view>
     <view class="story-date">{{story.date}}</view>
   </view>

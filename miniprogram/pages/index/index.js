@@ -8,6 +8,7 @@ Page({
     typeContent: '',
     stories: [],
     showRecordingToast: false,
+    transcript: '',
     recorderManager: null
   },
 
@@ -35,20 +36,13 @@ Page({
     this.loadStories()
   },
 
-  // 加载故事列表
+  // 加载故事列表（统一从本地读，本地是最终数据源，后端仅作同步）
   loadStories() {
-    const stories = app.globalData.stories
-    if (stories && stories.length > 0) {
-      this.setData({ stories: stories.slice(0, 5) })
-    } else {
-      app.getStories().then(list => {
-        this.setData({ stories: list.slice(0, 5) })
-      }).catch(() => {
-        // 加载失败，用本地存储的数据
-        const local = wx.getStorageSync('localStories') || []
-        this.setData({ stories: local.slice(0, 5) })
-      })
-    }
+    const local = wx.getStorageSync('localStories') || []
+    const list = this.storyCache && this.storyCache.length >= local.length
+      ? this.storyCache
+      : local
+    this.setData({ stories: list.slice(0, 5) })
   },
 
   // 开始录音
@@ -122,56 +116,97 @@ Page({
     }
   },
 
-  // 保存录音故事
+  // 保存录音故事（先转文字，再保存）
   saveAudioStory(res) {
     const { tempFilePath, duration, fileSize } = res
+    const dur = Math.floor(duration / 1000)
     
+    // 第一步：调用语音识别，把语音转成文字
+    wx.showLoading({ title: '识别语音中...' })
+    this.asrAudio(tempFilePath).then(text => {
+      wx.hideLoading()
+      const content = (text && text !== '(未能识别)') ? text : `[语音回忆 ${dur}秒]`
+      // 第二步：后端保存（文字+音频），失败则本地保存
+      this.uploadStory(tempFilePath, content, dur)
+    }).catch(() => {
+      wx.hideLoading()
+      // ASR失败，降级：以占位文字保存
+      const content = `[语音回忆 ${dur}秒]`
+      this.uploadStory(tempFilePath, content, dur)
+    })
+  },
+
+  // 调用语音识别接口
+  asrAudio(filePath) {
+    return new Promise((resolve, reject) => {
+      wx.uploadFile({
+        url: `${app.globalData.apiBase}/ai/asr`,
+        filePath: filePath,
+        name: 'audio',
+        success: (res) => {
+          try {
+            const data = JSON.parse(res.data)
+            const text = data.text || ''
+            this.setData({ transcript: text || '[未能识别出文字]' })
+            resolve(text || '[未能识别出文字]')
+          } catch (e) {
+            reject(e)
+          }
+        },
+        fail: reject
+      })
+    })
+  },
+
+  // 上传保存（后端优先，本地兜底）
+  uploadStory(tempFilePath, content, dur) {
     wx.showLoading({ title: '正在保存...' })
-    
-    // 上传音频文件
     wx.uploadFile({
       url: `${app.globalData.apiBase}/stories/audio`,
       filePath: tempFilePath,
       name: 'audio',
       formData: {
         type: 'audio',
-        era: getEraFromDate(new Date()),
-        duration: Math.floor(duration / 1000)
+        content: content,
+        era: getEraFromContent(content),
+        duration: dur
       },
       success: (resp) => {
         wx.hideLoading()
         if (resp.statusCode === 201 || resp.statusCode === 200) {
           wx.showToast({ title: '回忆已保存', icon: 'success' })
-          this.loadStories()
         } else {
-          // 后端暂不支持音频上传，本地保存
-          this.saveLocalStory(res)
+          // 后端暂不支持，本地保存
+          this.saveLocalStory(tempFilePath, content, dur)
         }
+        this.loadStories()
       },
       fail: () => {
         wx.hideLoading()
-        // 离线保存
-        this.saveLocalStory(res)
+        // 网络异常，本地保存
+        this.saveLocalStory(tempFilePath, content, dur)
+        this.loadStories()
       }
     })
   },
 
   // 本地保存（后端不支持时的降级方案）
-  saveLocalStory(res) {
+  saveLocalStory(tempFilePath, content, dur) {
     const stories = wx.getStorageSync('localStories') || []
     const newStory = {
       id: Date.now().toString(),
       date: getTodayDate(),
-      era: getEraFromDate(new Date()),
-      content: `[语音回忆 ${Math.floor(res.duration / 1000)}秒]`,
+      era: getEraFromContent(content),
+      content: content,
       type: 'audio',
-      audioPath: res.tempFilePath,
+      audioPath: tempFilePath,
       createdAt: new Date().toISOString()
     }
     stories.unshift(newStory)
     wx.setStorageSync('localStories', stories.slice(0, 100))
     app.globalData.stories = stories
-    
+    this.storyCache = stories
+
     wx.hideLoading()
     wx.showToast({ title: '回忆已保存（本地）', icon: 'success' })
     this.loadStories()
