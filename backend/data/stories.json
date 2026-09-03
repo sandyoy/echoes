@@ -1,5 +1,19 @@
 [
   {
+    "id": "0398a12a-73c9-4e1a-a33c-5cbebe821e25",
+    "date": "2026-09-01",
+    "era": "",
+    "content": "test from socket",
+    "type": "text",
+    "photos": [],
+    "audioUrl": null,
+    "isSubStory": false,
+    "parentStory": null,
+    "tags": [],
+    "createdAt": "2026-09-01T08:15:27.494Z",
+    "updatedAt": "2026-09-01T08:15:27.494Z"
+  },
+  {
     "id": "dc8d6602-3ac1-4e94-9700-78f8005a73bb",
     "date": "2026-01-01",
     "era": "其他",
@@ -9,5 +23,18 @@
     "tags": [],
     "createdAt": "2026-05-20T11:33:18.185Z",
     "updatedAt": "2026-05-20T11:33:18.185Z"
+  },
+  {
+    "id": "814b582d-4b32-4c50-996a-34c0abff71eb",
+    "date": "2026-01-01",
+    "era": "老家",
+    "content": "我老家村口有棵百年的枣树，每年秋天我妈都会打枣给我吃，那时候特别甜",
+    "type": "interview",
+    "photos": [],
+    "tags": [
+      "老家"
+    ],
+    "createdAt": "2026-09-03T06:53:35.391Z",
+    "updatedAt": "2026-09-03T06:53:35.391Z"
   }
 ]

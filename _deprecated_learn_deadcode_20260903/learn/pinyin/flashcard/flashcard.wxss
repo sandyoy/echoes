@@ -1,0 +1,208 @@
+/* 闪卡样式 */
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+}
+
+/* 进度条 */
+.progress-bar {
+  width: 70%;
+  height: 8rpx;
+  background: var(--border);
+  border-radius: 4rpx;
+  margin: 30rpx auto 8rpx;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #e8734a);
+  border-radius: 4rpx;
+  transition: width 0.3s;
+}
+.progress-text {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  margin-bottom: 30rpx;
+}
+
+/* 闪卡 */
+.card-area {
+  width: 500rpx;
+  height: 500rpx;
+  perspective: 1000px;
+  margin-bottom: 20rpx;
+}
+
+.flashcard {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+.flashcard.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.card-front, .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 32rpx rgba(0,0,0,0.1);
+}
+
+.card-front {
+  background: linear-gradient(145deg, #fff, #faf6f0);
+  border: 4rpx solid var(--accent-light);
+}
+.card-back {
+  background: linear-gradient(145deg, #f0e4d6, #e8d8c8);
+  transform: rotateY(180deg);
+  gap: 12rpx;
+}
+
+.card-pinyin {
+  font-size: 80rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.card-hint {
+  font-size: 24rpx;
+  color: var(--text-muted);
+  margin-top: 20rpx;
+}
+
+.card-read {
+  font-size: 36rpx;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.card-examples {
+  display: flex;
+  gap: 16rpx;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0 20rpx;
+}
+.card-example-word {
+  padding: 8rpx 20rpx;
+  background: rgba(255,255,255,0.6);
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.card-memo {
+  font-size: 22rpx;
+  color: var(--accent);
+  padding: 0 20rpx;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* 易混提示 */
+.confuse-hint {
+  padding: 12rpx 24rpx;
+  background: #fff5f5;
+  border: 2rpx solid #ffcccc;
+  border-radius: 16rpx;
+  font-size: 24rpx;
+  color: #c0392b;
+  margin-bottom: 20rpx;
+}
+
+/* 操作按钮 */
+.action-row {
+  display: flex;
+  gap: 40rpx;
+  margin-top: 20rpx;
+}
+.action-btn {
+  padding: 20rpx 50rpx;
+  border-radius: 50rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  border: none;
+}
+.wrong-btn {
+  background: #fff5f5;
+  border: 3rpx solid #ffcccc;
+  color: #c0392b;
+}
+.ok-btn {
+  background: #f0faf0;
+  border: 3rpx solid #b8e0b8;
+  color: #27ae60;
+}
+
+/* 结果页 */
+.result-area {
+  width: 100%;
+  padding: 0 40rpx;
+  box-sizing: border-box;
+}
+.result-card {
+  background: var(--bg-card);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.result-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 24rpx;
+}
+.result-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 30rpx;
+  width: 100%;
+}
+.result-stat {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}
+.result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  width: 100%;
+}
+.result-btn {
+  padding: 20rpx;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  text-align: center;
+}
+.restart-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+.review-btn {
+  background: var(--bg-card);
+  border: 2rpx solid var(--accent);
+  color: var(--accent);
+}
