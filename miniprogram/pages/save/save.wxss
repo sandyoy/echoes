@@ -1,0 +1,140 @@
+.page {
+  min-height: 100vh;
+  padding-bottom: 160rpx;
+  box-sizing: border-box;
+}
+.page-body {
+  padding: 0 30rpx;
+}
+
+/* 提示区 */
+.tip-area {
+  padding: 30rpx 6rpx 10rpx;
+}
+.tip-big {
+  display: block;
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+.tip-sub {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* 编辑卡 */
+.ed-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 26rpx;
+  margin-top: 26rpx;
+  box-shadow: var(--shadow-soft);
+  border: 1rpx solid rgba(255,255,255,0.85);
+}
+.ed-hint {
+  font-size: 24rpx;
+  color: var(--accent-deep);
+  margin-bottom: 12rpx;
+  font-weight: 500;
+}
+.ed-input {
+  width: 100%;
+  min-height: 240rpx;
+  font-size: 30rpx;
+  line-height: 1.8;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+/* 音频卡 */
+.audio-card {
+  margin-top: 20rpx;
+  background: rgba(185,138,85,0.08);
+  border: 1rpx solid rgba(185,138,85,0.25);
+  border-radius: 24rpx;
+  padding: 22rpx 26rpx;
+}
+.audio-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+.audio-active { opacity: 0.75; }
+.audio-ico { font-size: 30rpx; color: var(--accent); }
+.audio-txt { font-size: 28rpx; color: var(--accent-deep); }
+
+/* 年份卡 */
+.yr-card {
+  margin-top: 30rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 26rpx;
+  box-shadow: var(--shadow-soft);
+  border: 1rpx solid rgba(255,255,255,0.85);
+}
+.yr-title {
+  font-size: 28rpx;
+  color: var(--text-primary);
+  margin-bottom: 20rpx;
+  font-weight: 500;
+}
+.yr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin-bottom: 20rpx;
+}
+.yr-chip {
+  padding: 12rpx 24rpx;
+  border-radius: 999rpx;
+  background: #f4ece1;
+  border: 2rpx solid var(--border);
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+.yr-chip.on {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent-deep);
+  font-weight: 500;
+}
+.yr-yearpicker {
+  display: block;
+}
+.yr-yearbox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 92rpx;
+  padding: 0 26rpx;
+  border-radius: var(--radius-md);
+  border: 2rpx dashed var(--accent);
+  color: var(--accent-deep);
+  font-size: 34rpx;
+  font-weight: 600;
+  background: #fffaf3;
+}
+.yr-arrow { font-size: 26rpx; color: var(--accent); }
+.yr-tip {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  color: var(--text-muted);
+}
+
+/* 底部固定操作 */
+.foot {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  gap: 20rpx;
+  padding: 20rpx 30rpx calc(20rpx + env(safe-area-inset-bottom));
+  background: rgba(245,239,230,0.96);
+  border-top: 1rpx solid var(--border);
+  box-sizing: content-box;
+}
+.cancel-btn { flex: 1; }
+.do-btn { flex: 2; }

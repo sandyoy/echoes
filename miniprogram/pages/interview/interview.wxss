@@ -53,6 +53,7 @@
   display: flex;
   flex-direction: column;
 }
+.msg-user .msg-content { align-items: flex-end; }
 
 .msg-bubble {
   max-width: 520rpx;
@@ -227,16 +228,24 @@
 /* ============= 语音输入按钮 ============= */
 
 .voice-btn {
-  width: 72rpx;
-  height: 72rpx;
-  line-height: 72rpx;
+  width: 128rpx;
+  height: 88rpx;
+  line-height: 1.1;
   text-align: center;
-  border-radius: 50%;
+  border-radius: 20rpx;
   background: var(--bg-primary);
   font-size: 32rpx;
-  padding: 0;
+  padding: 8rpx 0;
+  margin: 0;
   transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2rpx var(--border) inset;
 }
+.voice-btn-icon { font-size: 40rpx; line-height: 1; }
+.voice-btn-sub { font-size: 20rpx; color: var(--text-secondary); margin-top: 2rpx; }
 
 .voice-btn:active {
   transform: scale(1.15);
@@ -247,47 +256,74 @@
   transform: scale(1.2);
   box-shadow: 0 0 20rpx rgba(255, 107, 53, 0.5);
 }
-
-/* ============= 录音状态提示 ============= */
-
 .voice-status {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 24rpx;
-  padding: 40rpx 60rpx;
+  width: 80%;
+  min-height: 280rpx;
+  background: rgba(20, 20, 20, 0.94);
+  border-radius: 28rpx;
+  padding: 40rpx 40rpx 36rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16rpx;
+  justify-content: center;
+  gap: 12rpx;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .voice-status-show {
   opacity: 1;
+  pointer-events: auto;
 }
 
-.voice-status-dot {
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
-  background: var(--accent);
-  animation: record-pulse 0.8s infinite;
-}
-
-.voice-status-dot.cancel {
-  background: #ff4d4f;
-}
-
-.voice-status-text {
+.vs-title {
   color: #fff;
-  font-size: 28rpx;
-  white-space: nowrap;
+  font-size: 34rpx;
+  font-weight: 600;
+  animation: record-pulse-soft 1s infinite;
+}
+.vs-tip {
+  color: #ffd9c4;
+  font-size: 24rpx;
+}
+.vs-btns {
+  display: flex;
+  gap: 40rpx;
+  margin-top: 30rpx;
+  width: 100%;
+}
+.vs-btn {
+  flex: 1;
+  font-size: 30rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 44rpx;
+  color: #fff;
+  padding: 0;
+}
+.vs-cancel { background: #666; }
+.vs-done { background: var(--accent, #ff6b35); font-weight: 600; }
+
+@keyframes record-pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* ✨ 把某一句收进回忆的小胶囊 */
+.msg-save-one {
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: var(--accent, #ff6b35);
+  background: #fff3e9;
+  border: 1rpx solid #ffd8bd;
+  padding: 6rpx 22rpx;
+  border-radius: 30rpx;
 }
 
 @keyframes record-pulse {

@@ -7,8 +7,7 @@ Page({
     currentMode: 'self',    // self | interview | type
     typeContent: '',
     stories: [],
-    showRecordingToast: false,
-    transcript: ''
+    showRecordingToast: false
   },
 
   onLoad() {
@@ -18,11 +17,9 @@ Page({
     app.registerRecorder({
       onStop: (res) => {
         this.setData({ isRecording: false, showRecordingToast: false })
-        // 松手后：超过1秒才识别保存
+        // 松手后：超过1秒才进入"确认-编辑-保存"
         if (res.duration > 1000) {
-          this.transcript = ''
-          this.setData({ transcript: '' })
-          this.saveAudioStory(res)
+          this.toSaveFromVoice(res)
         } else {
           wx.showToast({ title: '说话时间太短', icon: 'none' })
         }
@@ -90,112 +87,44 @@ Page({
     // UI 复位交给全局 onStop 回调；这里也兜底复位，防极个别回调丢失
     this.setData({ isRecording: false, showRecordingToast: false })
   },
-  // 保存录音故事（先转文字，再以文字为主保存；音频尽力上传不影响保存）
-  saveAudioStory(res) {
+  // 录音结束 → 后台转文字 → 跳"确认·编辑·保存"页
+  toSaveFromVoice(res) {
     const { tempFilePath, duration } = res
     const dur = Math.floor(duration / 1000)
-
-    // 第一步：调用语音识别，把语音转成文字
     wx.showLoading({ title: '识别语音中...' })
-    this.asrAudio(tempFilePath).then(text => {
-      wx.hideLoading()
-      const content = (text && text !== '(未能识别)') ? text : `[语音回忆 ${dur}秒]`
-      // 第二步：以文字为主保存（后端+本地双保险，绝不因音频上传失败而丢）
-      this.uploadTextStory(tempFilePath, content, dur)
-    }).catch(() => {
-      wx.hideLoading()
-      // ASR失败，降级：以占位文字保存（不阻塞用户）
-      wx.showToast({ title: '语音识别失败，已按语音保存', icon: 'none' })
-      const content = `[语音回忆 ${dur}秒]`
-      this.uploadTextStory(tempFilePath, content, dur)
+    wx.uploadFile({
+      url: `${app.globalData.apiBase}/ai/asr`,
+      filePath: tempFilePath,
+      name: 'audio',
+      success: (r) => {
+        wx.hideLoading()
+        let text = ''
+        try { text = (JSON.parse(r.data).text) || '' } catch (e) { text = '' }
+        if (text && text !== '(未能识别)' && text !== '[未能识别出文字]') {
+          this.openSavePage(text, tempFilePath, 'voice', dur)
+        } else {
+          // 转不出来：把未识别也带进保存页，让老人能补字/放弃（绝不静默丢）
+          wx.showToast({ title: '没能自动转文字，可手动补写', icon: 'none' })
+          this.openSavePage('', tempFilePath, 'voice', dur)
+        }
+      },
+      fail: () => {
+        wx.hideLoading()
+        wx.showToast({ title: '识别失败，可手动写或重录', icon: 'none' })
+        this.openSavePage('', tempFilePath, 'voice', dur)
+      }
     })
   },
 
-  // 调用语音识别接口
-  asrAudio(filePath) {
-    return new Promise((resolve, reject) => {
-      wx.uploadFile({
-        url: `${app.globalData.apiBase}/ai/asr`,
-        filePath: filePath,
-        name: 'audio',
-        success: (res) => {
-          try {
-            const data = JSON.parse(res.data)
-            const text = data.text || ''
-            this.setData({ transcript: text || '[未能识别出文字]' })
-            resolve(text || '[未能识别出文字]')
-          } catch (e) {
-            reject(e)
-          }
-        },
-        fail: reject
-      })
-    })
-  },
-
-  // 以文字为主保存（后端 POST + 本地双保险），音频文件尽力附带上传
-  uploadTextStory(tempFilePath, content, dur) {
-    const newStory = {
-      id: Date.now().toString(),
-      date: getTodayDate(),
-      era: getEraFromContent(content),
-      content,
-      type: 'audio',
-      audioPath: tempFilePath,
-      createdAt: new Date().toISOString()
-    }
-    // 1) 先本地保存（数据必不丢）
-    const stories = wx.getStorageSync('localStories') || []
-    stories.unshift(newStory)
-    wx.setStorageSync('localStories', stories.slice(0, 100))
-    app.globalData.stories = stories
-    this.storyCache = stories
-    this.loadStories()
-
-    wx.showLoading({ title: '正在保存...' })
-    // 2) 后端保存文字版（实测201成功）
-    let synced = Promise.reject()
-    try {
-      synced = new Promise((resolve, reject) => {
-        wx.request({
-          url: `${app.globalData.apiBase}/stories`,
-          method: 'POST',
-          data: {
-            content,
-            date: getTodayDate(),
-            era: getEraFromContent(content),
-            type: 'audio'
-          },
-          success: (r) => (r.statusCode === 200 || r.statusCode === 201) ? resolve(r.data) : reject(r),
-          fail: reject
-        })
-      })
-    } catch (e) { synced = Promise.reject(e) }
-
-    synced.finally(() => {
-      wx.hideLoading()
-    })
-    // 3) 音频文件尽力上传（失败不影响已保存的文字）
-    synced.then(() => {
-      try {
-        wx.uploadFile({
-          url: `${app.globalData.apiBase}/stories/audio`,
-          filePath: tempFilePath,
-          name: 'audio',
-          formData: {
-            type: 'audio',
-            content: content,
-            era: getEraFromContent(content),
-            duration: dur
-          },
-          fail: () => { /* 音频上传失败静默，文字已保存 */ }
-        })
-      } catch (e) { /* ignore */ }
-      wx.showToast({ title: '回忆已保存', icon: 'success' })
-    }).catch(() => {
-      // 后端同步失败，本地已保存，仍提示成功
-      wx.showToast({ title: '已保存（本地）', icon: 'success' })
-    })
+  // 跳转通用的"确认-编辑-保存"页
+  openSavePage(content, audioPath, sourceType, dur) {
+    const q = [
+      'content=' + encodeURIComponent(content || ''),
+      'sourceType=' + (sourceType || 'text'),
+      'dur=' + (dur || 0)
+    ]
+    if (audioPath) q.push('audioPath=' + encodeURIComponent(audioPath))
+    wx.navigateTo({ url: '/pages/save/save?' + q.join('&') })
   },
 
   // 切换模式
@@ -209,57 +138,11 @@ Page({
     this.setData({ typeContent: e.detail.value })
   },
 
-  // 提交文字回忆
+  // 打字的"保存"→ 跳到统一"确认·编辑·保存"页（顺带选年份），不再当场静默落库
   submitType() {
     const content = this.data.typeContent.trim()
     if (!content) return
-
-    // 无论后端是否成功，都先本地保存一份，保证用户数据不丢
-    const newStory = {
-      id: Date.now().toString(),
-      date: getTodayDate(),
-      era: getEraFromContent(content),
-      content,
-      type: 'text',
-      createdAt: new Date().toISOString()
-    }
-    const stories = wx.getStorageSync('localStories') || []
-    stories.unshift(newStory)
-    wx.setStorageSync('localStories', stories.slice(0, 100))
-    app.globalData.stories = stories
-
-    wx.showLoading({ title: '正在保存...' })
-
-    wx.request({
-      url: `${app.globalData.apiBase}/stories`,
-      method: 'POST',
-      data: {
-        content,
-        date: getTodayDate(),
-        era: getEraFromContent(content),
-        type: 'text',
-        tags: []
-      },
-      success: (res) => {
-        wx.hideLoading()
-        // 后端返回 200 / 201 都算保存成功
-        if (res.statusCode === 200 || res.statusCode === 201) {
-          wx.showToast({ title: '回忆已保存', icon: 'success' })
-        } else {
-          // 后端返回异常，但本地已保存，仍提示成功
-          wx.showToast({ title: '回忆已保存（本地）', icon: 'success' })
-        }
-        this.setData({ typeContent: '' })
-        this.loadStories()
-      },
-      fail: () => {
-        wx.hideLoading()
-        // 网络异常，本地已保存，提示成功
-        wx.showToast({ title: '回忆已保存（本地）', icon: 'success' })
-        this.setData({ typeContent: '' })
-        this.loadStories()
-      }
-    })
+    this.openSavePage(content, '', 'text', 0)
   },
 
   // 进入AI采访

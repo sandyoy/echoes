@@ -4,6 +4,7 @@
     "pages/interview/interview",
     "pages/timeline/timeline",
     "pages/story/story",
+    "pages/save/save",
     "pages/mine/mine",
     "pages/album/album"
   ],

@@ -1,0 +1,61 @@
+<!-- 确认 · 编辑 · 保存一段回忆 -->
+<view class="page">
+
+  <view class="page-body">
+
+    <view class="tip-area">
+      <text wx:if="{{sourceType === 'voice'}}" class="tip-big">🎙️ 刚才说的话已转成下面文字</text>
+      <text wx:elif="{{sourceType === 'single'}}" class="tip-big">📌 把这句话收进回忆册</text>
+      <text wx:else class="tip-big">✏️ 写下&整理这段回忆</text>
+      <text class="tip-sub">检查一下文字，可以不改；如果是记过去的事，请选年份。</text>
+    </view>
+
+    <!-- 文字编辑 -->
+    <view class="ed-card">
+      <view class="ed-hint">内容（可随意修改补充）</view>
+      <textarea
+        class="ed-input"
+        value="{{content}}"
+        bindinput="onContentInput"
+        maxlength="2000"
+        auto-height
+        placeholder="把想留住的话写在这里..."
+      />
+    </view>
+
+    <!-- 原声播放：语音来源且有录音文件时 -->
+    <view class="audio-card" wx:if="{{audioPath}}">
+      <view class="audio-row" bindtap="togglePlayAudio" hover-class="audio-active">
+        <text class="audio-ico">{{playing ? '⏸' : '🔊'}}</text>
+        <text class="audio-txt">{{playing ? '点击暂停' : '播放这段原声（确认录对了）'}}</text>
+      </view>
+    </view>
+
+    <!-- 年份选择 -->
+    <view class="yr-card">
+      <view class="yr-title">这段回忆，是哪一年的事？</view>
+      <view class="yr-chips">
+        <view
+          wx:for="{{yearQuickList}}"
+          wx:key="*this"
+          class="yr-chip {{curYearLabel === item ? 'on' : ''}}"
+          bindtap="pickYearLabel" data-year="{{item}}"
+        >{{item}}</view>
+      </view>
+      <picker class="yr-yearpicker" mode="date" fields="year" start="1930-01-01" end="{{currYear}}-12-31" value="{{yearStr}}-06-15" bindchange="onYearPick">
+        <view class="yr-yearbox">{{yearStr}} <text class="yr-arrow">▾</text></view>
+      </picker>
+      <view class="yr-tip">{{yearStr}} 年 · 将归入时光轴的{{yearStr}}年</view>
+    </view>
+
+  </view>
+
+  <!-- 底部操作 -->
+  <view class="foot">
+    <button class="btn btn-ghost cancel-btn" bindtap="cancel" disabled="{{saving}}">放弃</button>
+    <button class="btn btn-primary do-btn" bindtap="saveAll" disabled="{{!content.trim() || saving}}">
+      {{saving ? '保存中...' : '✅ 存进回忆册'}}
+    </button>
+  </view>
+
+</view>

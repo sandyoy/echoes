@@ -156,57 +156,40 @@ Page({
 
   // ============= 保存本次采访为回忆 =============
 
+  // 把"整场采访保存为回忆" → 跳统一"确认·编辑·保存"页（可改字、选年份再存）
   saveAsStory() {
     if (this.data.isSaving) return
-    // 只取用户说过的内容作为正文（排除开场白和AI回复）
     const userMsgs = this.data.messages.filter(m => m.role === 'user').map(m => m.content)
     if (userMsgs.length === 0) {
       wx.showToast({ title: '还没有采访内容', icon: 'none' })
       return
     }
-
-    this.setData({ isSaving: true })
-
-    // 从用户说的内容里提取主题标签
-    const era = getEraFromContent(userMsgs.join(' '))
-
     // 正文：把问答串起来，保留访谈的完整感
     const qa = this.data.messages
       .filter(m => m.content && (m.role === 'user' || m.role === 'ai'))
       .map(m => (m.role === 'user' ? '我：' : 'AI：') + m.content)
       .join('\n')
+    this._navToSave(qa, '', 'interview', 0)
+  },
 
-    const story = {
-      id: 'iv' + Date.now().toString(),
-      date: getTodayDate(),
-      era,
-      content: qa,
-      type: 'interview',
-      createdAt: new Date().toISOString()
+  // 把某一句话单独收进回忆册
+  saveOneMsg(e) {
+    const text = (e.currentTarget.dataset.text || '').trim()
+    if (!text) {
+      wx.showToast({ title: '这句话有点短，再说两句吧', icon: 'none' })
+      return
     }
+    this._navToSave(text, '', 'single', 0)
+  },
 
-    // 本地保存（采访不是实时存，这里一次性落地）
-    const stories = wx.getStorageSync('localStories') || []
-    stories.unshift(story)
-    wx.setStorageSync('localStories', stories.slice(0, 100))
-
-    wx.showLoading({ title: '正在保存...' })
-    wx.request({
-      url: `${API_BASE}/stories`,
-      method: 'POST',
-      data: {
-        content: qa,
-        date: getTodayDate(),
-        era,
-        type: 'interview',
-        tags: []
-      },
-      complete: () => {
-        wx.hideLoading()
-        this.setData({ isSaving: false })
-        wx.showToast({ title: '已存为回忆', icon: 'success' })
-      }
-    })
+  _navToSave(content, audioPath, sourceType, dur) {
+    const q = [
+      'content=' + encodeURIComponent(content || ''),
+      'sourceType=' + (sourceType || 'text'),
+      'dur=' + (dur || 0)
+    ]
+    if (audioPath) q.push('audioPath=' + encodeURIComponent(audioPath))
+    wx.navigateTo({ url: '/pages/save/save?' + q.join('&') })
   },
 
   // ============= 语音合成（TTS） =============
@@ -301,15 +284,17 @@ Page({
   },
 
   // ============= 语音输入 =============
-
-  onVoiceStart(e) {
-    // 全局互锁：别处（如有）正在录就不录；本页已在录也不重复
-    if (app.isRecording() || this._isRecording) return
-
-    this._startY = e.touches[0].clientY
+  // 改成一键开始、一键结束：老人更容易，也杜绝"录音停不下来"
+  onVoiceTap() {
+    if (this._isRecording) {
+      this.onVoiceDone()
+      return
+    }
+    // 开始录音
+    if (app.isRecording() || this.data.isThinking) return
+    this._startY = 0
     this._isRecording = true
     this.setData({ voicePress: true, voiceCancel: false })
-
     if (!app.startRecord({
       format: 'mp3',
       sampleRate: 16000,
@@ -321,40 +306,34 @@ Page({
       wx.showToast({ title: '录音启动失败', icon: 'none' })
       return
     }
-    // 录音超时保护（60秒自动停止）
+    // 超时保护（300秒上限，届时自动完成）
     this._recordTimer = setTimeout(() => {
-      if (this._isRecording) {
-        this._stopRecording(false)
-      }
-    }, 60000)
+      if (this._isRecording) this.onVoiceDone()
+    }, 300000)
   },
 
-  onVoiceMove(e) {
+  // 显式完成：停止并转文字发送（老人点【完成】或再点麦克风都会到这里）
+  onVoiceDone() {
     if (!this._isRecording) return
-    const moveY = e.touches[0].clientY
-    const deltaY = this._startY - moveY
-    // 上滑超过 50px 显示取消区域
-    this.setData({ voiceCancel: deltaY > 50 })
-  },
-
-  onVoiceEnd() {
-    if (!this._isRecording) return
-    const shouldCancel = this.data.voiceCancel
-    this._stopRecording(shouldCancel)
-  },
-
-  _stopRecording(cancel) {
     this._isRecording = false
     clearTimeout(this._recordTimer)
-    // 全局停止（无论是否取消，都停；取消时不转文字）
-    if (cancel) {
-      app.forceStopRecord()
-      this.setData({ voicePress: false, voiceCancel: false })
-      wx.showToast({ title: '已取消录音', icon: 'none' })
-    } else {
-      app.stopRecord() // 正常停止，onStop 回调会转文字+发送
-    }
+    this.setData({ voicePress: false, voiceCancel: false })
+    app.stopRecord() // 全局 onStop → _transcribeAndSend
   },
+
+  // 显式取消：丢弃这段录音
+  onVoiceCancel() {
+    if (!this._isRecording) return
+    this._isRecording = false
+    clearTimeout(this._recordTimer)
+    app.forceStopRecord()
+    this.setData({ voicePress: false, voiceCancel: false })
+    wx.showToast({ title: '已取消', icon: 'none' })
+  },
+
+  // 页面层面的兜底：录音期间意外切页面/隐藏也能停下
+  onVoiceMove() {}, // 保留占位防旧引用
+  onVoiceEnd() { this.onVoiceDone() },
 
   _uploadAudio(tempFilePath) {
     wx.showLoading({ title: '识别语音中...' })
