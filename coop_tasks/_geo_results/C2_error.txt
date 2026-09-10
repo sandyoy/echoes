@@ -1,2 +1,6 @@
-page.waitForTimeout: Target page, context or browser has been closed
-    at /Users/sandy/geo_run/run_geo.js:74:18
+locator.waitFor: Timeout 25000ms exceeded.
+Call log:
+  - waiting for locator('textarea, input[type="text"]').first() to be visible
+
+    at askOne (/Users/sandy/geo_run/run_geo_c.js:30:12)
+    at async /Users/sandy/geo_run/run_geo_c.js:73:18

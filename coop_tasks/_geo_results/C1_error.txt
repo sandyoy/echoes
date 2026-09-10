@@ -1,0 +1,6 @@
+page.goto: net::ERR_INTERNET_DISCONNECTED at https://metaso.cn/
+Call log:
+  - navigating to "https://metaso.cn/", waiting until "domcontentloaded"
+
+    at askOne (/Users/sandy/geo_run/run_geo_c.js:19:14)
+    at /Users/sandy/geo_run/run_geo_c.js:73:24

@@ -1,0 +1,18 @@
+[2026-09-10T07:59:03.663Z] === START C2 ===
+[2026-09-10T08:00:06.746Z] C2 ERROR: locator.waitFor: Timeout 25000ms exceeded.
+Call log:
+  - waiting for locator('textarea, input[type="text"]').first() to be visible
+
+[2026-09-10T08:00:43.431Z] === START C1 ===
+[2026-09-10T08:00:43.532Z] C1 ERROR: page.goto: net::ERR_INTERNET_DISCONNECTED at https://metaso.cn/
+Call log:
+  - navigating to "https://metaso.cn/", waiting until "domcontentloaded"
+
+[2026-09-10T08:02:22.174Z] ALL DONE
+[2026-09-10T11:26:51.330Z] === START C2 ===
+[2026-09-10T11:27:02.422Z] C2 submitted, waiting...
+[2026-09-10T11:28:47.306Z] C2 DONE len=1894
+[2026-09-10T11:29:07.310Z] === START C1 ===
+[2026-09-10T11:29:15.562Z] C1 submitted, waiting...
+[2026-09-10T11:30:56.612Z] C1 DONE len=1810
+[2026-09-10T11:31:17.319Z] ALL DONE
