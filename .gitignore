@@ -27,6 +27,34 @@ Thumbs.db
 *.log
 git-pull-logs/
 .git-pull-log*.txt
+
+# === 同步脚本日志（过程垃圾，不入仓）===
+.git-sync-log*
+.sync_log*
+.sync-log*
+.synclog/
+.sync-logs/
+.git_sync.log
+.gitpull-sync.log
+.sync_last.log
+.sync_last.log
+sync_log.txt
+sync_logs/
+sync-logs/
+git_pull_log*
+git_pull_sync*
+git_pull_cron*
+git_sync*
+pull_log*
+pull_sync*
+pull_记录*
+sync_record*
+同步记录*
+*git_pull.log
+git_pull_result*
+agents_log/
+.cron_pull_logs/
+logs/
 # Node
 node_modules/
 
