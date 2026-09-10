@@ -1,0 +1,19 @@
+[2026-09-10T03:09:24.346Z] === START A2 ===
+[2026-09-10T03:09:54.293Z] A2 submitted, waiting for answer...
+[2026-09-10T03:11:26.945Z] A2 DONE len=1693
+[2026-09-10T03:11:41.948Z] === START B1 ===
+[2026-09-10T03:11:54.646Z] B1 submitted, waiting for answer...
+[2026-09-10T03:13:28.900Z] B1 DONE len=1743
+[2026-09-10T03:13:43.905Z] === START B2 ===
+[2026-09-10T03:13:55.899Z] B2 submitted, waiting for answer...
+[2026-09-10T03:15:05.803Z] B2 DONE len=2316
+[2026-09-10T03:15:20.808Z] === START C1 ===
+[2026-09-10T03:15:37.762Z] C1 submitted, waiting for answer...
+[2026-09-10T03:15:41.508Z] C1 LOGIN_WALL mid-way
+[2026-09-10T03:15:41.510Z] C1 BLOCKED/EMPTY len=0
+[2026-09-10T03:15:56.548Z] === START C2 ===
+[2026-09-10T03:16:09.100Z] C2 submitted, waiting for answer...
+[2026-09-10T03:16:12.298Z] C2 LOGIN_WALL mid-way
+[2026-09-10T03:16:12.299Z] C2 BLOCKED/EMPTY len=0
+[2026-09-10T03:16:20.355Z] C2 ERROR: page.waitForTimeout: Target page, context or browser has been closed
+[2026-09-10T03:16:21.063Z] ALL DONE

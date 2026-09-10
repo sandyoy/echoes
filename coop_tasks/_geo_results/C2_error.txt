@@ -1,0 +1,2 @@
+page.waitForTimeout: Target page, context or browser has been closed
+    at /Users/sandy/geo_run/run_geo.js:74:18
