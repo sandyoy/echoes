@@ -45,7 +45,9 @@ git_pull_log*
 git_pull_sync*
 git_pull_cron*
 git_sync*
-pull_log*
+# 精确匹配脚本回显（⚠️ 不可用 pull_log* 通配，会误伤 docs/pull_log/pull_YYYY-MM-DD.md 正式留档）
+pull_log.txt
+pull_log_*.txt
 pull_sync*
 pull_记录*
 sync_record*
@@ -54,6 +56,13 @@ sync_record*
 git_pull_result*
 agents_log/
 .cron_pull_logs/
+.git-auto-pull*
+.cron_git_pull*
+.cron_pull_logs*
+.last_pull*
+.sync/
+.git_sync_logs/
+.sync_last*
 logs/
 # Node
 node_modules/
