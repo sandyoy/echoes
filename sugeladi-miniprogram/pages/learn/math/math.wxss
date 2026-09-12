@@ -1,0 +1,245 @@
+/* 数学运算律样式 */
+.page {
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+}
+
+.hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 50rpx 30rpx 30rpx;
+}
+.hero-icon {
+  font-size: 80rpx;
+  margin-bottom: 16rpx;
+}
+.hero-title {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8rpx;
+}
+.hero-desc {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.topic-section {
+  padding: 0 30rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.topic-card {
+  display: flex;
+  align-items: center;
+  background: var(--bg-card);
+  border-radius: 20rpx;
+  padding: 24rpx;
+  box-shadow: var(--shadow);
+  gap: 20rpx;
+}
+.topic-card.featured {
+  border: 3rpx solid #ffd700;
+  background: #fffdf5;
+}
+.topic-card:active {
+  transform: scale(0.98);
+}
+
+.topic-icon-area {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.jh-bg { background: #e8f5e9; }
+.cf-bg { background: #e3f2fd; }
+.fp-bg { background: #fff3e0; }
+.topic-icon {
+  font-size: 36rpx;
+}
+
+.topic-info {
+  flex: 1;
+}
+.topic-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4rpx;
+}
+.topic-desc {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.topic-example {
+  font-size: 26rpx;
+  color: var(--accent);
+  font-weight: 500;
+  margin-top: 6rpx;
+}
+.topic-arrow {
+  font-size: 32rpx;
+  color: var(--text-muted);
+}
+
+/* 苏格拉底对话 */
+.socrates-section {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 70vh;
+  background: var(--bg-primary);
+  border-radius: 30rpx 30rpx 0 0;
+  box-shadow: 0 -8rpx 32rpx rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+  animation: slideUp 0.3s;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 30rpx;
+  border-bottom: 2rpx solid var(--border);
+}
+.dialog-title {
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.dialog-close {
+  padding: 8rpx 16rpx;
+  font-size: 32rpx;
+  color: var(--text-muted);
+}
+
+.dialog-body {
+  flex: 1;
+  padding: 20rpx 30rpx;
+  overflow-y: auto;
+}
+
+.msg-row {
+  display: flex;
+  margin-bottom: 20rpx;
+  align-items: flex-start;
+}
+.msg-ai { justify-content: flex-start; }
+.msg-user { justify-content: flex-end; }
+
+.msg-icon {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 28rpx;
+}
+.ai-icon { margin-right: 12rpx; }
+.user-icon { margin-left: 12rpx; }
+
+.msg-text {
+  max-width: 500rpx;
+  padding: 16rpx 22rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  line-height: 1.7;
+}
+.ai-text {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-top-left-radius: 4rpx;
+  box-shadow: var(--shadow);
+}
+.user-text {
+  background: var(--accent);
+  color: #fff;
+  border-top-right-radius: 4rpx;
+}
+
+.thinking-dots {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+.thinking-dots .dot {
+  font-size: 48rpx;
+  animation: blink 1.4s infinite;
+  color: var(--text-muted);
+  line-height: 1;
+}
+.thinking-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.thinking-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* 快捷回答 */
+.quick-answers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  padding: 12rpx 30rpx;
+}
+.quick-btn {
+  padding: 12rpx 24rpx;
+  border-radius: 30rpx;
+  background: var(--accent-light);
+  border: 2rpx solid var(--accent);
+  font-size: 24rpx;
+  color: var(--accent);
+}
+.quick-btn:active {
+  opacity: 0.7;
+}
+
+/* 底部输入 */
+.dialog-input-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 20rpx;
+  background: var(--bg-card);
+  border-top: 2rpx solid var(--border);
+  gap: 12rpx;
+}
+.dialog-input {
+  flex: 1;
+  height: 68rpx;
+  background: var(--bg-primary);
+  border-radius: 40rpx;
+  padding: 0 24rpx;
+  font-size: 28rpx;
+}
+.dialog-send-btn {
+  width: 100rpx;
+  height: 68rpx;
+  line-height: 68rpx;
+  text-align: center;
+  border-radius: 40rpx;
+  background: var(--accent);
+  color: #fff;
+  font-size: 26rpx;
+  padding: 0;
+}
+.dialog-send-btn[disabled] {
+  background: var(--border);
+  color: var(--text-muted);
+}

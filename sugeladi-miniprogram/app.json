@@ -1,0 +1,33 @@
+{
+  "pages": [
+    "pages/learn/learn",
+    "pages/learn/pinyin/pinyin",
+    "pages/learn/pinyin/flashcard/flashcard",
+    "pages/learn/pinyin/lookup/lookup",
+    "pages/learn/math/math"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#f8f6ff",
+    "navigationBarTitleText": "苏格拉底学伴",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f8f6ff"
+  },
+  "tabBar": {
+    "color": "#999",
+    "selectedColor": "#6a5acd",
+    "backgroundColor": "#f8f6ff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/learn/learn",
+        "iconPath": "images/learn.png",
+        "selectedIconPath": "images/learn-active.png",
+        "text": "学习"
+      }
+    ]
+  },
+  "requiredBackgroundModes": ["audio"],
+  "plugins": {},
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
