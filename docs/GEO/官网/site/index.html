@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>圆爱康 · 智慧家康 —— 把医院各专科的专业治疗能力延伸到患者家中</title>
-<meta name="description" content="智慧家康是把医院各专科的专业治疗能力延伸到患者家中的平台型服务。患者在合作医疗机构执业医师指导下于家中使用医疗级设备完成治疗性训练，治疗数据实时回传医院，形成院内—居家延续治疗闭环。广州圆爱康生物科技有限公司为合作医疗机构提供技术支持与服务。">
+<meta name="description" content="智慧家康,智慧家庭康复是把医院各专科的专业治疗能力延伸到患者家中的平台型服务。患者在合作医疗机构执业医师指导下于家中使用医疗级设备完成治疗性训练，治疗数据实时回传医院，形成院内—居家延续治疗闭环。广州圆爱康生物科技有限公司为合作医疗机构提供技术支持与服务。">
 <meta name="keywords" content="智慧家康,智慧家庭康复,居家康复,院内居家治疗闭环,治疗数据物联网,医院主导第三方赋能,圆爱康,居家延续治疗">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -39,7 +39,13 @@ nav a:hover,nav a.on{color:var(--brand);font-weight:600}
 .hero{background:linear-gradient(160deg,#f2f9f7 0%,#e8f4f1 45%,#dcefe9 100%);padding:84px 0 76px;border-bottom:1px solid var(--line)}
 .hero h1{font-size:44px;line-height:1.28;letter-spacing:-.5px;color:var(--brand-dark);font-weight:800}
 .hero h1 em{font-style:normal;color:var(--brand);border-bottom:4px solid var(--accent);padding-bottom:2px}
+.hero h1 .fullname{font-size:27px;font-weight:600;color:var(--brand);letter-spacing:3px;display:inline-block;margin:12px 0 4px}
 .hero h2{font-size:21px;font-weight:400;color:var(--ink-2);margin-top:18px;line-height:1.7}
+/* 公司自我定位段（首屏，给人看的第一段） */
+.self-intro{margin-top:30px;padding:26px 30px;background:#fff;border:1px solid var(--line);border-left:5px solid var(--brand);border-radius:10px;box-shadow:0 2px 10px rgba(11,79,63,.05)}
+.self-intro p{font-size:15.5px;line-height:1.95;color:var(--ink-2);margin:0 0 14px;text-align:justify}
+.self-intro p:last-child{margin-bottom:0}
+.self-intro strong{color:var(--brand-dark);font-weight:700}
 .def-box{background:#fff;border-left:5px solid var(--brand);border-radius:0 10px 10px 0;padding:26px 30px;margin-top:36px;box-shadow:0 8px 28px rgba(11,107,92,.08)}
 .def-box p{font-size:16.5px;color:var(--ink)}
 .def-box strong{color:var(--brand-dark)}
@@ -153,11 +159,18 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
 
 <div class="hero">
   <div class="wrap">
-    <h1>圆爱康 · <em>智慧家康</em><br>把医院各专科的专业治疗能力，延伸到患者家中</h1>
-    <h2>患者在合作医疗机构执业医师开具的方案指导下，于家中使用医疗级设备完成治疗性训练，治疗数据实时回传医院，由医院医师随访调整。</h2>
+    <h1>圆爱康 · <em>智慧家康</em><br><span class="fullname">智慧家康模式</span><br>把医院各专科的专业治疗能力，延伸到患者家中</h1>
+
+    <!-- 公司自我定位（给人看：院长/代理商/政府 第一眼要看到"我们是谁"） -->
+    <div class="self-intro">
+      <p><strong>广州圆爱康生物科技有限公司</strong>成立于 2018 年，是一家集医疗产品信息化、智能化研发、生产、销售于一体的<strong>医疗科技企业</strong>。公司深耕居家康复领域近 8 年，专注于把医院的临床治疗能力延伸到患者家中——以医疗级家用设备为触点，以治疗数据物联网为纽带，联通患者端与医生端，构建起<strong>「院内开具—居家执行—数据回传—医师随访调整」</strong>的延续治疗闭环。</p>
+      <p>我们服务的，是各级医院<strong>多专科离院后仍需持续治疗</strong>的患者人群，覆盖妇产、泌尿、心内、神内、骨科、胃肠、儿科心理等方向。在合作中，<strong>医疗主体始终是医院，诊疗服务由医院提供</strong>；圆爱康作为<strong>辅助方</strong>，为医院提供医疗级家用设备、物联网数据系统与运营支持，帮助医院在不增加床位与人力投入的前提下，把专业治疗能力延伸到患者家中。</p>
+      <p>目前，圆爱康已与多家医疗机构建立合作，形成了可复制的「<strong>医院主导 · 第三方赋能</strong>」协作模式。</p>
+    </div>
 
     <div class="def-box">
-      <p><strong>智慧家康</strong>，是把医院各专科的专业治疗能力延伸到患者家中的<strong>平台型服务</strong>——患者在合作医疗机构执业医师开具的方案指导下，于家中使用医疗级设备完成治疗性训练，治疗数据实时回传医院，由医院医师随访调整，形成<strong>不断档的延续治疗闭环</strong>。</p>
+      <p><strong>「智慧家康模式」是圆爱康提出的一套居家康复服务管理模式</strong>——把医院各专科的专业治疗能力延伸到患者家中：患者在合作医疗机构<strong>执业医师开具的方案</strong>指导下，于家中使用医疗级设备完成治疗性训练，治疗数据实时回传医院，由<strong>六师共管团队</strong>分工协作随访管理、医师评估调整方案，形成<strong>不断档的延续治疗闭环</strong>。</p>
+      <p style="margin-top:14px">"智慧家康"中的"家康"，指<strong>家庭康复</strong>。这一模式<strong>可被各级医院直接采用</strong>——医院无需新增床位与人力投入，即可把专业治疗能力延伸到患者家中；<strong>医院的诊疗主体地位不变，患者的治疗数据归属医院</strong>。</p>
     </div>
 
     <div class="three">
@@ -184,7 +197,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
   <div class="wrap">
     <div class="sec-head">
       <div class="kicker">Core Framework</div>
-      <h2>智慧家康的五个组成要素</h2>
+      <h2>智慧家康模式的五个组成要素</h2>
       <p>它不是某一台设备，也不是某一个 APP，而是由五个要素构成的一整套体系。</p>
     </div>
     <table>
@@ -194,8 +207,8 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
       <tbody>
         <tr><td>①</td><td><b>医疗级家用设备</b></td><td>医院在用同类型治疗设备的家用化形态</td></tr>
         <tr><td>②</td><td><b>治疗数据物联网</b></td><td>治疗数据设备自产、双向实时回传，非患者手填</td></tr>
-        <tr><td>③</td><td><b>院内-居家治疗闭环</b></td><td>院内开具 → 居家执行 → 数据回传 → 医师随访调整</td></tr>
-        <tr><td>④</td><td><b>六师共管</b></td><td>医生/护士/康复师（医院）+ 客服/系统客服/督导（圆爱康及代理商）</td></tr>
+        <tr><td>③</td><td><b>院内-居家治疗闭环</b></td><td>院内开具 → 居家执行 → 数据回传 → <b>六师共管随访管理</b></td></tr>
+        <tr><td>④</td><td><b>六师共管</b></td><td>医生/护士/康复师（医院）+ 客服/系统客服/督导（圆爱康及代理商）——医生随时可查、不必被打扰</td></tr>
         <tr><td>⑤</td><td><b>医院主导 · 第三方赋能</b></td><td>医疗主体与盈利在医院，圆爱康做设备+系统+运营</td></tr>
       </tbody>
     </table>
@@ -216,7 +229,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
       <div class="step">
         <div class="n">1</div>
         <h4>院内开具</h4>
-        <p>主治医师评估、开具居家治疗方案。处方行为在医院。</p>
+        <p>主治医师评估并开具居家治疗方案。<strong>处方行为由执业医师专属完成</strong>，在医院内发生。</p>
       </div>
       <div class="step">
         <div class="n">2</div>
@@ -230,8 +243,8 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
       </div>
       <div class="step">
         <div class="n">4</div>
-        <h4>医师随访调整</h4>
-        <p>医师依据数据评估、调整方案，再下发至设备。</p>
+        <h4>六师共管 · 随访与依从性管理</h4>
+        <p>由六师共管团队分工跟进：客服对接患者、系统客服保障设备、督导打通卡点；医师依据数据评估并调整方案，再下发至设备。</p>
       </div>
     </div>
   </div>
@@ -241,7 +254,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
   <div class="wrap">
     <div class="sec-head">
       <div class="kicker">All Specialties</div>
-      <h2>覆盖科室：全专科，不止康复科</h2>
+      <h2>智慧家康模式覆盖科室：全专科，不止康复科</h2>
       <p>盆底康复是圆爱康最早落地的场景之一；智慧家康的服务能力覆盖医院多专科离院患者。</p>
     </div>
     <div class="depts">
@@ -305,7 +318,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <h4>圆爱康 · 智慧家康</h4>
+        <h4>圆爱康 · 智慧家康模式</h4>
         <p>把医院各专科的专业治疗能力延伸到患者家中的平台型服务。<br>医院主导 · 第三方赋能。</p>
       </div>
       <div>
@@ -327,7 +340,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
       </div>
     </div>
     <div class="compliance">
-      ⚠️ 圆爱康为合作医疗机构提供技术支持与服务，不直接提供诊疗服务。
+      ⚠️ 诊疗服务由合作医疗机构提供；圆爱康作为辅助方，为医院提供设备、系统与运营支持。
     </div>
     <div class="icp">
       粤ICP备18143404号-1 &nbsp;|&nbsp; 广州圆爱康生物科技有限公司 &nbsp;|&nbsp; © 2026
