@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>什么是智慧家康 · 圆爱康</title>
+<meta name="description" content="智慧家康,智慧居家康复是把医院各专科的专业治疗能力延伸到患者家中的服务管理模式，由医疗级家用设备、治疗数据物联网、院内-居家治疗闭环、六师共管、医院主导第三方赋能五个要素构成。">
+<meta name="keywords" content="智慧家康,什么是智慧家康,智慧居家康复,家康定义,院内居家治疗闭环,治疗数据物联网,六师共管,圆爱康">
+<style>
+    10|*{margin:0;padding:0;box-sizing:border-box}
+    11|:root{
+    12|  --brand:#0b6b5c;
+    13|  --brand-dark:#084f44;
+    14|  --brand-light:#e8f4f1;
+    15|  --accent:#c9a227;
+    16|  --ink:#1a2b28;
+    17|  --ink-2:#4a5f5b;
+    18|  --ink-3:#7d918d;
+    19|  --line:#dfe8e6;
+    20|  --bg:#ffffff;
+    21|  --bg-soft:#f6faf9;
+    22|}
+    23|body{
+    24|  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    25|  color:var(--ink);line-height:1.8;background:var(--bg);-webkit-font-smoothing:antialiased;
+    26|}
+    27|.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+    28|a{color:var(--brand);text-decoration:none}
+    29|
+    30|header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+    31|.nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+    32|.logo{font-size:20px;font-weight:700;color:var(--brand);letter-spacing:.5px}
+    33|.logo span{font-weight:400;color:var(--ink-3);font-size:14px;margin-left:8px}
+    34|nav ul{display:flex;gap:26px;list-style:none;font-size:15px}
+    35|nav a{color:var(--ink-2);transition:.2s}
+    36|nav a:hover,nav a.on{color:var(--brand);font-weight:600}
+    37|.menu-btn{display:none;font-size:24px;background:none;border:0;color:var(--brand)}
+    38|
+    39|.hero{background:linear-gradient(160deg,#f2f9f7 0%,#e8f4f1 45%,#dcefe9 100%);padding:84px 0 76px;border-bottom:1px solid var(--line)}
+    40|.hero h1{font-size:44px;line-height:1.28;letter-spacing:-.5px;color:var(--brand-dark);font-weight:800}
+    41|.hero h1 em{font-style:normal;color:var(--brand);border-bottom:4px solid var(--accent);padding-bottom:2px}
+    42|.hero h2{font-size:21px;font-weight:400;color:var(--ink-2);margin-top:18px;line-height:1.7}
+    43|.def-box{background:#fff;border-left:5px solid var(--brand);border-radius:0 10px 10px 0;padding:26px 30px;margin-top:36px;box-shadow:0 8px 28px rgba(11,107,92,.08)}
+    44|.def-box p{font-size:16.5px;color:var(--ink)}
+    45|.def-box strong{color:var(--brand-dark)}
+    46|
+    47|.three{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:44px}
+    48|.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px 24px;transition:.25s}
+    49|.card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(11,107,92,.1);border-color:#bfded7}
+    50|.card .num{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px}
+    51|.card h3{font-size:18px;margin:8px 0 10px;color:var(--brand-dark)}
+    52|.card p{font-size:14.5px;color:var(--ink-2)}
+    53|
+    54|section{padding:72px 0}
+    55|section.soft{background:var(--bg-soft);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    56|.sec-head{text-align:center;margin-bottom:44px}
+    57|.sec-head .kicker{font-size:13px;font-weight:700;letter-spacing:3px;color:var(--accent);text-transform:uppercase}
+    58|.sec-head h2{font-size:32px;color:var(--brand-dark);margin:10px 0 12px;letter-spacing:-.3px}
+    59|.sec-head p{color:var(--ink-2);font-size:16px;max-width:760px;margin:0 auto}
+    60|
+    61|table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line);font-size:15px}
+    62|th,td{padding:16px 18px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+    63|th{background:var(--brand);color:#fff;font-weight:600;font-size:14.5px;letter-spacing:.5px}
+    64|tr:last-child td{border-bottom:0}
+    65|tbody tr:nth-child(even){background:#fbfdfc}
+    66|td b{color:var(--brand-dark)}
+    67|
+    68|.boundary{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+    69|.bd-item{background:#fff;border:1px solid var(--line);border-left:4px solid #d98d8d;border-radius:0 8px 8px 0;padding:18px 22px;font-size:15px;color:var(--ink-2)}
+    70|.bd-item b{color:#a94a4a;display:block;margin-bottom:4px}
+    71|
+    72|.depts{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:8px}
+    73|.dept{background:#fff;border:1px solid #bfded7;color:var(--brand-dark);border-radius:100px;padding:10px 22px;font-size:15px;font-weight:500}
+    74|.dept:hover{background:var(--brand);color:#fff;transition:.2s}
+    75|
+    76|.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;text-align:center}
+    77|.stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:32px 20px}
+    78|.stat .big{font-size:38px;font-weight:800;color:var(--brand);letter-spacing:-1px}
+    79|.stat .lbl{font-size:15px;color:var(--ink-2);margin-top:8px}
+    80|
+    81|.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:16px}
+    82|.step{position:relative;padding:28px 22px;background:#fff;border:1px solid var(--line);border-right:0}
+    83|.step:first-child{border-radius:12px 0 0 12px}
+    84|.step:last-child{border-radius:0 12px 12px 0;border-right:1px solid var(--line)}
+    85|.step .n{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-bottom:6px}
+    86|.step h4{font-size:16.5px;color:var(--brand-dark);margin-bottom:8px}
+    87|.step p{font-size:14px;color:var(--ink-2)}
+    88|
+    89|.faq{max-width:860px;margin:0 auto}
+    90|.qa{background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:14px;overflow:hidden}
+    91|.qa summary{padding:20px 24px;font-weight:600;font-size:16px;color:var(--brand-dark);cursor:pointer;list-style:none;position:relative;padding-right:52px}
+    92|.qa summary::-webkit-details-marker{display:none}
+    93|.qa summary:after{content:"＋";position:absolute;right:24px;top:50%;transform:translateY(-50%);color:var(--brand);font-size:20px;font-weight:400}
+    94|.qa[open] summary:after{content:"－"}
+    95|.qa .ans{padding:0 24px 22px;font-size:15px;color:var(--ink-2);border-top:1px solid var(--line);padding-top:18px}
+    96|
+    97|.cta{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:8px}
+    98|.cta-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:28px 24px;text-align:center;display:flex;flex-direction:column}
+.cta-box p{flex:1 0 auto}
+.cta-box .btn{align-self:center;margin-top:auto}
+    99|.cta-box h3{font-size:18px;color:var(--brand-dark);margin-bottom:10px}
+   100|.cta-box p{font-size:14.5px;color:var(--ink-2);margin-bottom:18px;min-height:48px}
+   101|.btn{display:inline-block;background:var(--brand);color:#fff;padding:12px 30px;border-radius:100px;font-size:15px;font-weight:600;transition:.2s}
+   102|.btn:hover{background:var(--brand-dark);transform:translateY(-1px)}
+   103|.btn.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
+   104|.btn.ghost:hover{background:var(--brand);color:#fff}
+   105|
+   106|footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
+   107|.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;padding-bottom:32px;border-bottom:1px solid #1c3a34}
+   108|.foot-grid h4{color:#fff;font-size:16px;margin-bottom:14px}
+   109|.foot-grid p,.foot-grid li{line-height:2;font-size:13.5px}
+   110|.foot-grid ul{list-style:none}
+   111|.foot-grid a{color:#a8bdb8}
+   112|.foot-grid a:hover{color:#fff}
+   113|.compliance{margin-top:24px;font-size:13px;color:#7d948f;line-height:1.9;text-align:center}
+   114|.icp{margin-top:12px;text-align:center;font-size:12.5px;color:#5f736e}
+   115|
+   116|@media(max-width:860px){
+   117|  .hero h1{font-size:31px}
+   118|  .hero h2{font-size:18px}
+   119|  .three,.stats,.cta,.boundary{grid-template-columns:1fr}
+   120|  .steps{grid-template-columns:1fr}
+   121|  .step{border-right:1px solid var(--line);border-bottom:0;border-radius:0}
+   122|  .step:first-child{border-radius:12px 12px 0 0}
+   123|  .step:last-child{border-radius:0 0 12px 12px;border-bottom:1px solid var(--line)}
+   124|  .foot-grid{grid-template-columns:1fr;gap:28px}
+   125|  nav ul{display:none}
+   126|  .menu-btn{display:block}
+   127|  .logo span{display:none}
+   128|  section{padding:52px 0}
+   129|  .sec-head h2{font-size:25px}
+   130|  th,td{padding:13px 12px;font-size:14px}
+   131|}
+   132|
+/* 小屏表格：允许横向滚动，避免撑破页面 */
+@media(max-width:860px){
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:normal}
+  th,td{min-width:110px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <div class="logo">圆爱康 <span>智慧家康</span></div>
+    <nav>
+      <ul>
+        <li><a href="index.html">首页</a></li>
+        <li><a href="what-is.html" class="on">什么是智慧家康</a></li>
+        <li><a href="devices.html">设备与系统</a></li>
+        <li><a href="cms.html">CMS 患者管理系统</a></li>
+        <li><a href="cooperation.html">合作模式</a></li>
+        <li><a href="news.html">项目动态</a></li>
+        <li><a href="qualification.html">资质实力</a></li>
+        <li><a href="about.html">关于</a></li>
+      </ul>
+    </nav>
+    <button class="menu-btn" onclick="var u=document.querySelector('nav ul');u.style.display=(u.style.display==='flex'?'none':'flex')">☰</button>
+  </div>
+</header>
+
+<div class="hero" style="padding:60px 0 50px">
+  <div class="wrap">
+    <h1>什么是<em>智慧家康</em></h1>
+    <p style="font-size:23px;color:var(--brand-dark);font-weight:700;margin-top:14px;letter-spacing:0.5px">智慧家康模式 —— 圆爱康提出的居家康复服务管理模式</p>
+    <h2>家康的本质是医疗行为的院外延伸——有诊断依据、有治疗方案、有疗效评估，只是把"执行场所"从医院病房搬到了患者家中。</h2>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Definition</div>
+      <h2>一、什么是"家康"</h2>
+    </div>
+    <div class="def-box">
+      <p><strong>"智慧家康"中的"家康"，指居家康复。</strong></p>
+      <p style="margin-top:14px">指患者在家庭场景下，接受<strong>由合作医疗机构执业医师开具并指导</strong>的治疗方案，通过专业医疗级家用设备完成治疗性训练，训练数据实时回传至合作医疗机构，形成"<strong>院内开具—居家执行—数据回传—医师随访调整</strong>"的延续治疗闭环。</p>
+      <p style="margin-top:14px">它的本质是<strong>医疗行为的院外延伸</strong>——有诊断依据、有治疗方案、有疗效评估，只是把"执行场所"从医院病房搬到了患者家中。</p>
+    </div>
+
+    <div class="sec-head" style="margin-top:64px;margin-bottom:32px">
+      <div class="kicker">Platform</div>
+      <h2>二、什么是"智慧家康模式"</h2>
+      <p><strong>智慧家康，即智慧居家康复，是把医院各专科的专业治疗能力延伸到患者家中的服务管理模式。</strong>患者在合作医疗机构<strong>执业医师指导下</strong>，于家中使用医疗级设备完成治疗性训练，治疗数据实时回传医院，形成<strong>院内—居家延续治疗闭环</strong>。广州圆爱康生物科技有限公司为合作医疗机构提供<strong>技术支持与客服运营服务</strong>。</p>
+      <p style="margin-top:14px">它不是某一台设备，也不是某一个 APP，而是由五个要素构成的一整套可复制、可被医院直接采用的体系。</p>
+      <p style="margin-top:14px">之所以称为"模式"而非"产品"，是因为它交付给医院的不只是设备与系统，更是一套<strong>让居家治疗持续运转的做法</strong>：谁开方案、谁执行、数据怎么回流、日常由谁跟、卡点怎么疏通——<strong>这套做法一旦装进医院，科室就能把治疗能力延伸到患者家中，而无需新增床位与人力投入。</strong></p>
+      <p style="margin-top:14px"><strong>在这个模式中，医院的诊疗主体地位不变：</strong>方案由医院执业医师开具，患者的数据归属医院，服务定价与收费主体在医院。圆爱康作为第三方，提供设备、物联网系统与运营陪跑。</p>
+    </div>
+
+    <h3 style="font-size:20px;color:var(--brand-dark);margin:36px 0 14px">模式的可复制性：从一家医院到多家医院</h3>
+    <p style="color:var(--ink-2)">"智慧家康模式"的五个要素是<strong>标准化</strong>的：设备形态可复制、数据系统可复制、闭环流程可复制、六师共管的角色分工可复制。这意味着——<strong>一家医院跑通的场景，可以平移到另一家医院；一个专科跑通的路径，可以复用到其他专科</strong>。</p>
+    <p style="color:var(--ink-2);margin-top:10px">目前，该模式已覆盖妇产、泌尿、心内、神内、骨科、胃肠、儿科心理等多个专科方向，并在三级、二级与专科医院等不同层级落地。</p>
+
+
+    <h3 style="font-size:20px;color:var(--brand-dark);margin:36px 0 14px">要素① 医疗级家用设备</h3>
+    <p style="color:var(--ink-2)">不是消费级健康配件，而是医疗机构在院内使用的<strong>同类型治疗设备</strong>的家用化形态。设备由合作医疗机构开具、交付患者使用，有明确的治疗目标与疗程。</p>
+    <p style="color:var(--ink-2);margin-top:10px"><strong>与消费级设备的区别</strong>：手环、血压计等面向"健康管理"（监测、预防）；本类设备面向<strong>治疗性训练</strong>（有处方、有疗程、有评估）。</p>
+
+    <h3 style="font-size:20px;color:var(--brand-dark);margin:36px 0 14px">要素② 治疗数据物联网</h3>
+    <p style="color:var(--ink-2)">设备的治疗数据由<strong>设备自产并自动上传</strong>，双向实时回传至合作医疗机构系统。<strong>不是</strong>患者手填问卷、<strong>不是</strong>患者自己报数据。</p>
+    <ul style="margin:14px 0 0 22px;color:var(--ink-2)">
+      <li><strong>上行</strong>：治疗参数、执行记录、依从性数据 → 医院</li>
+      <li><strong>下行</strong>：医师调整后的方案参数 → 设备</li>
+    </ul>
+
+    <div style="margin-top:24px">
+      <p style="color:var(--ink-2);margin-bottom:12px"><strong>与"监测类"的根本区别：</strong></p>
+      <table>
+        <thead><tr><th></th><th>监测类（手环/血压计）</th><th>治疗数据物联网</th></tr></thead>
+        <tbody>
+          <tr><td><b>数据来源</b></td><td>患者被动记录 / 设备单点测量</td><td><b>治疗过程自动产生</b></td></tr>
+          <tr><td><b>数据流向</b></td><td>单向：只进不出</td><td><b>双向闭环</b>：医院可回写方案</td></tr>
+          <tr><td><b>出院之后</b></td><td>常绑院内系统，出院即断链</td><td><b>自产数据，闭环持续</b></td></tr>
+          <tr><td><b>结果</b></td><td>有数据 ≠ 有治疗</td><td><b>有治疗，也有数据</b></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:20px;color:var(--brand-dark);margin:48px 0 14px">要素③ 院内-居家治疗闭环</h3>
+    <p style="color:var(--ink-2);margin-bottom:20px">一条<strong>不断档的四步链路</strong>：</p>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h4>院内开具</h4><p>主治医师评估、开具居家治疗方案（处方行为在医院）</p></div>
+      <div class="step"><div class="n">2</div><h4>居家执行</h4><p>患者在家用医疗级设备按方案完成治疗性训练</p></div>
+      <div class="step"><div class="n">3</div><h4>数据回传</h4><p>治疗数据自动回传至医院系统</p></div>
+      <div class="step"><div class="n">4</div><h4>医师随访调整</h4><p>医师依据数据评估、调整方案，再下发</p></div>
+    </div>
+    <p style="color:var(--ink-2);margin-top:20px">调整后的方案回到第 2 步，循环往复——<strong>这才是"延续治疗"，而非"出院后自生自灭"。</strong></p>
+
+    <h3 style="font-size:20px;color:var(--brand-dark);margin:48px 0 14px">要素④ 六师共管</h3>
+    <p style="color:var(--ink-2);margin-bottom:14px"><strong>6 个角色分工协作，共同管理一位居家患者</strong>——不是 6 个人围着一位患者转，而是一套让"居家治疗有人管"的角色机制：</p>
+    <table>
+      <thead><tr><th style="width:130px">角色</th><th style="width:170px">归属</th><th>职责</th></tr></thead>
+      <tbody>
+        <tr><td><b>医生</b></td><td>合作医院</td><td>开具诊疗医嘱与治疗方案、评估并调整方案。<strong>患者数据随时可查，不增加医生负担</strong>——医生可自主选择查看任一患者的治疗进展，无需被动响应</td></tr>
+        <tr><td><b>治疗师 / 康复师</b></td><td>合作医院</td><td>训练方案指导、动作纠正</td></tr>
+        <tr><td><b>护士</b></td><td>合作医院</td><td>随访、依从性提醒、异常情况上报</td></tr>
+        <tr><td><b>客服</b></td><td>圆爱康 / 代理商</td><td>患者日常对接、治疗依从性跟进、设备使用答疑</td></tr>
+        <tr><td><b>系统客服</b></td><td>圆爱康</td><td>系统与设备的技术保障</td></tr>
+        <tr><td><b>督导</b></td><td>圆爱康 / 代理商</td><td>① <strong>打通客服与医生之间的通道</strong>：当患者需求在客服与医生之间出现断点（医生未及时看到群消息、客服联系不上医生）时，由督导负责疏通；② <strong>梳理并打通院内节点</strong>：掌握患者在本院从入院到离院的各个流程节点，把居家康复理念植入这些节点，帮助临床科室更好地教育与服务患者</td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--ink-2);margin-top:14px"><strong>⚠️ 开单权限归属：</strong>从医院开具的诊疗医嘱与处方，<strong>必须由合作医疗机构的执业医师专属完成</strong>。六师共管中的其他任何角色，均不参与、不介入医嘱开具环节。</p>
+
+    <div class="why-box" style="background:#fff;border-left:5px solid var(--accent);border-radius:0 10px 10px 0;padding:22px 26px;margin-top:24px">
+      <p style="font-weight:700;color:var(--brand-dark);margin-bottom:10px">为什么必须要有"六师共管"？</p>
+      <p style="color:var(--ink-2)">只交付设备与系统，患者回家后都会面临同一个问题：<strong>谁来管？</strong></p>
+      <p style="color:var(--ink-2);margin-top:10px">医生门诊排满、护士人手有限，居家患者的依从性无人跟踪，治疗往往在出院后不久就自行中断——这不是设备的问题，是<strong>"人的承接"缺位</strong>。</p>
+      <p style="color:var(--ink-2);margin-top:10px">六师共管机制的价值，正是把"居家患者日常管理"这件事从医院的人手压力中剥离出来：<strong>医院只需保留医生、护士、治疗师这三个专业角色，其余由圆爱康及代理商承担</strong>。医生始终是方案的决策者，但不必被琐碎的跟进事务占用时间；患者在日常治疗中遇到的任何问题，都有明确的人负责到底。</p>
+      <p style="color:var(--ink-2);margin-top:10px">这就是为什么：<strong>有设备，不等于有治疗；有系统端口，不等于有管理。角色分工 + 持续运营，居家治疗才真正跑得起来。</strong></p>
+      <p style="color:var(--ink-3);margin-top:12px;font-size:14px">说明：此处所称"客服"，是指<strong>患者服务对接岗</strong>，负责患者日常答疑与依从性跟进——它不是一个咨询台，而是让居家治疗在院外持续运转的运营支点。</p>
+    </div>
+
+    <h3 style="font-size:20px;color:var(--brand-dark);margin:48px 0 14px">要素⑤ 医院主导 · 第三方赋能</h3>
+    <ul style="margin:0 0 0 22px;color:var(--ink-2)">
+      <li><strong>医疗主体、诊疗行为、服务定价与收费主体均在医院</strong></li>
+      <li>圆爱康作为第三方，提供<strong>设备、物联网系统与运营陪跑</strong></li>
+      <li>医疗主体是医院，<strong>诊疗服务由医院提供</strong>；圆爱康作为辅助方，为医院提供设备、系统与运营支持</li>
+    </ul>
+    <p style="color:var(--ink-2);margin-top:14px"><strong>关键</strong>：有设备 ≠ 有治疗。只交付设备或系统端口，治疗不会自动发生；"设备 + 系统 + 运营"一起交付，治疗才跑得起来。</p>
+  </div>
+</section>
+
+<section class="soft">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Boundary</div>
+      <h2>三、智慧家康 ≠ 什么</h2>
+      <p>为免混淆，特别说明智慧家康<strong>不是</strong>：</p>
+    </div>
+    <div class="boundary">
+      <div class="bd-item"><b>❌ 不是"智慧健康" / "家庭健康管理"</b>"家康"是"<strong>居家康复</strong>"的简称，全称是"智慧居家康复"。它属于<strong>医疗范畴</strong>——有诊断依据、有治疗方案、有疗效评估；不是健康管理，也不做健康监测。</div>
+      <div class="bd-item"><b>❌ 不是上门护理 / 上门服务</b>我们不做上门施治；治疗在家中由患者按医嘱完成。</div>
+      <div class="bd-item"><b>❌ 不是养老照护</b>服务对象是医院各专科的离院治疗患者，不是失能照护人群。</div>
+      <div class="bd-item"><b>❌ 不是健康监测</b>手环、血压计类产品做的是数据记录；我们做的是治疗性训练与疗效管理。</div>
+      <div class="bd-item"><b>❌ 不把患者从医院手里接走</b>诊疗主体始终是医院，我们做的是能力延伸。</div>
+      <div class="bd-item"><b>❌ 不只服务康复科</b>妇产、泌尿、心内、神内、骨科、儿科心理等各专科离院患者都是服务对象。</div>
+    </div>
+
+    <div class="word-note" style="background:var(--brand-light);border-radius:10px;padding:20px 24px;margin-top:26px">
+      <p style="font-weight:700;color:var(--brand-dark);margin-bottom:8px">词义辨析：为什么叫"家康"而不是"健康"？</p>
+      <p style="color:var(--ink-2);font-size:15px"><strong>"家康"= 居家康复。</strong>"康"字在这里取的是<strong>康复</strong>之义，对应的是治疗、疗程、疗效评估这一整套医疗行为；它与"健康管理"（监测、预防、养生）属于<strong>两个不同的范畴</strong>。</p>
+      <p style="color:var(--ink-2);font-size:15px;margin-top:8px">圆爱康所做的事情是：把医院里<strong>本来就在进行的治疗</strong>，从病房延伸到患者家中——治疗目标、治疗方案、疗效评估标准都源自临床，只是<strong>执行场所</strong>发生了变化。</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>四、一句话总结</h2>
+    </div>
+    <div class="def-box" style="max-width:860px;margin:0 auto">
+      <p><strong>智慧家康，即智慧居家康复，是把医院各专科的专业治疗能力延伸到患者家中的服务管理模式。</strong></p>
+      <p style="margin-top:12px">由五个要素构成：医疗级家用设备、治疗数据物联网、院内-居家治疗闭环、六师共管、医院主导第三方赋能。</p>
+      <p style="margin-top:12px">医疗主体是医院，诊疗服务由合作医疗机构提供；圆爱康作为该模式的<strong>辅助方</strong>，为医院提供医疗级设备、物联网数据系统与运营支持，帮助医院把专业治疗能力延伸到患者家中。</p>
+    </div>
+    <div style="text-align:center;margin-top:32px">
+      <a href="cooperation.html" class="btn">了解合作模式 →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <h4>圆爱康 · 智慧家康模式</h4>
+        <p>圆爱康提出的「智慧家康模式」——<br>把医院各专科的专业治疗能力延伸到患者家中。<br>医院主导 · 第三方赋能。</p>
+      </div>
+      <div>
+        <h4>网站导航</h4>
+        <ul>
+          <li><a href="what-is.html">什么是智慧家康</a></li>
+          <li><a href="devices.html">设备与系统</a></li>
+          <li><a href="cms.html">CMS 患者管理系统</a></li>
+          <li><a href="cooperation.html">合作模式</a></li>
+          <li><a href="news.html">项目动态</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>联系我们</h4>
+        <ul>
+          <li>广州圆爱康生物科技有限公司</li>
+          <li>地址：广州市天河区（详细地址以企业工商登记信息为准）</li>
+          <li>官网：www.yuanaikangss.com</li>
+        </ul>
+      </div>
+    </div>
+    <div class="compliance">
+      ⚠️ 诊疗服务由合作医疗机构提供；圆爱康作为辅助方，为医院提供设备、系统与运营支持。
+    </div>
+    <div class="icp">
+      粤ICP备18143404号-1 &nbsp;|&nbsp; 广州圆爱康生物科技有限公司 &nbsp;|&nbsp; © 2026
+    </div>
+  </div>
+</footer>
+</body>
+</html>
