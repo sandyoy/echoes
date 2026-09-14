@@ -1,0 +1,41 @@
+=== git pull origin main (2026-09-14 17:24 tick) ===
+b9c27e6..ab4c107  main -> origin/main  (Fast-forward)
+
+ docs/GEO/官网/site/about.html                      |  15 +-
+ docs/GEO/官网/site/about.html.v2                   | 231 +++++++++++++
+ .../assets/certs/00_圆医_医疗器械生产许可证-1.png  | Bin 0 -> 921406 bytes
+ .../site/assets/certs/01_圆医_医疗器械注册证-1.png | Bin 0 -> 1102906 bytes
+ .../assets/certs/02_圆医_一类生产备案凭证-1.png    | Bin 0 -> 360010 bytes
+ .../assets/certs/03_圆爱康_二类经营备案凭证-1.png  | Bin 0 -> 1641894 bytes
+ .../site/assets/certs/04_圆爱康_软件著作权-1.png   | Bin 0 -> 1753470 bytes
+ .../certs/05_圆爱康_信创符合性测试证书-1.png       | Bin 0 -> 449726 bytes
+ .../assets/certs/06_圆爱康_公有云备案证明-1.png    | Bin 0 -> 403153 bytes
+ docs/GEO/官网/site/assets/favicon.svg              |   7 +
+ docs/GEO/官网/site/assets/logo.svg                 |   5 +
+ docs/GEO/官网/site/cms.html                        |  15 +-
+ docs/GEO/官网/site/cms.html.v2                     | 378 +++++++++++++++++++++
+ docs/GEO/官网/site/cooperation.html                |  15 +-
+ docs/GEO/官网/site/cooperation.html.v2             | 257 ++++++++++++++
+ docs/GEO/官网/site/devices.html                    |  17 +-
+ docs/GEO/官网/site/devices.html.v2                 | 229 +++++++++++++
+ docs/GEO/官网/site/index.html                      |  13 +-
+ docs/GEO/官网/site/index.html.v2                   | 361 ++++++++++++++++++++
+ docs/GEO/官网/site/news.html                       |  15 +-
+ docs/GEO/官网/site/news.html.v2                    | 217 ++++++++++++
+ docs/GEO/官网/site/qualification.html              | 276 +++++++++++----
+ docs/GEO/官网/site/qualification.html.v2           | 229 +++++++++++++
+ docs/GEO/官网/site/what-is.html                    |  13 +-
+ docs/GEO/官网/site/what-is.html.v2                 | 339 ++++++++++++++++++
+ docs/GEO/官网/交付包/交付说明_资质页升级_v2.docx   | Bin 0 -> 39606 bytes
+ docs/GEO/官网/交付包/交付说明_资质页升级_v2.md     |  89 +++++
+ ...网_20260914.zip => 圆爱康官网_20260914.zip.old} | Bin
+ docs/GEO/官网/交付包/圆爱康官网_20260914_v2.zip    | Bin 0 -> 6665505 bytes
+ docs/GEO/官网/圆爱康官网_内容预览_v3_20260914.docx | Bin 0 -> 49572 bytes
+ docs/daily/盯催日志_2026-09-14.md                  |  21 ++
+ docs/pull_log/.channel_health                      |   2 +-
+ docs/pull_log/pull_2026-09-14.md                   |  36 ++
+ 33 files changed, 2682 insertions(+), 98 deletions(-)
+
+
+=== target commit ===
+ab4c107a4340ab299f9e3386752e6997fb11e616 2026-09-14 16:31:51 +0800 docs(GEO): 官网资质页升级v2 assets+交付包(本机工作区保存)
