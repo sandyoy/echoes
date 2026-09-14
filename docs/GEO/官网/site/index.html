@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>圆爱康 · 智慧家康 —— 把医院各专科的专业治疗能力延伸到患者家中</title>
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <meta name="description" content="智慧家康,智慧居家康复是把医院各专科的专业治疗能力延伸到患者家中的服务管理模式。患者在合作医疗机构执业医师指导下于家中使用医疗级设备完成治疗性训练，治疗数据实时回传医院，形成院内—居家延续治疗闭环。广州圆爱康生物科技有限公司为合作医疗机构提供技术支持与服务。">
 <meta name="keywords" content="智慧家康,智慧居家康复,居家康复,院内居家治疗闭环,治疗数据物联网,医院主导第三方赋能,圆爱康,居家延续治疗">
 <style>
@@ -29,7 +30,9 @@ a{color:var(--brand);text-decoration:none}
 
 header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
-.logo{font-size:20px;font-weight:700;color:var(--brand);letter-spacing:.5px}
+.logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:var(--brand);letter-spacing:.5px}
+.logo-img{height:38px;width:auto;display:none}
+.logo-text{display:flex;align-items:baseline}
 .logo span{font-weight:400;color:var(--ink-3);font-size:14px;margin-left:8px}
 nav ul{display:flex;gap:26px;list-style:none;font-size:15px}
 nav a{color:var(--ink-2);transition:.2s}
@@ -113,6 +116,7 @@ td b{color:var(--brand-dark)}
 
 footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
 .foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;padding-bottom:32px;border-bottom:1px solid #1c3a34}
+.foot-logo{height:40px;width:auto;margin-bottom:14px;display:none}
 .foot-grid h4{color:#fff;font-size:16px;margin-bottom:14px}
 .foot-grid p,.foot-grid li{line-height:2;font-size:13.5px}
 .foot-grid ul{list-style:none}
@@ -149,7 +153,10 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
 
 <header>
   <div class="wrap nav">
-    <div class="logo">圆爱康 <span>智慧家康</span></div>
+    <a class="logo" href="index.html">
+      <img class="logo-img" src="assets/logo.svg" alt="圆爱康">
+      <span class="logo-text">圆爱康 <span>智慧家康</span></span>
+    </a>
     <nav>
       <ul>
         <li><a href="index.html" class="on">首页</a></li>
@@ -287,7 +294,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
       <h2>合作与实力</h2>
     </div>
     <div class="stats">
-      <div class="stat"><div class="big">17+</div><div class="lbl">合作医疗机构</div></div>
+      <div class="stat"><div class="big">几十<em>家</em></div><div class="lbl">合作医疗机构</div></div>
       <div class="stat"><div class="big">多级</div><div class="lbl">三级 / 二级 / 专科医院落地场景</div></div>
       <div class="stat"><div class="big">全专科</div><div class="lbl">医院主导 · 第三方赋能</div></div>
     </div>
