@@ -31,8 +31,8 @@ a{color:var(--brand);text-decoration:none}
 header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
 .logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:var(--brand);letter-spacing:.5px}
-.logo-img{height:38px;width:auto;display:none}
-.logo-text{display:flex;align-items:baseline}
+.logo-img{height:38px;width:auto;display:block}
+.logo-text{display:none}
 .logo span{font-weight:400;color:var(--ink-3);font-size:14px;margin-left:8px}
 nav ul{display:flex;gap:26px;list-style:none;font-size:15px}
 nav a{color:var(--ink-2);transition:.2s}
@@ -109,8 +109,8 @@ td b{color:var(--brand-dark)}
 .btn.ghost:hover{background:var(--brand);color:#fff}
 
 footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
-.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;padding-bottom:32px;border-bottom:1px solid #1c3a34}
-.foot-logo{height:40px;width:auto;margin-bottom:14px;display:none}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:34px;padding-bottom:32px;border-bottom:1px solid #1c3a34}
+
 .foot-grid h4{color:#fff;font-size:16px;margin-bottom:14px}
 .foot-grid p,.foot-grid li{line-height:2;font-size:13.5px}
 .foot-grid ul{list-style:none}
@@ -147,7 +147,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
 <header>
   <div class="wrap nav">
     <a class="logo" href="index.html">
-      <img class="logo-img" src="assets/logo.svg" alt="圆爱康">
+      <img class="logo-img" src="assets/brand/02_品牌logo横版_圆爱康智慧家康_金色.jpg" alt="圆爱康 · 智慧家康">
       <span class="logo-text">圆爱康 <span>智慧家康</span></span>
     </a>
     <nav>
@@ -218,13 +218,15 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <img class="foot-logo" src="assets/logo.svg" alt="圆爱康">
         <h4>圆爱康 · 智慧家康模式</h4><p>圆爱康提出的「智慧家康模式」——<br>把医院各专科的专业治疗能力延伸到患者家中。<br>医院主导 · 第三方赋能。</p></div>
       <div><h4>网站导航</h4><ul>
           <li><a href="what-is.html">什么是智慧家康</a></li>
           <li><a href="devices.html">设备与系统</a></li>
           <li><a href="cooperation.html">合作模式</a></li>
           <li><a href="news.html">项目动态</a></li></ul></div>
+      <div><h4>企业愿景</h4>
+        <p class="foot-vision">让健康更简单一点！</p>
+      </div>
       <div><h4>联系我们</h4><ul>
           <li>广州圆爱康生物科技有限公司</li>
           <li>地址：广州市天河区（详细地址以企业工商登记信息为准）</li>

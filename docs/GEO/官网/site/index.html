@@ -31,8 +31,8 @@ a{color:var(--brand);text-decoration:none}
 header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
 .logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:var(--brand);letter-spacing:.5px}
-.logo-img{height:38px;width:auto;display:none}
-.logo-text{display:flex;align-items:baseline}
+.logo-img{height:38px;width:auto;display:block}
+.logo-text{display:none}
 .logo span{font-weight:400;color:var(--ink-3);font-size:14px;margin-left:8px}
 nav ul{display:flex;gap:26px;list-style:none;font-size:15px}
 nav a{color:var(--ink-2);transition:.2s}
@@ -40,6 +40,9 @@ nav a:hover,nav a.on{color:var(--brand);font-weight:600}
 .menu-btn{display:none;font-size:24px;background:none;border:0;color:var(--brand)}
 
 .hero{background:linear-gradient(160deg,#f2f9f7 0%,#e8f4f1 45%,#dcefe9 100%);padding:84px 0 76px;border-bottom:1px solid var(--line)}
+.hero-vision{max-width:400px;margin:0 auto 30px;background:#fff;border-radius:16px;padding:20px 28px;
+  box-shadow:0 6px 22px rgba(11,107,92,.10);border:1px solid rgba(11,107,92,.07)}
+.hero-vision img{width:100%;max-width:400px;display:block;margin:0 auto}
 .hero h1{font-size:44px;line-height:1.28;letter-spacing:-.5px;color:var(--brand-dark);font-weight:800}
 .hero h1 em{font-style:normal;color:var(--brand);border-bottom:4px solid var(--accent);padding-bottom:2px}
 .hero h1 .fullname{font-size:27px;font-weight:600;color:var(--brand);letter-spacing:3px;display:inline-block;margin:12px 0 4px}
@@ -115,8 +118,9 @@ td b{color:var(--brand-dark)}
 .btn.ghost:hover{background:var(--brand);color:#fff}
 
 footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
-.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;padding-bottom:32px;border-bottom:1px solid #1c3a34}
-.foot-logo{height:40px;width:auto;margin-bottom:14px;display:none}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:34px;padding-bottom:32px;border-bottom:1px solid #1c3a34}
+
+.foot-vision{color:#d9b13b;font-size:15px;font-weight:600;letter-spacing:.5px;line-height:1.9}
 .foot-grid h4{color:#fff;font-size:16px;margin-bottom:14px}
 .foot-grid p,.foot-grid li{line-height:2;font-size:13.5px}
 .foot-grid ul{list-style:none}
@@ -126,6 +130,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
 .icp{margin-top:12px;text-align:center;font-size:12.5px;color:#5f736e}
 
 @media(max-width:860px){
+  .hero-vision{max-width:260px;margin-bottom:18px}
   .hero h1{font-size:31px}
   .hero h2{font-size:18px}
   .three,.stats,.cta,.boundary{grid-template-columns:1fr}
@@ -154,7 +159,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
 <header>
   <div class="wrap nav">
     <a class="logo" href="index.html">
-      <img class="logo-img" src="assets/logo.svg" alt="圆爱康">
+      <img class="logo-img" src="assets/brand/02_品牌logo横版_圆爱康智慧家康_金色.jpg" alt="圆爱康 · 智慧家康">
       <span class="logo-text">圆爱康 <span>智慧家康</span></span>
     </a>
     <nav>
@@ -175,6 +180,7 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
 
 <div class="hero">
   <div class="wrap">
+    <div class="hero-vision"><img src="assets/brand/01_企业愿景手写稿_让健康更简单一点_深蓝.jpg" alt="企业愿景：让健康更简单一点"></div>
     <h1>圆爱康 · <em>智慧家康</em><br><span class="fullname">智慧家康模式</span><br>把医院各专科的专业治疗能力，延伸到患者家中</h1>
 
     <!-- 公司自我定位（给人看：院长/代理商/政府 第一眼要看到"我们是谁"） -->
@@ -346,6 +352,10 @@ footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
           <li><a href="cooperation.html">合作模式</a></li>
           <li><a href="news.html">项目动态</a></li>
         </ul>
+      </div>
+      <div>
+        <h4>企业愿景</h4>
+        <p class="foot-vision">让健康更简单一点！</p>
       </div>
       <div>
         <h4>联系我们</h4>
