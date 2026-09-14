@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMS 患者管理系统 · 圆爱康智慧家康</title>
+<meta name="description" content="CMS 患者管理系统是圆爱康面向医院科室的院内患者管理系统，含医护 PC 管理端、医生管理小程序、患者使用小程序（预约）三个端口，覆盖专科管理、居家衔接、运营统计、筛查与活动入组四类场景，可与 HIS 对接。">
+<meta name="keywords" content="CMS患者管理系统,院内患者管理系统,医院科室管理系统,专科患者管理,患者预约小程序,医生管理小程序,圆爱康CMS">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --brand:#0b6b5c;
+  --brand-dark:#084f44;
+  --brand-light:#e8f4f1;
+  --accent:#c9a227;
+  --ink:#1a2b28;
+  --ink-2:#4a5f5b;
+  --ink-3:#7d918d;
+  --line:#dfe8e6;
+  --bg:#ffffff;
+  --bg-soft:#f6faf9;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  color:var(--ink);line-height:1.8;background:var(--bg);-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+a{color:var(--brand);text-decoration:none}
+
+header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+.logo{font-size:20px;font-weight:700;color:var(--brand);letter-spacing:.5px}
+.logo span{font-weight:400;color:var(--ink-3);font-size:14px;margin-left:8px}
+nav ul{display:flex;gap:22px;list-style:none;font-size:15px}
+nav a{color:var(--ink-2);transition:.2s}
+nav a:hover,nav a.on{color:var(--brand);font-weight:600}
+.menu-btn{display:none;font-size:24px;background:none;border:0;color:var(--brand)}
+
+.hero{background:linear-gradient(160deg,#f2f9f7 0%,#e8f4f1 45%,#dcefe9 100%);padding:76px 0 66px;border-bottom:1px solid var(--line)}
+.hero h1{font-size:42px;line-height:1.28;letter-spacing:-.5px;color:var(--brand-dark);font-weight:800}
+.hero h1 em{font-style:normal;color:var(--brand);border-bottom:4px solid var(--accent);padding-bottom:2px}
+.hero h2{font-size:20px;font-weight:400;color:var(--ink-2);margin-top:18px;line-height:1.7}
+.hero .tagline{margin-top:26px;padding:22px 28px;background:#fff;border-left:5px solid var(--brand);border-radius:0 10px 10px 0;box-shadow:0 8px 28px rgba(11,107,92,.08)}
+.hero .tagline p{font-size:16.5px;color:var(--ink)}
+.hero .tagline strong{color:var(--brand-dark)}
+
+section{padding:72px 0}
+section.soft{background:var(--bg-soft);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sec-head{text-align:center;margin-bottom:44px}
+.sec-head .kicker{font-size:13px;font-weight:700;letter-spacing:3px;color:var(--accent);text-transform:uppercase}
+.sec-head h2{font-size:32px;color:var(--brand-dark);margin:10px 0 12px;letter-spacing:-.3px}
+.sec-head p{color:var(--ink-2);font-size:16px;max-width:780px;margin:0 auto}
+
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px 24px;transition:.25s}
+.card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(11,107,92,.1);border-color:#bfded7}
+.card .num{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:1px}
+.card h3{font-size:18px;margin:8px 0 10px;color:var(--brand-dark)}
+.card p{font-size:14.5px;color:var(--ink-2)}
+.card ul{margin:10px 0 0 18px;font-size:14.5px;color:var(--ink-2)}
+.card li{margin-bottom:4px}
+
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--line);font-size:15px}
+th,td{padding:16px 18px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--brand);color:#fff;font-weight:600;font-size:14.5px;letter-spacing:.5px}
+tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:#fbfdfc}
+td b{color:var(--brand-dark)}
+
+.note{background:#fff;border:1px solid var(--line);border-left:4px solid #5ba394;border-radius:0 8px 8px 0;padding:20px 24px;margin-top:22px;font-size:15px;color:var(--ink-2)}
+.note b{color:var(--brand-dark)}
+.note.warn{border-left-color:#d9a441}
+.note.warn b{color:#9a6f10}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.half{background:#fff;border:1px solid var(--line);border-radius:12px;padding:26px 26px}
+.half h3{font-size:18px;color:var(--brand-dark);margin-bottom:12px}
+.half p{font-size:15px;color:var(--ink-2);margin-bottom:8px}
+.half ul{margin:8px 0 0 18px;font-size:14.5px;color:var(--ink-2)}
+.half li{margin-bottom:5px}
+
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:16px}
+.step{position:relative;padding:26px 20px;background:#fff;border:1px solid var(--line);border-right:0}
+.step:first-child{border-radius:12px 0 0 12px}
+.step:last-child{border-radius:0 12px 12px 0;border-right:1px solid var(--line)}
+.step .n{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-bottom:6px}
+.step h4{font-size:16px;color:var(--brand-dark);margin-bottom:8px}
+.step p{font-size:14px;color:var(--ink-2)}
+
+.cta{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;margin-top:8px}
+.cta-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:28px 24px;text-align:center;display:flex;flex-direction:column}
+.cta-box p{flex:1 0 auto}
+.cta-box .btn{align-self:center;margin-top:auto}
+.cta-box h3{font-size:18px;color:var(--brand-dark);margin-bottom:10px}
+.cta-box p{font-size:14.5px;color:var(--ink-2);margin-bottom:18px}
+.btn{display:inline-block;background:var(--brand);color:#fff;padding:12px 30px;border-radius:100px;font-size:15px;font-weight:600;transition:.2s}
+.btn:hover{background:var(--brand-dark);transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--brand);border:1.5px solid var(--brand)}
+.btn.ghost:hover{background:var(--brand);color:#fff}
+
+footer{background:#0d2420;color:#a8bdb8;padding:52px 0 30px;font-size:14px}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:40px;padding-bottom:32px;border-bottom:1px solid #1c3a34}
+.foot-grid h4{color:#fff;font-size:16px;margin-bottom:14px}
+.foot-grid p,.foot-grid li{line-height:2;font-size:13.5px}
+.foot-grid ul{list-style:none}
+.foot-grid a{color:#a8bdb8}
+.foot-grid a:hover{color:#fff}
+.compliance{margin-top:24px;font-size:13px;color:#7d948f;line-height:1.9;text-align:center}
+.icp{margin-top:12px;text-align:center;font-size:12.5px;color:#5f736e}
+
+@media(max-width:860px){
+  .hero h1{font-size:30px}
+  .hero h2{font-size:17px}
+  .three,.cta,.split{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .step{border-right:1px solid var(--line);border-radius:0}
+  .step:first-child{border-radius:12px 12px 0 0}
+  .step:last-child{border-radius:0 0 12px 12px}
+  .foot-grid{grid-template-columns:1fr;gap:28px}
+  nav ul{display:none}
+  .menu-btn{display:block}
+  .logo span{display:none}
+  section{padding:52px 0}
+  .sec-head h2{font-size:25px}
+  th,td{padding:13px 12px;font-size:14px}
+}
+
+/* 小屏表格：允许横向滚动，避免撑破页面 */
+@media(max-width:860px){
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:normal}
+  th,td{min-width:110px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <div class="logo">圆爱康 <span>智慧家康</span></div>
+    <nav>
+      <ul>
+        <li><a href="index.html">首页</a></li>
+        <li><a href="what-is.html">什么是智慧家康</a></li>
+        <li><a href="devices.html">设备与系统</a></li>
+        <li><a href="cms.html" class="on">CMS 患者管理系统</a></li>
+        <li><a href="cooperation.html">合作模式</a></li>
+        <li><a href="news.html">项目动态</a></li>
+        <li><a href="qualification.html">资质实力</a></li>
+        <li><a href="about.html">关于</a></li>
+      </ul>
+    </nav>
+    <button class="menu-btn" onclick="var u=document.querySelector('nav ul');u.style.display=(u.style.display==='flex'?'none':'flex')">☰</button>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>CMS <em>患者管理系统</em></h1>
+    <h2>面向医院科室的院内患者管理系统 —— 覆盖专科管理、居家衔接、运营统计与筛查入组</h2>
+    <div class="tagline">
+      <p><strong>CMS 患者管理系统</strong>是圆爱康自主研发的院内患者管理系统，供医院科室使用。系统含<strong>医护 PC 管理端、医生管理小程序、患者使用小程序（预约）</strong>三个端口，可<strong>单独部署使用</strong>，也可与居家康复系统组合成完整体系。</p>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Positioning</div>
+      <h2>一、系统定位：独立、可用、可拆</h2>
+      <p>CMS 是一套独立完整的院内患者管理系统，不依附于其他系统即可单独运行。</p>
+    </div>
+    <div class="three">
+      <div class="card">
+        <div class="num">独立</div>
+        <h3>可单独部署</h3>
+        <p>医院科室可单独部署使用，不要求与其他系统捆绑。系统本身已具备完整功能，无需依赖外部条件即可运转。</p>
+      </div>
+      <div class="card">
+        <div class="num">模块</div>
+        <h3>可按模块拆用</h3>
+        <p>科室可根据实际需要选择所需功能模块，不必整套引入。范围与组合方式按科室需求确定。</p>
+      </div>
+      <div class="card">
+        <div class="num">对接</div>
+        <h3>可与 HIS 对接</h3>
+        <p>按医院要求确定是否对接。可对接、可不接；对接后数据可以反向回传，也可以不传。是否对接属技术配置动作。</p>
+      </div>
+    </div>
+    <div class="note">
+      <b>说明：</b>系统与医院现有信息系统之间的关系，按医院实际情况与信息科要求确定。圆爱康配合完成技术实施，不对医院现有系统架构作任何要求。
+    </div>
+  </div>
+</section>
+
+<section class="soft">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Ports</div>
+      <h2>二、三个端口</h2>
+      <p>面向科室管理、医生使用、患者使用三类场景，各端口职责清晰。</p>
+    </div>
+    <table>
+      <thead>
+        <tr><th style="width:200px">端口</th><th style="width:170px">使用者</th><th>主要功能</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><b>医护 PC 管理端</b></td>
+          <td>科室医护人员</td>
+          <td>患者档案管理、治疗方案录入与下发、治疗数据查看、依从性监测、复诊提醒、科室治疗量统计</td>
+        </tr>
+        <tr>
+          <td><b>医生管理小程序</b></td>
+          <td>科室医生</td>
+          <td>随时查看患者数据、治疗方案调整、消息提醒。医生可随时查阅，无需被动响应</td>
+        </tr>
+        <tr>
+          <td><b>患者使用小程序（预约）</b></td>
+          <td>患者</td>
+          <td>预约登记、治疗记录查看、就诊提醒、健康信息填报</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="note warn">
+      <b>端口设计原则：</b>医护人员在日常工作中最常使用 PC 端完成管理工作；医生在移动或碎片时间通过小程序查看数据；患者通过小程序完成预约与信息交互。<b>三者分工明确，互不增加负担。</b>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Scenarios</div>
+      <h2>三、覆盖的四类场景</h2>
+      <p>CMS 面向医院科室的实际工作场景设计，系统按场景组合功能模块。</p>
+    </div>
+    <div class="split">
+      <div class="half">
+        <h3>① 专科管理场景</h3>
+        <p>面向盆底、心脏、骨科、产科等各专科的独立治疗路径管理。</p>
+        <ul>
+          <li>各专科建立独立的治疗路径与参数体系</li>
+          <li>按专科组织患者、按疗程管理治疗进程</li>
+          <li>科室治疗数据可统计、可导出</li>
+        </ul>
+        <p style="margin-top:10px;color:var(--ink-3);font-size:14px">说明：系统面向专科治疗管理设计，不用于门诊/住院通科建档。</p>
+      </div>
+      <div class="half">
+        <h3>② 居家衔接场景</h3>
+        <p>面向出院后仍需继续治疗的患者，衔接院内与居家两个阶段。</p>
+        <ul>
+          <li>出院患者转入系统，治疗方案在院外延续</li>
+          <li>治疗数据回传，医生远程查看</li>
+          <li>医生按数据远程调整方案并下发</li>
+        </ul>
+        <p style="margin-top:10px;color:var(--ink-3);font-size:14px">说明：本场景可与居家康复系统组合使用，形成院内—居家完整闭环。</p>
+      </div>
+      <div class="half">
+        <h3>③ 运营场景</h3>
+        <p>面向科室管理者，提供治疗量与依从性的数据支撑。</p>
+        <ul>
+          <li>科室治疗量统计与趋势查看</li>
+          <li>患者依从性监测与提醒</li>
+          <li>复诊提醒与随访管理</li>
+        </ul>
+      </div>
+      <div class="half">
+        <h3>④ 筛查与活动入组场景</h3>
+        <p>面向医院组织的筛查与健康活动，支持异常人群的集中管理。</p>
+        <ul>
+          <li>筛查活动人群登记与建档</li>
+          <li>筛查异常人群集中入组管理</li>
+          <li>后续治疗路径跟踪</li>
+        </ul>
+        <p style="margin-top:10px;color:var(--ink-3);font-size:14px">说明：适用于两癌筛查等医院常规筛查运营活动。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="soft">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">Workflow</div>
+      <h2>四、科室怎么用起来</h2>
+      <p>系统部署与使用流程，由圆爱康与科室共同确定实施节奏。</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <h4>需求确认</h4>
+        <p>科室明确所需功能模块与使用场景，确定系统范围。</p>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <h4>系统部署</h4>
+        <p>完成系统部署与账号配置。如需与院内系统对接，由双方技术团队配合实施。</p>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <h4>人员培训</h4>
+        <p>对科室医护人员进行系统操作培训，确保日常使用顺畅。</p>
+      </div>
+      <div class="step">
+        <div class="n">4</div>
+        <h4>运行支持</h4>
+        <p>系统上线后提供持续的技术支持与运行保障，按需迭代优化。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker">System Map</div>
+      <h2>五、与居家康复系统的关系</h2>
+      <p>两套系统面向不同场景，可单独使用，也可组合成完整体系。</p>
+    </div>
+    <table>
+      <thead>
+        <tr><th style="width:180px">对比项</th><th style="width:330px">CMS 患者管理系统</th><th>居家康复系统</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><b>使用场景</b></td><td>院内科室管理</td><td>患者离院后的居家治疗</td></tr>
+        <tr><td><b>端口构成</b></td><td>医护 PC 管理端 + 医生管理小程序 + 患者使用小程序（预约）</td><td>医护管理小程序 + 患者使用端</td></tr>
+        <tr><td><b>部署方式</b></td><td>整院落地或科室落地</td><td>部署于合作机构公众号</td></tr>
+        <tr><td><b>组合方式</b></td><td colspan="2">两者可组合使用：院内治疗由 CMS 管理，出院后转入居家康复系统，治疗数据双向连通，形成<b>院内—居家治疗闭环</b>。亦可单独部署其中一套。</td></tr>
+      </tbody>
+    </table>
+    <div style="text-align:center;margin-top:30px">
+      <a href="devices.html" class="btn ghost">查看设备与系统 →</a>
+      <a href="what-is.html" class="btn ghost" style="margin-left:12px">什么是智慧家康 →</a>
+    </div>
+  </div>
+</section>
+
+<section class="soft">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>如何开始</h2>
+    </div>
+    <div class="cta">
+      <div class="cta-box">
+        <h3>医院 / 科室</h3>
+        <p>希望了解系统功能、部署方式与合作条件</p>
+        <a href="cooperation.html" class="btn">了解合作模式</a>
+      </div>
+      <div class="cta-box">
+        <h3>代理商 / 渠道</h3>
+        <p>希望了解区域市场合作与渠道支持方式</p>
+        <a href="cooperation.html#channel" class="btn ghost">了解合作方式</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div><h4>圆爱康 · 智慧家康模式</h4><p>圆爱康提出的「智慧家康模式」——<br>把医院各专科的专业治疗能力延伸到患者家中。<br>医院主导 · 第三方赋能。</p></div>
+      <div><h4>网站导航</h4><ul>
+          <li><a href="what-is.html">什么是智慧家康</a></li>
+          <li><a href="devices.html">设备与系统</a></li>
+          <li><a href="cms.html">CMS 患者管理系统</a></li>
+          <li><a href="cooperation.html">合作模式</a></li>
+          <li><a href="news.html">项目动态</a></li></ul></div>
+      <div><h4>联系我们</h4><ul>
+          <li>广州圆爱康生物科技有限公司</li>
+          <li>地址：广州市天河区（详细地址以企业工商登记信息为准）</li>
+          <li>官网：www.yuanaikangss.com</li></ul></div>
+    </div>
+    <div class="compliance">⚠️ 诊疗服务由合作医疗机构提供；圆爱康作为辅助方，为医院提供设备、系统与运营支持。</div>
+    <div class="icp">粤ICP备18143404号-1 &nbsp;|&nbsp; 广州圆爱康生物科技有限公司 &nbsp;|&nbsp; © 2026</div>
+  </div>
+</footer>
+</body>
+</html>

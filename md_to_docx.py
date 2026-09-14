@@ -9,6 +9,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
+import os
 
 
 def add_bold_to_paragraph(paragraph, text):
@@ -241,5 +242,9 @@ def convert_md_to_docx(md_path, docx_path):
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print("Usage: python md_to_docx.py input.md output.docx")
+        sys.exit(1)
+    # 保护：输入输出不能是同一路径（否则读到的会是 docx 二进制，且覆盖源文件）
+    if os.path.abspath(sys.argv[1]) == os.path.abspath(sys.argv[2]):
+        print("❌ 输入与输出路径相同，会覆盖源文件。请给不同的输出路径。")
         sys.exit(1)
     convert_md_to_docx(sys.argv[1], sys.argv[2])
