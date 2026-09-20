@@ -67,3 +67,4 @@ logs/
 # Node
 node_modules/
 
+backend/data/*.bak_*
