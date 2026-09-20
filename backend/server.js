@@ -461,6 +461,46 @@ app.get('/api/stories', (req, res) => {
   res.json(stories);
 });
 
+// GET /api/stories/timeline - 按时间轴获取故事（v7·场景E：按真实年份排序，无年份的沉底）
+app.get('/api/stories/timeline', (req, res) => {
+  const sorted = [...stories].sort((a, b) => {
+    const ya = a.year != null ? Number(a.year) : null;
+    const yb = b.year != null ? Number(b.year) : null;
+    // 都没年份 → 按 date 字符串降序
+    if (ya == null && yb == null) return String(b.date || '').localeCompare(String(a.date || ''));
+    // 无年份的永远沉底（不干扰老人看真实年份）
+    if (ya == null) return 1;
+    if (yb == null) return -1;
+    // 年份相同 → 按 date 再排
+    if (ya === yb) return String(b.date || '').localeCompare(String(a.date || ''));
+    return yb - ya;
+  });
+  res.json(sorted);
+});
+
+// GET /api/stories/timeline/grouped - 分年分组（v7·场景E：老人时间轴视图，年份降序）
+app.get('/api/stories/timeline/grouped', (req, res) => {
+  const groups = {};
+  stories.forEach(s => {
+    const key = s.year != null ? String(s.year) : '未知年份';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(s);
+  });
+  const result = Object.keys(groups)
+    .sort((a, b) => {
+      if (a === '未知年份') return 1;
+      if (b === '未知年份') return -1;
+      return Number(b) - Number(a);
+    })
+    .map(year => ({
+      year: year === '未知年份' ? null : Number(year),
+      label: year === '未知年份' ? '年份待补充' : `${year}年`,
+      count: groups[year].length,
+      stories: groups[year].sort((x, y) => String(y.date || '').localeCompare(String(x.date || '')))
+    }));
+  res.json(result);
+});
+
 // GET /api/stories/:id - 获取单个故事
 app.get('/api/stories/:id', (req, res) => {
   const story = stories.find(s => s.id === req.params.id);
@@ -543,46 +583,6 @@ app.delete('/api/stories/:id', (req, res) => {
   saveStories();
 
   res.json({ message: '删除成功', story: deleted });
-});
-
-// GET /api/stories/timeline - 按时间轴获取故事（v7·场景E：按真实年份排序，无年份的沉底）
-app.get('/api/stories/timeline', (req, res) => {
-  const sorted = [...stories].sort((a, b) => {
-    const ya = a.year != null ? Number(a.year) : null;
-    const yb = b.year != null ? Number(b.year) : null;
-    // 都没年份 → 按 date 字符串降序
-    if (ya == null && yb == null) return String(b.date || '').localeCompare(String(a.date || ''));
-    // 无年份的永远沉底（不干扰老人看真实年份）
-    if (ya == null) return 1;
-    if (yb == null) return -1;
-    // 年份相同 → 按 date 再排
-    if (ya === yb) return String(b.date || '').localeCompare(String(a.date || ''));
-    return yb - ya;
-  });
-  res.json(sorted);
-});
-
-// GET /api/stories/timeline/grouped - 分年分组（v7·场景E：老人时间轴视图，年份降序）
-app.get('/api/stories/timeline/grouped', (req, res) => {
-  const groups = {};
-  stories.forEach(s => {
-    const key = s.year != null ? String(s.year) : '未知年份';
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(s);
-  });
-  const result = Object.keys(groups)
-    .sort((a, b) => {
-      if (a === '未知年份') return 1;
-      if (b === '未知年份') return -1;
-      return Number(b) - Number(a);
-    })
-    .map(year => ({
-      year: year === '未知年份' ? null : Number(year),
-      label: year === '未知年份' ? '年份待补充' : `${year}年`,
-      count: groups[year].length,
-      stories: groups[year].sort((x, y) => String(y.date || '').localeCompare(String(x.date || '')))
-    }));
-  res.json(result);
 });
 
 // ==========================================
