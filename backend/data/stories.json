@@ -2,7 +2,7 @@
   {
     "id": "0398a12a-73c9-4e1a-a33c-5cbebe821e25",
     "date": "2026-09-01",
-    "era": "",
+    "era": "其他",
     "content": "test from socket",
     "type": "text",
     "photos": [],
@@ -11,7 +11,9 @@
     "parentStory": null,
     "tags": [],
     "createdAt": "2026-09-01T08:15:27.494Z",
-    "updatedAt": "2026-09-01T08:15:27.494Z"
+    "updatedAt": "2026-09-01T08:15:27.494Z",
+    "year": 2026,
+    "yearApprox": false
   },
   {
     "id": "dc8d6602-3ac1-4e94-9700-78f8005a73bb",
@@ -22,7 +24,9 @@
     "photos": [],
     "tags": [],
     "createdAt": "2026-05-20T11:33:18.185Z",
-    "updatedAt": "2026-05-20T11:33:18.185Z"
+    "updatedAt": "2026-05-20T11:33:18.185Z",
+    "year": 2026,
+    "yearApprox": false
   },
   {
     "id": "814b582d-4b32-4c50-996a-34c0abff71eb",
@@ -35,6 +39,8 @@
       "老家"
     ],
     "createdAt": "2026-09-03T06:53:35.391Z",
-    "updatedAt": "2026-09-03T06:53:35.391Z"
+    "updatedAt": "2026-09-03T06:53:35.391Z",
+    "year": 2026,
+    "yearApprox": false
   }
 ]

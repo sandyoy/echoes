@@ -32,7 +32,8 @@ App({
     userInfo: null,
     token: null,
     stories: [],
-    apiBase: API_BASE
+    apiBase: API_BASE,
+    interviewSessionId: null
   },
 
   // ===== 录音全局 API =====
@@ -141,13 +142,23 @@ App({
     })
   },
 
-  // AI采访
-  aiInterview(message, history) {
+  // AI采访（v7·场景C：带会话ID + 打断标记，支持续接与可打断）
+  aiInterview(message, history, options) {
+    const opts = options || {}
+    // 会话ID：首次生成后存本地，杀进程重进也能接上同一段采访
+    if (!this.globalData.interviewSessionId) {
+      this.globalData.interviewSessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)
+    }
     return new Promise((resolve, reject) => {
       wx.request({
         url: `${API_BASE}/ai/interview`,
         method: 'POST',
-        data: { message, history },
+        data: {
+          message,
+          history,
+          sessionId: this.globalData.interviewSessionId,
+          interrupted: !!opts.interrupted
+        },
         success: (res) => {
           if (res.statusCode === 200) {
             resolve(res.data)

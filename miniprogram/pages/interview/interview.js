@@ -127,7 +127,8 @@ Page({
     this.setData({ messages, inputText: '', isThinking: true, hasConversation: true })
 
     // 调用AI接口
-    app.aiInterview(text, this.data.messages.slice(0, -1)).then(res => {
+    app.aiInterview(text, this.data.messages.slice(0, -1), { interrupted: !!this._wasInterrupted }).then(res => {
+      this._wasInterrupted = false
       const reply = res.reply
       const msgs = [...this.data.messages, { role: 'ai', content: reply, ttsUrl: '', ttsLoading: false, ttsPlaying: false }]
       this.setData({ messages: msgs, isThinking: false })
@@ -283,6 +284,21 @@ Page({
     this._playTTS(index)
   },
 
+  // 【v7·场景C】立刻停掉正在播的 AI 语音，并把状态复位
+  _interruptTTS() {
+    if (this._audioCtx && this._playingIndex >= 0) {
+      try { this._audioCtx.stop() } catch (e) {}
+      const msgs = [...this.data.messages]
+      if (msgs[this._playingIndex]) {
+        msgs[this._playingIndex] = { ...msgs[this._playingIndex], ttsPlaying: false }
+        this.setData({ messages: msgs })
+      }
+      this._playingIndex = -1
+      // 告诉后端：老人打断了我 → 让 AI 顺着他新说的话题接，别继续原来的问题
+      this._wasInterrupted = true
+    }
+  },
+
   // ============= 语音输入 =============
   // 改成一键开始、一键结束：老人更容易，也杜绝"录音停不下来"
   onVoiceTap() {
@@ -292,6 +308,10 @@ Page({
     }
     // 开始录音
     if (app.isRecording() || this.data.isThinking) return
+
+    // 【v7·场景C】打断：老人一开口，正在播的 AI 语音立刻停 —— 这才是"能打断"的手感
+    this._interruptTTS()
+
     this._startY = 0
     this._isRecording = true
     this.setData({ voicePress: true, voiceCancel: false })
@@ -373,7 +393,8 @@ Page({
     const messages = [...this.data.messages, { role: 'user', content: trimmed }]
     this.setData({ messages, isThinking: true, hasConversation: true })
     // 调用AI接口
-    app.aiInterview(trimmed, messages.slice(0, -1)).then(res => {
+    app.aiInterview(trimmed, messages.slice(0, -1), { interrupted: !!this._wasInterrupted }).then(res => {
+      this._wasInterrupted = false
       const reply = res.reply
       const msgs = [...this.data.messages, { role: 'ai', content: reply, ttsUrl: '', ttsLoading: false, ttsPlaying: false }]
       this.setData({ messages: msgs, isThinking: false })

@@ -50,10 +50,70 @@ if (!fs.existsSync(STORIES_FILE)) {
 // ---------- 内存存储 ----------
 let stories = [];
 
+// ---------- 年份解析工具（v7·场景E） ----------
+// 老人回忆的年份可能是：1985 / 1985年 / 约1980年 / 1980年代 / 五十年代 / 2026-09-01 / 空
+function parseStoryYear(story) {
+  if (!story) return null;
+  // 1) 优先用显式年份字段（前端 save 页选年份后写入）
+  if (story.year != null && story.year !== '') {
+    const y = parseInt(story.year, 10);
+    if (!isNaN(y) && y > 1900 && y < 2100) return y;
+  }
+  const dateStr = String(story.date || '').trim();
+  if (!dateStr) return null;
+
+  // 2) "约1980年" / "1985年" / "1985"
+  const m1 = dateStr.match(/(19|20)\d{2}/);
+  if (m1) {
+    const y = parseInt(m1[0], 10);
+    if (y > 1900 && y < 2100) return y;
+  }
+  // 3) "1980年代" / "80年代"
+  const m2 = dateStr.match(/(\d{2,4})\s*年代/);
+  if (m2) {
+    let y = parseInt(m2[1], 10);
+    if (y < 100) y += (y >= 30 ? 1900 : 2000); // 30-99→19xx，0-29→20xx
+    if (y > 1900 && y < 2100) return y;
+  }
+  // 4) "五十年代" 等中文数字年代
+  const cnNum = { '二十':1920,'三十':1930,'四十':1940,'五十':1950,'六十':1960,'七十':1970,'八十':1980,'九十':1990 };
+  for (const k in cnNum) {
+    if (dateStr.includes(k + '年代')) return cnNum[k];
+  }
+  return null;
+}
+
+// 旧数据兜底：给没有 year 字段的故事补上，保证时间轴不漏、可排序
+function isApproximateYear(story) {
+  if (!story) return false;
+  const dateStr = String(story.date || '').trim();
+  // 只有"约XXXX年""XXXX年代""五十年代"这种才叫不确定年份
+  if (/约|年代/.test(dateStr)) return true;
+  // date 被塞成 1月1日（后端兜底日）且不是用户手填 → 存疑但按精确处理
+  return false;
+}
+
+function normalizeStory(story) {
+  const year = parseStoryYear(story);
+  return {
+    ...story,
+    year: story.year != null && story.year !== '' ? story.year : (year || null),
+    yearApprox: story.yearApprox != null ? story.yearApprox : isApproximateYear(story),
+    era: story.era || (story.tags && story.tags[0]) || '其他'
+  };
+}
+
 function loadStories() {
   try {
     const raw = fs.readFileSync(STORIES_FILE, 'utf-8');
-    stories = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    stories = Array.isArray(parsed) ? parsed.map(normalizeStory) : [];
+    // 旧数据补完年份后回写一次（幂等，只有首次启动会真写）
+    const needBackfill = stories.some(s => s.year && !parsed.find(p => p.id === s.id && p.year != null));
+    if (needBackfill) {
+      console.log('  🔧 旧数据年份兜底：已为', stories.filter(s => s.year).length, '条故事补齐 year 字段');
+      saveStories();
+    }
   } catch (err) {
     console.error('读取 stories.json 失败，使用空数组:', err.message);
     stories = [];
@@ -258,47 +318,107 @@ function generateMockReply(messages) {
   return replies['default'];
 }
 
-// POST /api/ai/interview - 真正的 AI 采访对话
+// POST /api/ai/interview - 真正的 AI 采访对话（v7·场景C：会话续接 + 打断感知）
+// 会话记忆：服务端按 sessionId 保存上下文，老人打断/重连后仍能接上（不依赖前端 history 传全量）
+const interviewSessions = new Map(); // sessionId -> { messages: [], lastActive: ts }
+const SESSION_TTL = 2 * 60 * 60 * 1000; // 2小时未活动则清
+
+function getSession(sessionId) {
+  if (!sessionId) return null;
+  const s = interviewSessions.get(sessionId);
+  if (!s) return null;
+  if (Date.now() - s.lastActive > SESSION_TTL) {
+    interviewSessions.delete(sessionId);
+    return null;
+  }
+  return s;
+}
+
+function saveSession(sessionId, messages) {
+  if (!sessionId) return;
+  interviewSessions.set(sessionId, {
+    messages: messages.slice(-20), // 服务端留最近20轮
+    lastActive: Date.now()
+  });
+  // 顺手清理过期会话，防内存泄漏
+  if (interviewSessions.size > 200) {
+    const now = Date.now();
+    for (const [k, v] of interviewSessions) {
+      if (now - v.lastActive > SESSION_TTL) interviewSessions.delete(k);
+    }
+  }
+}
+
 app.post('/api/ai/interview', async (req, res) => {
-  const { message, history } = req.body;
+  const { message, history, sessionId, interrupted } = req.body;
 
   if (!message) {
     return res.status(400).json({ error: 'message 为必填项' });
   }
 
   try {
-    // 构建消息历史
+    // 构建消息历史：服务端会话优先，前端 history 作补充
     const messages = [
       { role: 'system', content: INTERVIEW_SYSTEM_PROMPT }
     ];
 
-    // 加入对话历史（最多保留最近10轮）
-    if (history && Array.isArray(history)) {
-      const recentHistory = history.slice(-10);
-      recentHistory.forEach(msg => {
-        messages.push({
-          role: msg.role === 'ai' ? 'assistant' : 'user',
-          content: msg.content
-        });
+    const sess = getSession(sessionId);
+    let contextMsgs = [];
+
+    if (sess && sess.messages.length > 0) {
+      // 有服务端会话 → 用它，老人中断重来也不丢上下文
+      contextMsgs = sess.messages.slice(-20);
+    } else if (history && Array.isArray(history)) {
+      // 无服务端会话（首次/换设备）→ 退回前端 history
+      contextMsgs = history.slice(-10).map(msg => ({
+        role: msg.role === 'ai' ? 'assistant' : 'user',
+        content: msg.content
+      }));
+    }
+
+    contextMsgs.forEach(m => messages.push(m));
+
+    // 打断感知：老人打断你的话时，让你知道"上一句被打断了"，要顺着他接
+    if (interrupted) {
+      messages.push({
+        role: 'system',
+        content: '【提示】老人刚刚打断了你正在说的话，说明他有更想聊的。请直接顺着他的新话题接，不要继续原来的问题，也不要提"打断"这件事。'
       });
     }
 
-    // 加入当前用户消息
     messages.push({ role: 'user', content: message });
 
     // 调用 AI
     const reply = await callDeepSeek(messages);
 
+    // 写回服务端会话（user + assistant 成对追加）
+    const newSessionMsgs = contextMsgs.concat([
+      { role: 'user', content: message },
+      { role: 'assistant', content: reply }
+    ]);
+    saveSession(sessionId, newSessionMsgs);
+
     res.json({
       reply,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      sessionId: sessionId || null
     });
 
     // 自动保存有价值的回忆（超过15个字）
     if (message.length > 15) {
-      // 检测是否包含年份信息
-      const yearMatch = message.match(/(\d{4})年/);
-      const year = yearMatch ? yearMatch[1] : String(new Date().getFullYear());
+      // 检测是否包含年份信息（v7·场景E：优先识别老人真实年份，识别不到才用今年）
+      const yearMatch = message.match(/((?:19|20)\d{2})\s*年?/);
+      const decadeMatch = message.match(/(\d{2,4})\s*年代/);
+      let year = null;
+      if (yearMatch) {
+        year = parseInt(yearMatch[1], 10);
+      } else if (decadeMatch) {
+        let d = parseInt(decadeMatch[1], 10);
+        if (d < 100) d += (d >= 30 ? 1900 : 2000);
+        year = d;
+      }
+      // 识别不到真实年份 → 不硬塞今年，标记为待补充（老人后续可在详情页补）
+      const yearApprox = !yearMatch;
 
       // 检测主题
       const topics = ['童年','小学','求学','工作','结婚','恋爱','孩子','父母','老家','朋友','退休'];
@@ -309,16 +429,21 @@ app.post('/api/ai/interview', async (req, res) => {
 
       const newStory = {
         id: uuidv4(),
-        date: `${year}-01-01`,
+        date: year ? `${year}-01-01` : new Date().toISOString().split('T')[0],
+        year: year,
+        yearApprox: yearApprox,
         era: topic || '其他',
         content: message,
         type: 'interview',
         photos: [],
+        audioUrl: null,
+        isSubStory: false,
+        parentStory: null,
         tags: topic ? [topic] : [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      stories.push(newStory);
+      stories.unshift(newStory);
       saveStories();
     }
   } catch (err) {
@@ -336,6 +461,46 @@ app.get('/api/stories', (req, res) => {
   res.json(stories);
 });
 
+// GET /api/stories/timeline - 按时间轴获取故事（v7·场景E：按真实年份排序，无年份的沉底）
+app.get('/api/stories/timeline', (req, res) => {
+  const sorted = [...stories].sort((a, b) => {
+    const ya = a.year != null ? Number(a.year) : null;
+    const yb = b.year != null ? Number(b.year) : null;
+    // 都没年份 → 按 date 字符串降序
+    if (ya == null && yb == null) return String(b.date || '').localeCompare(String(a.date || ''));
+    // 无年份的永远沉底（不干扰老人看真实年份）
+    if (ya == null) return 1;
+    if (yb == null) return -1;
+    // 年份相同 → 按 date 再排
+    if (ya === yb) return String(b.date || '').localeCompare(String(a.date || ''));
+    return yb - ya;
+  });
+  res.json(sorted);
+});
+
+// GET /api/stories/timeline/grouped - 分年分组（v7·场景E：老人时间轴视图，年份降序）
+app.get('/api/stories/timeline/grouped', (req, res) => {
+  const groups = {};
+  stories.forEach(s => {
+    const key = s.year != null ? String(s.year) : '未知年份';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(s);
+  });
+  const result = Object.keys(groups)
+    .sort((a, b) => {
+      if (a === '未知年份') return 1;
+      if (b === '未知年份') return -1;
+      return Number(b) - Number(a);
+    })
+    .map(year => ({
+      year: year === '未知年份' ? null : Number(year),
+      label: year === '未知年份' ? '年份待补充' : `${year}年`,
+      count: groups[year].length,
+      stories: groups[year].sort((x, y) => String(y.date || '').localeCompare(String(x.date || '')))
+    }));
+  res.json(result);
+});
+
 // GET /api/stories/:id - 获取单个故事
 app.get('/api/stories/:id', (req, res) => {
   const story = stories.find(s => s.id === req.params.id);
@@ -343,22 +508,35 @@ app.get('/api/stories/:id', (req, res) => {
   res.json(story);
 });
 
-// POST /api/stories - 新增故事
+// POST /api/stories - 新增故事（v7·场景E：支持 year/yearApprox）
 app.post('/api/stories', (req, res) => {
-  const { content, date, era, type, photos, tags, isSubStory, parentStory } = req.body;
+  const { content, date, era, type, photos, tags, isSubStory, parentStory, year, yearApprox, audioUrl } = req.body;
 
   if (!content) {
     return res.status(400).json({ error: 'content 为必填项' });
   }
 
+  // 年份优先级：显式 year > date 里解析出的年份 > date 原值
+  const parsedYear = year != null && year !== '' ? parseInt(year, 10) : parseStoryYear({ date });
+  const finalYear = (!isNaN(parsedYear) && parsedYear > 1900 && parsedYear < 2100) ? parsedYear : null;
+
+  // date 落库口径：有明确年份→"YYYY-01-01"；否则保留原样（便于后续人工补）
+  let finalDate = date;
+  if (!finalDate && finalYear) finalDate = `${finalYear}-01-01`;
+  if (!finalDate) finalDate = new Date().toISOString().split('T')[0];
+
+  const isApprox = yearApprox != null ? !!yearApprox : /约|年代/.test(String(finalDate));
+
   const newStory = {
     id: uuidv4(),
-    date: date || new Date().toISOString().split('T')[0],
+    date: finalDate,
+    year: finalYear,
+    yearApprox: isApprox,
     era: era || '',
     content,
     type: type || 'text',
     photos: photos || [],
-    audioUrl: null,
+    audioUrl: audioUrl || null,
     isSubStory: isSubStory || false,
     parentStory: parentStory || null,
     tags: tags || [],
@@ -405,12 +583,6 @@ app.delete('/api/stories/:id', (req, res) => {
   saveStories();
 
   res.json({ message: '删除成功', story: deleted });
-});
-
-// GET /api/stories/timeline - 按时间轴获取故事
-app.get('/api/stories/timeline', (req, res) => {
-  const sorted = [...stories].sort((a, b) => a.date.localeCompare(b.date));
-  res.json(sorted);
 });
 
 // ==========================================
