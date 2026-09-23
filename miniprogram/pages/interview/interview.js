@@ -56,6 +56,7 @@ Page({
       onStop: (res) => {
         this._isRecording = false
         clearTimeout(this._recordTimer)
+        clearTimeout(this._voiceWatchdog)
         this.setData({ voicePress: false, voiceCancel: false })
         if (res.duration < 500) {
           wx.showToast({ title: '录音时间太短', icon: 'none' })
@@ -67,6 +68,7 @@ Page({
       onError: () => {
         this._isRecording = false
         clearTimeout(this._recordTimer)
+        clearTimeout(this._voiceWatchdog)
         this.setData({ voicePress: false, voiceCancel: false })
         wx.showToast({ title: '录音失败，请重试', icon: 'none' })
       }
@@ -184,8 +186,17 @@ Page({
   },
 
   _navToSave(content, audioPath, sourceType, dur) {
+    // 【v7·修复(09-23)】正文改走 storage 中转，避免整场采访长文本经 URL 被截断
+    try {
+      wx.setStorageSync('pendingStory', {
+        content: content || '',
+        audioPath: audioPath || '',
+        sourceType: sourceType || 'text',
+        dur: dur || 0
+      })
+    } catch (e) { console.warn('写 pendingStory 失败', e) }
+    // URL 只传轻标记，兼容兜底
     const q = [
-      'content=' + encodeURIComponent(content || ''),
       'sourceType=' + (sourceType || 'text'),
       'dur=' + (dur || 0)
     ]
@@ -330,6 +341,17 @@ Page({
     this._recordTimer = setTimeout(() => {
       if (this._isRecording) this.onVoiceDone()
     }, 300000)
+    // 【v7·修复(09-23)】兜底看门狗：录音回调可能因权限被拒/系统打断而永久丢失，
+    // 一旦命中，voicePress 会永久 true（按钮卡死、发送键灰）。8 秒未收到任何回调即强制复位。
+    clearTimeout(this._voiceWatchdog)
+    this._voiceWatchdog = setTimeout(() => {
+      if (this._isRecording) {
+        this._isRecording = false
+        try { app.forceStopRecord() } catch (e) {}
+        this.setData({ voicePress: false, voiceCancel: false })
+        wx.showToast({ title: '录音没启动，请重试', icon: 'none' })
+      }
+    }, 8000)
   },
 
   // 显式完成：停止并转文字发送（老人点【完成】或再点麦克风都会到这里）
@@ -337,6 +359,7 @@ Page({
     if (!this._isRecording) return
     this._isRecording = false
     clearTimeout(this._recordTimer)
+    clearTimeout(this._voiceWatchdog)
     this.setData({ voicePress: false, voiceCancel: false })
     app.stopRecord() // 全局 onStop → _transcribeAndSend
   },
@@ -346,6 +369,7 @@ Page({
     if (!this._isRecording) return
     this._isRecording = false
     clearTimeout(this._recordTimer)
+    clearTimeout(this._voiceWatchdog)
     app.forceStopRecord()
     this.setData({ voicePress: false, voiceCancel: false })
     wx.showToast({ title: '已取消', icon: 'none' })

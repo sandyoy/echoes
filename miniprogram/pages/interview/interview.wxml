@@ -87,7 +87,8 @@
         disabled="{{voicePress}}"
       />
     </view>
-    <button class="send-btn" bindtap="sendMessage" disabled="{{!inputText.trim() || isThinking || voicePress}}">
+    <!-- v7·修复(09-23)：发送键不得被录音状态锁死——录音异常绝不能堵死文字通道 -->
+    <button class="send-btn" bindtap="sendMessage" disabled="{{!inputText.trim() || isThinking}}">
       <text>发送</text>
     </button>
     <!-- 语音按钮：点头一次开始，再点一次结束（对老人更稳，也杜绝"想停停不下来"） -->

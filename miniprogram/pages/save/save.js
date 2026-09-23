@@ -19,11 +19,26 @@ Page({
   _audioCtx: null,
 
   onLoad(query) {
-    // 听众：语音单句原样带入
-    let content = decodeURIComponent(query.content || '')
+    // 【v7·修复(09-23)】正文优先走 storage 中转：微信 navigateTo URL 有长度上限（约1024字节），
+    // 采访整场/长文本经 URL 传必被截断 → content 变空 → 保存静默失败。storage 优先，query 兜底。
+    let content = ''
     let audioPath = query.audioPath || ''
     let sourceType = query.sourceType || 'text'
     let dur = parseInt(query.dur || '0', 10)
+    try {
+      const pending = wx.getStorageSync('pendingStory')
+      if (pending && typeof pending === 'object') {
+        content = pending.content || ''
+        audioPath = pending.audioPath || audioPath
+        sourceType = pending.sourceType || sourceType
+        dur = pending.dur || dur
+        wx.removeStorageSync('pendingStory') // 即清，防重复带入
+      }
+    } catch (e) { console.warn('读 pendingStory 失败', e) }
+    // storage 无内容时回退到 query（兼容老调用方）
+    if (!content) {
+      try { content = decodeURIComponent(query.content || '') } catch (e) { content = query.content || '' }
+    }
 
     // 口语式来源：无声给占位壳，让老人补字或放弃
     if ((sourceType === 'voice' || sourceType === 'single') && !content.trim() && audioPath) {
@@ -105,7 +120,17 @@ Page({
   // 真正落库
   saveAll() {
     const text = this.data.content.trim()
-    if (!text || this.data.saving) return
+    if (this.data.saving) return
+    // 【v7·修复(09-23)】空内容必须给明确提示，不许静默 return（老人会以为保存成功）
+    if (!text) {
+      wx.showModal({
+        title: '还没写内容',
+        content: '这段回忆还是空的，说点什么或写几个字再保存吧',
+        showCancel: false,
+        confirmText: '好'
+      })
+      return
+    }
     this.setData({ saving: true })
 
     const year = this.data.yearStr || String(this.data.currYear)

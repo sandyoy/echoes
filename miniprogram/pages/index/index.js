@@ -131,8 +131,17 @@ Page({
 
   // 跳转通用的"确认-编辑-保存"页
   openSavePage(content, audioPath, sourceType, dur) {
+    // 【v7·修复(09-23)】正文改走 storage 中转，避免长文本经 URL 被截断（URL 上限约1024字节）
+    try {
+      wx.setStorageSync('pendingStory', {
+        content: content || '',
+        audioPath: audioPath || '',
+        sourceType: sourceType || 'text',
+        dur: dur || 0
+      })
+    } catch (e) { console.warn('写 pendingStory 失败', e) }
+    // URL 只传轻标记，兼容兜底
     const q = [
-      'content=' + encodeURIComponent(content || ''),
       'sourceType=' + (sourceType || 'text'),
       'dur=' + (dur || 0)
     ]
