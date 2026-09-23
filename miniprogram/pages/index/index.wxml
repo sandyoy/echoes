@@ -16,9 +16,9 @@
     <view class="recording-btn-wrapper" wx:if="{{currentMode === 'self'}}">
       <button 
         class="recording-btn {{isRecording ? 'recording-active' : ''}}"
-        bindtouchstart="startRecording"
-        bindtouchend="stopRecording"
-        bindtouchcancel="stopRecording"
+        catchtouchstart="startRecording"
+        catchtouchend="stopRecording"
+        catchtouchcancel="stopRecording"
         hover-class="none"
       >
         <text class="icon">{{isRecording ? '🔴' : '🎤'}}</text>

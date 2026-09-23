@@ -53,18 +53,42 @@ App({
     return _recording
   },
   // 开始录音（options 缺省用微信默认参数）
+  // 返回 Promise：resolve(true)=已开录；resolve(false)+errMsg=未授/被拒，调用方必须给用户提示
   startRecord(opts) {
-    if (_recording) return false
-    const rec = getRecorder()
-    const options = Object.assign({
-      duration: 600000,
-      sampleRate: 16000,
-      numberOfChannels: 1,
-      encodeBitRate: 48000,
-      format: 'mp3'
-    }, opts || {})
-    rec.start(options)
-    return true
+    return new Promise((resolve) => {
+      if (_recording) { resolve({ ok: false, errMsg: '正在录音中' }); return }
+      const rec = getRecorder()
+      const options = Object.assign({
+        duration: 600000,
+        sampleRate: 16000,
+        numberOfChannels: 1,
+        encodeBitRate: 48000,
+        format: 'mp3'
+      }, opts || {})
+      // 先查权限：未授权则先弹授权，被拒则明确告知（绝不静默失败）
+      wx.getSetting({
+        success: (s) => {
+          if (s.authSetting['scope.record'] === false) {
+            // 曾被拒绝过：直接引导去设置页
+            resolve({ ok: false, denied: true, errMsg: '麦克风权限被拒绝' })
+            return
+          }
+          if (s.authSetting['scope.record'] === undefined) {
+            // 从未申请：先申请
+            wx.authorize({
+              scope: 'scope.record',
+              success: () => { rec.start(options); resolve({ ok: true }) },
+              fail: () => resolve({ ok: false, denied: true, errMsg: '未获得麦克风权限' })
+            })
+            return
+          }
+          // 已授权：直接开录
+          rec.start(options)
+          resolve({ ok: true })
+        },
+        fail: () => { rec.start(options); resolve({ ok: true }) }
+      })
+    })
   },
   // 停止录音
   stopRecord() {

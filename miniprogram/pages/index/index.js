@@ -74,10 +74,23 @@ Page({
     if (app.isRecording() || this.data.isRecording) return
     // 立即刷新 UI（不等 onStart 回调，按下即亮，避免闪烁）
     this.setData({ isRecording: true, showRecordingToast: true })
-    const ok = app.startRecord()
-    if (!ok) {
-      this.setData({ isRecording: false, showRecordingToast: false })
-    }
+    app.startRecord().then((res) => {
+      if (res && res.ok === false) {
+        this.setData({ isRecording: false, showRecordingToast: false })
+        if (res.denied) {
+          // 权限被拒：明确告知并给一键去设置的入口（绝不静默）
+          wx.showModal({
+            title: '需要麦克风权限',
+            content: '按住说话需要用到麦克风，请点"去设置"打开"录音"权限后重试。',
+            confirmText: '去设置',
+            cancelText: '取消',
+            success: (r) => { if (r.confirm) wx.openSetting({}) }
+          })
+        } else {
+          wx.showToast({ title: res.errMsg || '无法开始录音', icon: 'none' })
+        }
+      }
+    })
   },
 
   // 停止录音（松手/取消）
