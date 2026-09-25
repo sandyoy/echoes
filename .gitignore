@@ -68,3 +68,9 @@ logs/
 node_modules/
 
 backend/data/*.bak_*
+
+# === 密钥（严禁入仓）===
+*_secret*.json
+*xunfei*.json
+config/secrets/
+*.key
