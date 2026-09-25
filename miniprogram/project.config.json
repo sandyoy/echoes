@@ -1,0 +1,17 @@
+{
+  "description": "往事可追忆 v2.4 小程序（另起炉灶版）",
+  "packOptions": { "ignore": [], "include": [] },
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "newFeature": true
+  },
+  "compileType": "miniprogram",
+  "libVersion": "3.0.0",
+  "appid": "wx800bcf18e915dfde",
+  "projectname": "往事可追忆-v24",
+  "condition": {}
+}

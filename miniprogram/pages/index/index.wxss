@@ -1,0 +1,29 @@
+/* 首页样式（字号/间距由 app.wxss 的 CSS 变量驱动，切 ui-mode 即变） */
+.row { display: flex; gap: var(--space); }
+.big-btn.small { font-size: var(--font-base); }
+
+.list-title {
+  font-size: var(--font-base);
+  font-weight: 600;
+  margin: var(--space) 0 calc(var(--space) / 2);
+}
+.empty { color: #999; }
+.story-item {
+  padding: var(--space);
+  background: #fff;
+  border-radius: 12rpx;
+  margin-bottom: calc(var(--space) / 2);
+}
+.switch {
+  margin-top: var(--space);
+  text-align: center;
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+.more {
+  margin-top: var(--space);
+  text-align: center;
+  font-size: var(--font-base);
+  color: #666;
+  padding: var(--space);
+}

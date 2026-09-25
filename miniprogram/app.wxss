@@ -1,0 +1,57 @@
+/* 往事可追忆 v2.4 · 全局样式
+ * 双界面实现方式（v2.4 §3.4）：同一套代码，两套样式。
+ * 通过根节点 ui-mode-standard / ui-mode-large 切换 CSS 变量。 */
+
+page {
+  --font-base: 32rpx;      /* 标准版字号 */
+  --font-title: 40rpx;
+  --btn-h: 96rpx;
+  --color-bg: #faf6f0;
+  --color-fg: #333333;
+  --color-accent: #c4956a;
+  --space: 24rpx;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-size: var(--font-base);
+}
+
+/* —— 大字版：高对比 + 特大字 —— */
+page.ui-mode-large {
+  --font-base: 52rpx;
+  --font-title: 64rpx;
+  --btn-h: 160rpx;
+  --color-bg: #ffffff;
+  --color-fg: #000000;
+  --color-accent: #9a5b1e;
+  --space: 40rpx;
+}
+
+.container {
+  padding: var(--space);
+  box-sizing: border-box;
+}
+
+.title {
+  font-size: var(--font-title);
+  font-weight: 600;
+  margin-bottom: var(--space);
+}
+
+/* 大按钮：大字版首页「就一个大按钮：按住说话」（v2.4 §3.3） */
+.big-btn {
+  width: 100%;
+  height: var(--btn-h);
+  line-height: var(--btn-h);
+  text-align: center;
+  font-size: var(--font-base);
+  border-radius: 20rpx;
+  background: var(--color-accent);
+  color: #ffffff;
+  margin-bottom: var(--space);
+}
+
+.big-btn.hold {
+  /* 按住说话：按住时视觉反馈 */
+  transform: scale(0.99);
+  opacity: 0.9;
+}

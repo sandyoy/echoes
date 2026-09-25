@@ -1,0 +1,16 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/capture/capture",
+    "pages/book/book"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#faf6f0",
+    "navigationBarTitleText": "往事可追忆",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#faf6f0"
+  },
+  "requiredBackgroundModes": ["audio"],
+  "plugins": {},
+  "sitemapLocation": "sitemap.json"
+}

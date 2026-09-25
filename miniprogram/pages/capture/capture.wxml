@@ -1,0 +1,38 @@
+<!-- 采集页：四类素材，素材挂同一件事 -->
+<view class="container">
+
+  <!-- 类型切换（标准版显示；大字版收起为单一模式） -->
+  <view wx:if="{{uiMode !== 'large'}}" class="tabs">
+    <view class="tab {{type === 'voice' ? 'on' : ''}}" data-type="voice" bindtap="onTypeChange">语音</view>
+    <view class="tab {{type === 'text'  ? 'on' : ''}}" data-type="text"  bindtap="onTypeChange">文字</view>
+    <view class="tab {{type === 'photo' ? 'on' : ''}}" data-type="photo" bindtap="onTypeChange">照片</view>
+    <view class="tab {{type === 'video' ? 'on' : ''}}" data-type="video" bindtap="onTypeChange">视频</view>
+  </view>
+
+  <!-- 语音：按住说话（合格线＝摁一下哒哒就说） -->
+  <block wx:if="{{type === 'voice'}}">
+    <view class="big-btn hold {{recording ? 'recording' : ''}}"
+          bindtouchstart="onHoldStart" bindtouchend="onHoldEnd">
+      {{recording ? '松开 发送' : '按住说话'}}
+    </view>
+  </block>
+
+  <!-- 文字 -->
+  <block wx:elif="{{type === 'text'}}">
+    <textarea class="text-input" placeholder="想到什么就写什么…"
+              bindinput="onTextInput" value="{{text}}"></textarea>
+  </block>
+
+  <!-- 照片 / 视频：加号直接跳图库（当场录 + 相册传） -->
+  <block wx:else>
+    <view class="big-btn" data-kind="{{type}}" bindtap="onPlusPick">+ 添加{{type === 'photo' ? '照片' : '视频'}}</view>
+    <view class="media-grid">
+      <view wx:for="{{mediaList}}" wx:key="path" class="media-item">{{item.kind}}</view>
+    </view>
+  </block>
+
+  <!-- 已采集素材（挂同一件事） -->
+  <view wx:if="{{mediaList.length > 0}}" class="list-title">已添加 {{mediaList.length}} 项</view>
+
+  <view class="big-btn" bindtap="onSave">保存</view>
+</view>

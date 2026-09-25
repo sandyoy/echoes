@@ -1,0 +1,37 @@
+<!-- 首页：标准版 / 大字版 同一模板，靠 uiMode 分支 -->
+<view class="container">
+
+  <!-- ===== 大字版：就一个大按钮「按住说话」 ===== -->
+  <block wx:if="{{uiMode === 'large'}}">
+    <view class="big-btn hold"
+          bindtouchstart="onHoldStart"
+          bindtouchend="onHoldEnd">
+      按住说话
+    </view>
+    <!-- 核心之外全部收起；切换/更多藏在「更多」里，不露出「设置/权限/分享」字样（v2.4 §3.3） -->
+    <view class="more" bindtap="onToggleMode">更多</view>
+  </block>
+
+  <!-- ===== 标准版：故事列表 / 成书 / 全部功能 ===== -->
+  <block wx:else>
+    <view class="title">往事可追忆</view>
+
+    <view class="big-btn" data-type="voice" bindtap="onCapture">+ 录一段</view>
+
+    <view class="row">
+      <view class="big-btn small" data-type="text"  bindtap="onCapture">写文字</view>
+      <view class="big-btn small" data-type="photo" bindtap="onCapture">传照片</view>
+      <view class="big-btn small" data-type="video" bindtap="onCapture">传视频</view>
+    </view>
+
+    <view class="big-btn" bindtap="onOpenBook">我要成书</view>
+
+    <!-- 故事列表占位（数据主体=故事，v2.4 §2.1） -->
+    <view class="list-title">我的故事</view>
+    <view wx:if="{{stories.length === 0}}" class="empty">还没有故事，先录一段吧</view>
+    <view wx:for="{{stories}}" wx:key="id" class="story-item">{{item.title}}</view>
+
+    <view class="switch" bindtap="onToggleMode">切换大字版</view>
+  </block>
+
+</view>

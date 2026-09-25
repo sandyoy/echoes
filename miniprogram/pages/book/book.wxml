@@ -1,0 +1,5 @@
+<!-- 成书页占位（第1期只做入口，第3期做电子书） -->
+<view class="container">
+  <view class="title">我要成书</view>
+  <view class="empty">电子书功能在第 3 期上线</view>
+</view>
