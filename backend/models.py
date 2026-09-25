@@ -138,6 +138,7 @@ class Story(Base):
     __tablename__ = "stories"
 
     id = Column(String(64), primary_key=True)
+    owner_id = Column(String(128), index=True, default="")  # 书的主人（讲述人）——权限判定的根
     title = Column(String(256), default="")            # 可为空，AI 后补
     summary = Column(Text, default="")                 # 一句话摘要（列表展示用）
 
