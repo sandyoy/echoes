@@ -11,8 +11,11 @@ App({
     uiMode: 'standard',
     // 故事 = 数据主体（v2.4 §2.1）
     currentStoryId: null,
-    // 后端基址（小鲸鱼 09-30 交接口定义后替换；本地联调用 mock）
-    apiBase: ''
+    // 后端基址。小龙虾 09-26 实测：本机已装 fastapi/uvicorn/sqlalchemy，
+    //   后端适配器可在本地真跑（34/34 自测过 + /docs 200 + 4 接口信封实测），
+    //   本地联调：cd backend && python3 -m uvicorn api_adapter_fastapi:app --port 8012
+    //   微信开发者工具需在「详情→本地设置」勾「不校验合法域名」才能连 127.0.0.1。
+    apiBase: 'http://127.0.0.1:8012'
   },
 
   onLaunch() {
