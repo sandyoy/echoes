@@ -28,6 +28,7 @@ except ImportError as e:  # pragma: no cover
 
 from models import SessionLocal, get_db, init_db
 import collect_api as api
+import claim_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -99,3 +100,72 @@ def upload_url(req: UploadUrlReq):
     return api.api_upload_url(
         file_name=req.file_name, file_size=req.file_size, mime=req.mime,
     )
+
+
+# ============================================================
+# 待认领 / 认领 路由（2026-09-27，第1期 A 线）
+# ============================================================
+
+class RegisterClaimReq(BaseModel):
+    owner_id: str
+    phone: str = ""
+    display_name: str = ""
+    story_id: str = ""
+
+
+class ClaimLoginReq(BaseModel):
+    user_id: str
+    phone: str = ""
+
+
+class ConfirmClaimReq(BaseModel):
+    claim_id: str
+    owner_id: str
+    user_id: str
+
+
+class RejectClaimReq(BaseModel):
+    claim_id: str
+    owner_id: str
+
+
+@app.post("/api/echoes/claim/register")
+def register_claim(req: RegisterClaimReq, db=Depends(get_db)):
+    return claim_api.api_register_claim(
+        db, owner_id=req.owner_id, phone=req.phone,
+        display_name=req.display_name, story_id=req.story_id,
+    )
+
+
+@app.post("/api/echoes/claim/login")
+def claim_on_login(req: ClaimLoginReq, db=Depends(get_db)):
+    return claim_api.api_claim_on_login(db, user_id=req.user_id, phone=req.phone)
+
+
+@app.get("/api/echoes/claim/mentioned")
+def mentioned(user_id: str, db=Depends(get_db)):
+    return claim_api.api_mentioned(db, user_id=user_id)
+
+
+@app.get("/api/echoes/claim/search")
+def search_claim(display_name: str, db=Depends(get_db)):
+    return claim_api.api_search_claim_by_name(db, display_name=display_name)
+
+
+@app.post("/api/echoes/claim/confirm")
+def confirm_claim(req: ConfirmClaimReq, db=Depends(get_db)):
+    return claim_api.api_confirm_claim(
+        db, claim_id=req.claim_id, owner_id=req.owner_id, user_id=req.user_id,
+    )
+
+
+@app.post("/api/echoes/claim/reject")
+def reject_claim(req: RejectClaimReq, db=Depends(get_db)):
+    return claim_api.api_reject_claim(
+        db, claim_id=req.claim_id, owner_id=req.owner_id,
+    )
+
+
+@app.get("/api/echoes/claim/pending")
+def pending_claims(owner_id: str, db=Depends(get_db)):
+    return claim_api.api_pending_claims(db, owner_id=owner_id)

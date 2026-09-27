@@ -267,7 +267,33 @@ def remove_member(db, member_id: str) -> bool:
 # ============================================================
 
 import uuid as _uuid
+import re as _re
 
 
 def _new_id(prefix: str) -> str:
     return f"{prefix}_{_uuid.uuid4().hex[:12]}"
+
+
+def _normalize_phone(phone: str) -> str:
+    """
+    手机号归一化（认领钥匙必须**唯一口径**，否则同一人认不上）。
+
+    规则（保守，不瞎猜）：
+      - 去空格 / 去横线 / 去括号
+      - 去掉 +86 / 86 国际区号前缀
+      - 全角数字转半角
+      - 只保留数字；长度 6~15 才算有效手机号，否则返回原始去空串
+        （非手机号不硬掰，避免把座机/错误输入当成认领钥匙）
+    """
+    if not phone:
+        return ""
+    s = str(phone).strip()
+    # 全角数字 → 半角
+    s = s.translate(str.maketrans("０１２３４５６７８９", "0123456789"))
+    s = _re.sub(r"[\s\-()（）]", "", s)
+    s = _re.sub(r"^(\+?86)", "", s)
+    digits = _re.sub(r"\D", "", s)
+    if 6 <= len(digits) <= 15:
+        return digits
+    return s
+
