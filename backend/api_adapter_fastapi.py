@@ -28,6 +28,7 @@ except ImportError as e:  # pragma: no cover
 
 from models import SessionLocal, get_db, init_db
 import collect_api as api
+import collect_av as av
 import claim_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
@@ -59,6 +60,50 @@ class UploadUrlReq(BaseModel):
     file_name: str
     file_size: int
     mime: str = ""
+
+
+# --- 语音 / 原声 / 视频（2026-09-28，B 线后半，提前完成 09-29 任务）---
+
+class AddAudioReq(BaseModel):
+    story_id: str
+    actor_id: str
+    media_url: str
+    file_name: str = ""
+    file_size: int = 0
+    mime: str = ""
+    duration: float = 0.0
+    caption: str = ""
+    audio_path: str = ""      # 本机原声路径（可选）；传了才可能同步转写
+    do_transcribe: bool = True
+
+
+class AddOriginalReq(BaseModel):
+    story_id: str
+    actor_id: str
+    media_url: str
+    file_name: str = ""
+    file_size: int = 0
+    mime: str = ""
+    duration: float = 0.0
+    caption: str = ""
+
+
+class AddVideoReq(BaseModel):
+    story_id: str
+    actor_id: str
+    media_url: str
+    file_name: str = ""
+    file_size: int = 0
+    mime: str = ""
+    duration: float = 0.0
+    cover_url: str = ""
+    caption: str = ""
+
+
+class TranscribeReq(BaseModel):
+    clip_id: str
+    actor_id: str
+    audio_path: str = ""
 
 
 # ============================================================
@@ -99,6 +144,50 @@ def list_clips(story_id: str, viewer_id: str, db=Depends(get_db)):
 def upload_url(req: UploadUrlReq):
     return api.api_upload_url(
         file_name=req.file_name, file_size=req.file_size, mime=req.mime,
+    )
+
+
+# ============================================================
+# 语音 / 原声 / 视频 路由（2026-09-28）
+# 路径沿用既有口径：/api/echoes/clip/<类型>
+# ============================================================
+
+@app.post("/api/echoes/clip/audio")
+def add_audio(req: AddAudioReq, db=Depends(get_db)):
+    return av.api_add_audio_clip(
+        db, story_id=req.story_id, owner_id=req.actor_id,   # TODO 登录态注入
+        actor_id=req.actor_id, media_url=req.media_url,
+        file_name=req.file_name, file_size=req.file_size, mime=req.mime,
+        duration=req.duration, caption=req.caption,
+        audio_path=req.audio_path, do_transcribe=req.do_transcribe,
+    )
+
+
+@app.post("/api/echoes/clip/original")
+def add_original(req: AddOriginalReq, db=Depends(get_db)):
+    return av.api_add_original_clip(
+        db, story_id=req.story_id, owner_id=req.actor_id,   # TODO 登录态注入
+        actor_id=req.actor_id, media_url=req.media_url,
+        file_name=req.file_name, file_size=req.file_size, mime=req.mime,
+        duration=req.duration, caption=req.caption,
+    )
+
+
+@app.post("/api/echoes/clip/video")
+def add_video(req: AddVideoReq, db=Depends(get_db)):
+    return av.api_add_video_clip(
+        db, story_id=req.story_id, owner_id=req.actor_id,   # TODO 登录态注入
+        actor_id=req.actor_id, media_url=req.media_url,
+        file_name=req.file_name, file_size=req.file_size, mime=req.mime,
+        duration=req.duration, cover_url=req.cover_url, caption=req.caption,
+    )
+
+
+@app.post("/api/echoes/clip/transcribe")
+def transcribe_clip(req: TranscribeReq, db=Depends(get_db)):
+    return av.api_transcribe_clip(
+        db, clip_id=req.clip_id, owner_id=req.actor_id,     # TODO 登录态注入
+        viewer_id=req.actor_id, audio_path=req.audio_path,
     )
 
 
