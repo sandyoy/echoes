@@ -2,7 +2,8 @@
   "pages": [
     "pages/index/index",
     "pages/capture/capture",
-    "pages/book/book"
+    "pages/book/book",
+    "pages/claim/claim"
   ],
   "window": {
     "navigationBarBackgroundColor": "#faf6f0",

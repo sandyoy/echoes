@@ -1,0 +1,35 @@
+<!-- 待认领页：①提到了我 ②按名字找候选（候选须登记人确认才生效） -->
+<view class="container">
+
+  <view class="tabs">
+    <view class="tab {{mode === 'mentioned' ? 'on' : ''}}" data-mode="mentioned" bindtap="onSwitchMode">提到了我</view>
+    <view class="tab {{mode === 'search' ? 'on' : ''}}" data-mode="search" bindtap="onSwitchMode">找人</view>
+  </view>
+
+  <!-- ① 有 N 篇故事提到了你 -->
+  <block wx:if="{{mode === 'mentioned'}}">
+    <view class="count-line">有 {{mentioned.count}} 篇故事提到了你</view>
+    <view wx:if="{{mentioned.stories.length === 0}}" class="empty">还没有人写到你</view>
+    <view wx:for="{{mentioned.stories}}" wx:key="story_id" class="item" bindtap="onOpenStory">
+      <view class="item-title">{{item.title}}</view>
+      <view class="item-sub">{{item.time_label}}</view>
+    </view>
+  </block>
+
+  <!-- ② 按名字找人（手机号对不上时的兜底路） -->
+  <block wx:else>
+    <input class="name-input" placeholder="写一下他的名字" bindinput="onNameInput" value="{{name}}" />
+    <view class="big-btn" bindtap="onSearch">找一下</view>
+
+    <view wx:if="{{candidates.count === 0}}" class="empty">没找到，可能家里人还没写到</view>
+    <block wx:else>
+      <view class="hint">{{candidates.hint}}</view>
+      <view wx:for="{{candidates.candidates}}" wx:key="claim_id" class="item" bindtap="onCandidateTap">
+        <view class="item-title">{{item.display_name}}</view>
+        <view class="item-sub">{{item.story_title}}</view>
+        <view class="item-tag">等写故事的人确认</view>
+      </view>
+    </block>
+  </block>
+
+</view>

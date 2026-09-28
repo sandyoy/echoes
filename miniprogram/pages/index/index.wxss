@@ -2,6 +2,16 @@
 .row { display: flex; gap: var(--space); }
 .big-btn.small { font-size: var(--font-base); }
 
+/* 「有 N 篇故事提到了你」提示块（标准版；大字版首页不显示此块） */
+.notice {
+  padding: var(--space);
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: 12rpx;
+  margin-bottom: var(--space);
+  text-align: center;
+}
+
 .list-title {
   font-size: var(--font-base);
   font-weight: 600;

@@ -16,6 +16,12 @@
   <block wx:else>
     <view class="title">往事可追忆</view>
 
+    <!-- 「有 N 篇故事提到了你」——登录后由后端算（claim/login 返回 mentioned_count）
+         N>0 才显示；整块可点，进待认领页（被提到的人看那篇永远不需要授权） -->
+    <view wx:if="{{mentionedCount > 0}}" class="notice" bindtap="onOpenMentioned">
+      有 {{mentionedCount}} 篇故事提到了你
+    </view>
+
     <view class="big-btn" data-type="voice" bindtap="onCapture">+ 录一段</view>
 
     <view class="row">

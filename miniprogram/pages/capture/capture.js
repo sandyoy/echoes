@@ -22,28 +22,11 @@
  *     （语音/视频接口小鲸鱼 09-29 才出，本页先只接文字/图片，语音保留 UI 占位。）
  */
 const app = getApp();
+const api = require('../../utils/api.js');
 const TYPES = ['voice', 'text', 'photo', 'video'];
 
-/** 统一请求：只看 ok，error 直显；code 留给调用方分支 */
-function callApi(path, method, data) {
-  return new Promise((resolve, reject) => {
-    const base = (app.globalData && app.globalData.apiBase) || '';
-    wx.request({
-      url: base + path,
-      method,
-      data: data || {},
-      success: (res) => {
-        const body = res.data || {};
-        if (body.ok) return resolve(body.data || {});
-        // 后端的中文 error 直接给用户看；code 不外显
-        const err = new Error(body.error || '操作失败，请重试');
-        err.code = body.code;      // 仅供调用方分支
-        reject(err);
-      },
-      fail: () => reject(new Error('网络不太好，请稍后再试'))
-    });
-  });
-}
+/** 统一请求：只看 ok，error 直显；code 留给调用方分支（实现已抽到 utils/api.js，全站共用） */
+const callApi = api.request;
 
 Page({
   data: {
