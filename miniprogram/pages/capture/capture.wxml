@@ -1,23 +1,25 @@
-<!-- 采集页：四类素材，素材挂同一件事 -->
+<!-- 采集页：5 类素材（文字/说话/留个声/照片/视频），素材挂同一件事 -->
 <view class="container">
 
   <!-- 类型切换（标准版显示；大字版收起为单一模式） -->
   <view wx:if="{{uiMode !== 'large'}}" class="tabs">
-    <view class="tab {{type === 'voice' ? 'on' : ''}}" data-type="voice" bindtap="onTypeChange">语音</view>
-    <view class="tab {{type === 'text'  ? 'on' : ''}}" data-type="text"  bindtap="onTypeChange">文字</view>
-    <view class="tab {{type === 'photo' ? 'on' : ''}}" data-type="photo" bindtap="onTypeChange">照片</view>
-    <view class="tab {{type === 'video' ? 'on' : ''}}" data-type="video" bindtap="onTypeChange">视频</view>
+    <view class="tab {{type === 'voice'    ? 'on' : ''}}" data-type="voice"    bindtap="onTypeChange">说话</view>
+    <view class="tab {{type === 'original' ? 'on' : ''}}" data-type="original" bindtap="onTypeChange">留个声</view>
+    <view class="tab {{type === 'photo'    ? 'on' : ''}}" data-type="photo"    bindtap="onTypeChange">照片</view>
+    <view class="tab {{type === 'video'    ? 'on' : ''}}" data-type="video"    bindtap="onTypeChange">视频</view>
+    <view class="tab {{type === 'text'     ? 'on' : ''}}" data-type="text"     bindtap="onTypeChange">打字</view>
   </view>
 
-  <!-- 语音：按住说话（合格线＝摁一下哒哒就说） -->
-  <block wx:if="{{type === 'voice'}}">
+  <!-- 说话（语音→转文字）/ 留个声（原声，不转写）：按住说话 -->
+  <block wx:if="{{type === 'voice' || type === 'original'}}">
+    <view class="hint">{{type === 'original' ? '想留个声音？唱一句、说句方言都行，按原样留着' : '按住说话，松开就记下了'}}</view>
     <view class="big-btn hold {{recording ? 'recording' : ''}}"
           bindtouchstart="onHoldStart" bindtouchend="onHoldEnd">
-      {{recording ? '松开 发送' : '按住说话'}}
+      {{recording ? '松开 保存' : '按住说话'}}
     </view>
   </block>
 
-  <!-- 文字 -->
+  <!-- 打字 -->
   <block wx:elif="{{type === 'text'}}">
     <textarea class="text-input" placeholder="想到什么就写什么…"
               bindinput="onTextInput" value="{{text}}"></textarea>
@@ -31,8 +33,12 @@
     </view>
   </block>
 
+  <!-- 软提示（灰/黄，不弹红叉：转写稍后 / 建议分段 / 上传通道未开） -->
+  <view wx:if="{{notice}}" class="notice">{{notice}}</view>
+
   <!-- 已采集素材（挂同一件事） -->
-  <view wx:if="{{mediaList.length > 0}}" class="list-title">已添加 {{mediaList.length}} 项</view>
+  <view wx:if="{{clips.length > 0}}" class="list-title">这件事已经有 {{clips.length}} 项</view>
+  <view wx:for="{{clips}}" wx:key="clip_id" class="clip-item">{{item.clip_type}}</view>
 
   <view class="big-btn" bindtap="onSave">保存</view>
 </view>

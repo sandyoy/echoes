@@ -28,3 +28,26 @@
   font-size: 24rpx; color: #666;
 }
 .list-title { font-size: var(--font-base); font-weight: 600; margin: var(--space) 0; }
+
+/* 软提示：灰/黄，不弹红叉（转写稍后 / 建议分段 / 上传通道未开） */
+.notice {
+  margin: var(--space) 0;
+  padding: calc(var(--space) / 2);
+  border-radius: 12rpx;
+  background: #fdf6e3;
+  color: #8a6d00;
+  font-size: 26rpx;
+  line-height: 1.5;
+}
+.hint {
+  margin-bottom: calc(var(--space) / 2);
+  color: #666;
+  font-size: 26rpx;
+}
+.clip-item {
+  padding: calc(var(--space) / 2);
+  margin-bottom: calc(var(--space) / 2);
+  background: #fff;
+  border-radius: 12rpx;
+  font-size: var(--font-base);
+}
