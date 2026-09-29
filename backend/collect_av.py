@@ -16,7 +16,7 @@ collect_api.py 已经 275 行、只负责「纯登记类」素材（文字/图�
   转写失败/超时/密钥没开，**只影响 text 字段为空，绝不影响这条素材存在**。
 
 === 讯飞密钥现状（09-28）===
-讯飞 IAT 密钥**至今未开通（第 5 次提醒 sandy）**，asr.recognize() 会走：
+讯飞 IAT 密钥**已作废（sandy 09-25 定案换腾讯云）**，asr.recognize() 三级兜底：
   讯飞跳过 → 百度未配置 → 本地 whisper（本机未装 faster-whisper）
 → 实测 `recognize()` 返回 `{"error": "...", "mock": true, "text": ""}`。
 本文件对此的处理是**正确姿势**：转写失败 → transcript 留空 + 给前端一句可读提示
