@@ -334,7 +334,24 @@ def claim_everything_for(db, *, user_id: str, phone: str = "") -> dict:
     if phone:
         r = auto_claim_on_login(db, user_id=user_id, phone=phone)
     else:
-        r = {"claimed_claims": [], "claimed_members": [], "owners": [], "count_stories": 0}
+        # 无手机号（微信用户常见：不一定绑手机）也要给出正确首页数字。
+        # 09-29 修复：原先这里 owners/count_stories 直接置空，
+        # 导致「有 N 篇提到了你」在未绑手机用户上**静默显示 0**——
+        # 而该用户其实早就是某些书的家人/成员（此前登录认领过）。
+        owners = sorted({
+            m.owner_id for m in db.scalars(
+                select(Member).where(
+                    Member.user_id == user_id,
+                    Member.claim_status == ClaimStatus.CLAIMED,
+                )
+            )
+        })
+        r = {"claimed_claims": [], "claimed_members": [], "owners": owners,
+             "count_stories": 0}
+    # count_stories 一律按「被提到的篇数」重算；无 owners 时不按书范围收窄，
+    # 保证未绑手机用户也能看到"谁提到了我"。
+    r["count_stories"] = len(_mentioned_story_ids(db, user_id=user_id,
+                                                  owners=r.get("owners") or None))
     r["mentioned_count"] = pending_mentioned_count(db, user_id=user_id)
     return r
 

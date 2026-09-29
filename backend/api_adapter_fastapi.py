@@ -30,6 +30,7 @@ from models import SessionLocal, get_db, init_db
 import collect_api as api
 import collect_av as av
 import claim_api
+import login_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -258,3 +259,39 @@ def reject_claim(req: RejectClaimReq, db=Depends(get_db)):
 @app.get("/api/echoes/claim/pending")
 def pending_claims(owner_id: str, db=Depends(get_db)):
     return claim_api.api_pending_claims(db, owner_id=owner_id)
+
+
+# ============================================================
+# 登录态路由（2026-09-29，第1期——"能录进来"的最后一块后端）
+# 前端拿 user_id 的唯一入口。此前所有接口都要 user_id，但没人负责产出它。
+# ============================================================
+
+class LoginReq(BaseModel):
+    code: str                     # wx.login() 拿到的临时 code
+    nick_name: str = ""
+    avatar_url: str = ""
+    phone: str = ""
+    force_stub: bool = False      # 仅联调/自测用；生产不传（默认 False）
+
+
+class UiModeReq(BaseModel):
+    user_id: str
+    ui_mode: str                  # standard / large（兼容 senior 等别名）
+
+
+@app.post("/api/echoes/login")
+def login(req: LoginReq, db=Depends(get_db)):
+    return login_api.api_login(
+        db, code=req.code, nick_name=req.nick_name, avatar_url=req.avatar_url,
+        phone=req.phone, force_stub=req.force_stub,
+    )
+
+
+@app.get("/api/echoes/login/profile")
+def login_profile(user_id: str, db=Depends(get_db)):
+    return login_api.api_profile(db, user_id=user_id)
+
+
+@app.post("/api/echoes/login/ui_mode")
+def login_ui_mode(req: UiModeReq, db=Depends(get_db)):
+    return login_api.api_set_ui_mode(db, user_id=req.user_id, ui_mode=req.ui_mode)
