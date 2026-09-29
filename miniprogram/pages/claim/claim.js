@@ -41,15 +41,19 @@ Page({
     if (this.data.mode === 'mentioned') this.refreshMentioned();
   },
 
-  /** ① 有 N 篇故事提到了你（拉列表） */
+  /** ① 有 N 篇故事提到了你（拉列表）。user_id 由 app.ensureLogin() 落定（微信 openid） */
   refreshMentioned() {
-    const s = api.getSession();
-    if (!s.userId) {
+    const uid = (app.globalData && app.globalData.userId) || api.getSession().userId;
+    if (!uid) {
+      // 登录可能还在路上 —— 落定后重试一次
       this.setData({ mentioned: { count: 0, stories: [] } });
+      app.ensureLogin().then(() => {
+        if (app.globalData.userId) this.refreshMentioned();
+      }).catch(() => null);
       return;
     }
     this.setData({ loadingMentioned: true });
-    api.claimMentioned(s.userId)
+    api.claimMentioned(uid)
       .then((data) => this.setData({
         mentioned: { count: Number(data.count || 0), stories: data.stories || [] }
       }))

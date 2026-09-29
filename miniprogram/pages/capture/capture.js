@@ -43,7 +43,9 @@ Page({
     uiMode: 'standard',
     type: 'voice',
     storyId: null,
-    actorId: 'u_me',   // v1：登录态未接，先固定；后端 owner_id 暂取 actor_id（TODO 登录态注入）
+    // user_id = 微信 openid（小鲸鱼《接口定义_登录态v1_20260929》），由 app.ensureLogin() 落定；
+    // 不再写死假 id。取不到时为空串，操作前会提示先登录。
+    actorId: '',
     text: '',
     recording: false,
     mediaList: [],     // 本地已选/已录素材（仅展示用）
@@ -53,12 +55,33 @@ Page({
 
   onLoad(query) {
     const type = TYPES.indexOf(query.type) >= 0 ? query.type : 'voice';
+    const g = app.globalData;
     this.setData({
       uiMode: app.getUiMode(),
       type,
-      storyId: query.storyId || app.globalData.currentStoryId || null
+      storyId: query.storyId || g.currentStoryId || null,
+      actorId: g.userId || ''
     });
+    // 登录可能还在路上（onLaunch 异步）—— 落定后补上，不打断用户
+    if (!this.data.actorId) {
+      app.ensureLogin().then(() => {
+        const uid = app.globalData.userId || '';
+        if (uid) this.setData({ actorId: uid });
+      });
+    }
     if (this.data.storyId) this.refreshClips();
+  },
+
+  /** 统一登录守卫：所有采集动作前必须已有 user_id（否则后端会 no_permission） */
+  requireLogin() {
+    if (this.data.actorId) return true;
+    const uid = (app.globalData && app.globalData.userId) || '';
+    if (uid) { this.setData({ actorId: uid }); return true; }
+    wx.showToast({ title: '正在准备，稍等一下再试', icon: 'none' });
+    app.ensureLogin().then(() => {
+      if (app.globalData.userId) this.setData({ actorId: app.globalData.userId });
+    });
+    return false;
   },
 
   onTypeChange(e) {
@@ -83,6 +106,7 @@ Page({
   /** 按住说话：开始录音（语音=要转文字；原声=只留声音） */
   onHoldStart() {
     if (this.data.type !== 'voice' && this.data.type !== 'original') return;
+    if (!this.requireLogin()) return;
     this._recStart = Date.now();
     this.setData({ recording: true });
     wx.vibrateShort && wx.vibrateShort();
@@ -192,6 +216,7 @@ Page({
   /** 挂文字素材 → POST /api/echoes/clip/text */
   saveText() {
     const { storyId, actorId, text } = this.data;
+    if (!this.requireLogin()) return;
     if (!storyId) { wx.showToast({ title: '还没有故事', icon: 'none' }); return; }
     if (!text || !text.trim()) { wx.showToast({ title: '说点什么再存', icon: 'none' }); return; }
     wx.showLoading({ title: '保存中' });
@@ -220,6 +245,7 @@ Page({
       wx.showToast({ title: '请直接在下方输入', icon: 'none' });
       return;
     }
+    if (!this.requireLogin()) return;
     wx.chooseMedia({
       count: kind === 'photo' ? 9 : 1,
       mediaType: [kind],

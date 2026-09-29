@@ -11,7 +11,7 @@ const app = getApp();
 
 /** 简单内存缓存：登录后拿到的「有 N 篇故事提到了你」 */
 let _mentionedCache = { count: 0, stories: [] };
-/** 简单内存缓存：登录总入口返回的 user_id（本机登录态未接前的过渡） */
+/** 简单内存缓存：登录总入口返回的 user_id */
 let _session = { userId: '', phone: '' };
 
 /** 统一请求：只看 ok，error 直显；code 留给调用方分支 */
@@ -125,6 +125,65 @@ function setSession(userId, phone) {
   _session = { userId: userId || '', phone: phone || '' };
 }
 
+// ============ 登录态 线（小鲸鱼 09-29 接口 v1，形状已冻结）============
+// 铁律（小鲸鱼《接口定义_登录态v1_20260929》）：user_id = 微信 openid，
+//   后续采集 6 类 + 认领 7 个接口**统一用它**，前端**不许再写死假 id**。
+//   - profile.ui_mode 决定渲染标准版/大字版（User 级持久，前端不自己存业务态）
+//   - 联调传 force_stub:true（本机无 appid/secret）；session_from 会写明走 stub 还是 wechat，
+//     **不静默假装成功** —— 生产不传该字段。
+const LOGIN = {
+  LOGIN: '/api/echoes/login',
+  PROFILE: '/api/echoes/login/profile',
+  UI_MODE: '/api/echoes/login/ui_mode'
+};
+
+/**
+ * 登录（进小程序第一件事）：wx.login() code → user_id，一次拿齐
+ *   「我是谁 + 我有哪些书 + 有几篇提到了我」
+ * @param {object} opts {code, phone?, nickName?, avatarUrl?, forceStub?}
+ * @returns {Promise<{user_id,is_new_user,profile,owners,count_stories,mentioned_count,session_from}>}
+ */
+function login(opts) {
+  const o = opts || {};
+  const body = { code: o.code || '' };
+  if (o.nickName) body.nick_name = o.nickName;
+  if (o.avatarUrl) body.avatar_url = o.avatarUrl;
+  if (o.phone) body.phone = o.phone;
+  if (o.forceStub) body.force_stub = true;      // 联调专用；生产不传
+  return post(LOGIN.LOGIN, body).then((data) => {
+    _session.userId = data.user_id || '';
+    _session.phone = o.phone || '';
+    _mentionedCache = {
+      count: Number(data.count_stories || data.mentioned_count || 0),
+      stories: []
+    };
+    return data;
+  });
+}
+
+/** wx.login() 包成 Promise（拿临时 code） */
+function wxLoginCode() {
+  return new Promise((resolve, reject) => {
+    wx.login({
+      success: (res) => (res && res.code) ? resolve(res.code) : reject(new Error('没拿到登录凭证，请重试')),
+      fail: () => reject(new Error('微信登录没成功，请重试'))
+    });
+  });
+}
+
+/** 读资料（切页/冷启动拉状态，含 ui_mode） */
+function loginProfile(userId) {
+  return get(LOGIN.PROFILE, { user_id: userId });
+}
+
+/**
+ * 双界面切换（v2.4 第9条）：ui_mode 是 User 级持久设置，切一次下次进来 profile 就是 large。
+ * 后端兼容 senior / big / 大字版 等别名，统一归一化。
+ */
+function loginSetUiMode(userId, uiMode) {
+  return post(LOGIN.UI_MODE, { user_id: userId, ui_mode: uiMode });
+}
+
 // ============ 采集 线（小鲸鱼 09-26 文字/图片 + 09-28 v1.1 语音/原声/视频）============
 // 信封完全同形（{ok,data,error,code} / 成功可带 notice），一套解析复用 request()。
 // 铁律（v2.4 §六）：
@@ -190,6 +249,8 @@ module.exports = {
   claimLogin, claimRegister, claimSearch, claimMentioned,
   claimConfirm, claimReject, claimPending,
   getMentionedCache, getSession, setSession,
+  LOGIN,
+  login, wxLoginCode, loginProfile, loginSetUiMode,
   CLIP,
   clipAudio, clipOriginal, clipVideo, clipTranscribe, clipList, uploadUrl
 };
