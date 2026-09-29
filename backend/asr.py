@@ -2,8 +2,9 @@
 """
 Echoes ASR (语音转文字) 服务
 
-引擎顺序（v2.0，2026-09-25 起）：
-  1. 讯飞语音听写（XF_APP_ID / XF_API_KEY / XF_APISECRET）→ 优先
+引擎顺序（v3.0，2026-09-29 起 · sandy 09-25 定案）：
+  0. **腾讯云 ASR（tencent_asr.py，内网直连/免白名单）→ 主引擎**
+  1. 讯飞语音听写（XF_APP_ID / XF_API_KEY / XF_APISECRET）→ 已降级为备用（密钥始终未开通）
   2. 百度短语音识别（BAIDU_ASR_APP_ID / BAIDU_API_KEY / BAIDU_SECRET_KEY）→ 次选
   3. 本地 faster-whisper（离线、免费）→ 兜底
   4. 全部失败 → 返回明确错误 JSON，绝不让 node 进程崩溃
@@ -57,6 +58,24 @@ _opencc_converter = None
 
 
 # ================= 通用工具 =================
+
+# 腾讯云 ASR（主引擎，sandy 09-25 定案）——延迟导入，避免缺依赖时拖垮整个模块
+def _tencent_available():
+    try:
+        import tencent_asr as _t
+        return _t.has_credentials()
+    except Exception:
+        return False
+
+
+def _tencent_recognize(audio_path):
+    try:
+        import tencent_asr as _t
+        return _t.recognize_short(audio_path)
+    except Exception as e:
+        sys.stderr.write(f'[asr] 腾讯云识别异常: {type(e).__name__}: {e}\n')
+        return None
+
 
 def _read_audio(audio_path):
     """读音频文件，返回 (bytes, 格式扩展名小写)"""
@@ -337,7 +356,16 @@ def recognize(audio_path: str) -> str:
     }
     audio_format = format_map.get('.' + ext, 'pcm')
 
-    # ① 讯飞优先
+    # ⓪ 腾讯云优先（主引擎 · sandy 09-25 定案）
+    if _tencent_available():
+        text = _tencent_recognize(audio_path)
+        if text:
+            return json.dumps({"text": text, "source": "tencent"}, ensure_ascii=False)
+        sys.stderr.write('[asr] 腾讯云未识别成功，回退下一引擎。\n')
+    else:
+        sys.stderr.write('[asr] 腾讯云凭证不可用，跳过腾讯云。\n')
+
+    # ① 讯飞（备用）
     if XF_APP_ID and XF_API_KEY and XF_APISECRET:
         text = _xf_recognize(audio_path)
         if text:
@@ -362,7 +390,7 @@ def recognize(audio_path: str) -> str:
 
     # ④ 全失败
     return json.dumps({
-        "error": "语音识别未能返回文字（讯飞/百度/whisper 均未成功）",
+        "error": "语音识别未能返回文字（腾讯云/讯飞/百度/whisper 均未成功）",
         "mock": True,
         "text": ""
     }, ensure_ascii=False)
