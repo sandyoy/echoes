@@ -117,6 +117,28 @@ def register_claim(db, *, owner_id: str, phone: str = "", display_name: str = ""
 # 二、认领路 ①：手机号自动认领（无需对方点任何东西）
 # ============================================================
 
+def _has_member(db, *, owner_id: str, phone: str = "", user_id: str = "") -> bool:
+    """
+    该 owner 名下是否已有一条「属于这个人」的 Member 记录（已认领）。
+    用手机号或 user_id 任一命中即算有——避免重复补建。
+    """
+    conds = []
+    if phone:
+        conds.append(Member.phone == phone)
+    if user_id:
+        conds.append(Member.user_id == user_id)
+    if not conds:
+        return False
+    from sqlalchemy import or_
+    return db.scalar(
+        select(Member).where(
+            Member.owner_id == owner_id,
+            Member.claim_status == ClaimStatus.CLAIMED,
+            or_(*conds),
+        ).limit(1)
+    ) is not None
+
+
 def auto_claim_on_login(db, *, user_id: str, phone: str) -> dict:
     """
     老李注册/登录（带手机号）→ 系统自动认领所有等他的记录。
@@ -162,6 +184,31 @@ def auto_claim_on_login(db, *, user_id: str, phone: str) -> dict:
         m.user_id = user_id
         m.claim_status = ClaimStatus.CLAIMED
         m.claimed_at = now
+
+    # --- 3. 补齐 Member（09-30 修：认领链最关键的一环）---
+    # 场景：写故事的人只用 register_claim() 登记了手机号，**没有**同步建 Member，
+    #       于是老李登录 → Claim 变成 CLAIMED，但 Member 表里没有他这条 →
+    #       can_view_story() 找不到成员记录 → 认领了却看不到任何内容。
+    # 处理：凡本次认领的 Claim，若该 owner + 该手机号下没有 Member，就补建一条。
+    #       story_id 取自 Claim（有则只可见那一篇 = STORY；无则泛登记，按 FAMILY 记整本）。
+    materialized = []
+    for c in claims:
+        if _has_member(db, owner_id=c.owner_id, phone=phone, user_id=user_id):
+            continue
+        m = Member(
+            id=_new_id("mem"),
+            owner_id=c.owner_id,
+            user_id=user_id,
+            phone=phone,
+            display_name=c.display_name or "",
+            granted_via=GrantVia.STORY if c.story_id else GrantVia.FAMILY,
+            claim_status=ClaimStatus.CLAIMED,
+            story_id=c.story_id,
+            can_add=True,
+            claimed_at=now,
+        )
+        db.add(m)
+        materialized.append(m)
 
     db.commit()
 
