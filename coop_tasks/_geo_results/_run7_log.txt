@@ -1,0 +1,16 @@
+[2026-10-03T19:30:14.355Z] === START A2_r2 ===
+[2026-10-03T19:30:22.643Z] A2_r2 submitted
+[2026-10-03T19:32:03.926Z] A2_r2 BLOCKED len=223
+[2026-10-03T19:32:12.665Z] === START A3_r2 ===
+[2026-10-03T19:33:11.385Z] A3_r2 ERROR: page.goto: net::ERR_NETWORK_CHANGED at https://metaso.cn/
+Call log:
+  - navigating to "https://metaso.cn/", waiting until "domcontentloaded"
+
+[2026-10-03T19:33:19.689Z] ALL DONE
+[2026-10-03T19:33:31.986Z] === START A2_r3 ===
+[2026-10-03T19:33:40.597Z] A2_r3 submitted (attempt 1)
+[2026-10-03T19:34:59.111Z] A2_r3 DONE len=3126
+[2026-10-03T19:35:09.460Z] === START A3_r3 ===
+[2026-10-03T19:35:16.383Z] A3_r3 submitted (attempt 1)
+[2026-10-03T19:36:22.659Z] A3_r3 DONE len=2182
+[2026-10-03T19:36:32.835Z] ALL DONE
