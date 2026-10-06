@@ -1,0 +1,119 @@
+<!--
+  pages/timeline/timeline.wxml —— 时间轴页
+  铁律：nodes 顺序原样渲染（不重排）；pending 单列到底部灰点；只显示 time_label。
+-->
+<view class="container ui-{{uiMode}}">
+
+  <view class="page-title">往事可追忆 · 时间轴</view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="hint">正在排时间…</view>
+
+  <!-- 错误（中文人话，可直接看） -->
+  <view wx:elif="{{error}}" class="hint error">{{error}}</view>
+
+  <block wx:else>
+
+    <!-- 空态：零故事 -->
+    <view wx:if="{{stats.total === 0}}" class="empty">
+      <view class="empty-text">还没有故事，先去说说 / 传张照片吧</view>
+      <view class="big-btn" bindtap="onTapStory" data-story-id="">按住说话</view>
+    </view>
+
+    <block wx:else>
+      <!-- 全部时间待定时的轻提示（不吓用户，§1.4） -->
+      <view wx:if="{{stats.placed === 0 && stats.pending > 0}}" class="hint soft">
+        有些还没听出年份，等您说说就排上了
+      </view>
+
+      <!-- 时间线：每节一个时间点，可挂多张卡 -->
+      <view class="timeline">
+        <view
+          class="node"
+          wx:for="{{nodes}}"
+          wx:key="node_id"
+          bindlongpress="onLongPressNode"
+          data-sort-key="{{item.time_sort_key}}"
+        >
+          <view class="dot"></view>
+          <view class="node-body">
+            <view class="node-label">{{item.label}}</view>
+
+            <!-- 该节故事卡（同一时间点可多张） -->
+            <view
+              class="story-card"
+              wx:for="{{item.stories}}"
+              wx:for-item="story"
+              wx:key="story_id"
+              bindtap="onTapStory"
+              data-story-id="{{story.story_id}}"
+            >
+              <view class="story-title">
+                {{story.title || '这段还没起名'}}
+                <text wx:if="{{story.is_anchor}}" class="anchor-tag">锚</text>
+                <text wx:if="{{story.time_confirmed_by_user}}" class="confirmed-tag">·已改</text>
+              </view>
+              <view class="story-time">
+                {{story.time_label}}
+                <text wx:if="{{story.time_precision === 'fuzzy'}}" class="fuzzy-tag">（老人原话）</text>
+              </view>
+            </view>
+
+            <!-- 改时间入口：三个字，可点（大字版放大） -->
+            <view
+              class="edit-time"
+              catchtap="onTapSetTime"
+              data-sort-key="{{item.time_sort_key}}"
+            >改时间</view>
+          </view>
+        </view>
+
+        <!-- 【时间待定】独立成节，永远排最底部、灰点问号（§5.4 保命线） -->
+        <view wx:if="{{pending.length > 0}}" class="node pending-node">
+          <view class="dot pending-dot">?</view>
+          <view class="node-body">
+            <view class="node-label pending-label">时间待定</view>
+            <view
+              class="story-card pending-card"
+              wx:for="{{pending}}"
+              wx:key="story_id"
+              bindtap="onTapStory"
+              data-story-id="{{item.story_id}}"
+            >
+              <view class="story-title">{{item.title || '这段还没起名'}}</view>
+              <view class="story-time">{{item.time_label}}</view>
+            </view>
+            <!-- 待定区也要能改时间（点它=给这段定个时间），但整节不参与排序 -->
+            <view
+              class="edit-time"
+              catchtap="onTapSetPending"
+            >改时间</view>
+          </view>
+        </view>
+      </view>
+    </block>
+  </block>
+
+  <!-- ===== 改时间弹层（§2 三层交互流）===== -->
+  <view wx:if="{{editing}}" class="mask" catchtap="closeEditor"></view>
+  <view wx:if="{{editing}}" class="sheet" catchtap="">
+    <view class="sheet-read">这段是 {{editReading}}，对吗？</view>
+    <view class="sheet-ask">不对您说个时间，我给您挪过去</view>
+
+    <block wx:if="{{!editChoice}}">
+      <view class="sheet-btn" bindtap="submitSetTime">按住说</view>
+      <view class="sheet-btn ghost" bindtap="onChooseBySelf">自己选</view>
+    </block>
+
+    <!-- 自己选：大字号年份滚轮（上下滑） -->
+    <block wx:else>
+      <picker mode="selector" range="{{yearRange}}" value="{{pickerIndex}}" bindchange="onPickYear">
+        <view class="sheet-year">选年份：{{pickedYear}} 年</view>
+      </picker>
+      <view class="sheet-btn" bindtap="submitSetTime">就这个</view>
+    </block>
+
+    <view class="sheet-cancel" bindtap="closeEditor">先不改</view>
+  </view>
+
+</view>

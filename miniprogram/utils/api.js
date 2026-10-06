@@ -243,6 +243,61 @@ function uploadUrl(fileName, fileSize, mime) {
   return post(CLIP.UPLOAD_URL, { file_name: fileName, file_size: fileSize, mime: mime });
 }
 
+// ============ 时间轴 线（小鲸鱼 10-06 接口 v1，形状已冻结）============
+// 定义：docs/事卷/接口定义_时间轴v1_20261006.md（后端 backend/timeline_api.py，自测 33/33）
+// 四条铁律（前端必须守，接口定义 §三）：
+//   1) 排序只在后端 —— 拿 nodes 顺序渲染，前端不重排
+//   2) 只显示 time_label —— 别把「1970年代（老人说的）」加工成「1975年3月」
+//   3) 【时间待定】单列 —— 用 pending 渲到底部灰点，不塞进 nodes 排序
+//   4) 改过的不许被覆盖 —— 覆盖判断在后端，前端只管提交 set_time
+const TIMELINE = {
+  GET: '/api/echoes/timeline',            // N1 节数组 + N2 待定区
+  GROUPED: '/api/echoes/timeline/grouped',// 同义（兼容旧命名）
+  PENDING: '/api/echoes/timeline/pending',// N2 只取待定区
+  SET_TIME: '/api/echoes/timeline/set_time',   // N3 改时间
+  AUTO_PLACE: '/api/echoes/timeline/auto_place'// 自动归位（保存即触发，可选）
+};
+
+/**
+ * N1 取整本时间轴：nodes 已正序 + pending 待定区 + stats
+ * @param {string} ownerId 书的主人（讲述人）
+ * @param {string} [viewerId] 谁在看（默认＝ownerId）。家人看整本；故事成员只看命中那篇；外人空轴
+ * @returns {Promise<{owner_id,nodes,pending,stats}>}
+ */
+function timelineGet(ownerId, viewerId) {
+  return get(TIMELINE.GET, { owner_id: ownerId, viewer_id: viewerId });
+}
+
+/** N2 只取【时间待定】区 */
+function timelinePending(ownerId, viewerId) {
+  return get(TIMELINE.PENDING, { owner_id: ownerId, viewer_id: viewerId });
+}
+
+/**
+ * N3 ★「改时间」：用户说/选一个时间，后端解析归位（改过后不再被自动覆盖）
+ * @param {string} storyId 要改的那条
+ * @param {string} actorId 谁改的（主人 或 已认领家人）
+ * @param {string} newTimeText 用户原话，如「1980年5月」「七几年」
+ * @param {object} [opts] {anchors, forceRaw}
+ * @returns {Promise<{story_id,placed,time,node_hint,evidence,confidence}>}
+ *   placed=false ⇒ 进「时间待定」，前端据此回读提示
+ */
+function timelineSetTime(storyId, actorId, newTimeText, opts) {
+  const o = opts || {};
+  const body = { story_id: storyId, actor_id: actorId, new_time_text: newTimeText };
+  if (o.anchors) body.anchors = o.anchors;
+  if (o.forceRaw) body.force_raw = o.forceRaw;
+  return post(TIMELINE.SET_TIME, body);
+}
+
+/**
+ * 自动归位（保存即触发，可选）。用户手改过的会自动 skipped=true，绝不覆盖。
+ * @returns {Promise<{story_id,placed,skipped,reason,time}>}
+ */
+function timelineAutoPlace(storyId) {
+  return post(TIMELINE.AUTO_PLACE + '?story_id=' + encodeURIComponent(storyId));
+}
+
 module.exports = {
   request, get, post,
   CLAIM,
@@ -252,5 +307,7 @@ module.exports = {
   LOGIN,
   login, wxLoginCode, loginProfile, loginSetUiMode,
   CLIP,
-  clipAudio, clipOriginal, clipVideo, clipTranscribe, clipList, uploadUrl
+  clipAudio, clipOriginal, clipVideo, clipTranscribe, clipList, uploadUrl,
+  TIMELINE,
+  timelineGet, timelinePending, timelineSetTime, timelineAutoPlace
 };

@@ -2,6 +2,7 @@
   "pages": [
     "pages/index/index",
     "pages/capture/capture",
+    "pages/timeline/timeline",
     "pages/book/book",
     "pages/claim/claim"
   ],

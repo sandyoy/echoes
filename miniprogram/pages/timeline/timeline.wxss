@@ -1,0 +1,149 @@
+/* pages/timeline/timeline.wxss —— 时间轴页样式
+   双界面：根节点 ui-standard / ui-large 切换（与全局 CSS 变量一致，v2.4 §3.4）。
+   大字版：加大字号 + 加大点击区；禁词「设置/权限/分享」不得出现在用户可见文案。 */
+
+.page-title {
+  font-size: var(--font-title);
+  font-weight: 600;
+  margin-bottom: var(--space);
+}
+
+.hint { color: #999; padding: var(--space) 0; }
+.hint.error { color: #c0392b; }
+.hint.soft { color: #b08a5a; }
+
+/* 空态 */
+.empty { padding: calc(var(--space) * 2) 0; text-align: center; }
+.empty-text { color: #999; margin-bottom: var(--space); }
+
+/* 时间线 */
+.timeline { position: relative; padding-left: 8rpx; }
+
+.node {
+  position: relative;
+  padding-left: 56rpx;
+  padding-bottom: calc(var(--space) * 1.4);
+}
+/* 竖线 */
+.node::before {
+  content: '';
+  position: absolute;
+  left: 15rpx;
+  top: 30rpx;
+  bottom: 0;
+  width: 2rpx;
+  background: #e2d6c6;
+}
+.node:last-child::before { display: none; }
+
+/* 节点圆点 */
+.dot {
+  position: absolute;
+  left: 0;
+  top: 6rpx;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: var(--color-accent);
+}
+.dot.pending-dot {
+  background: #cccccc;
+  color: #ffffff;
+  font-size: 22rpx;
+  text-align: center;
+  line-height: 32rpx;
+}
+
+.node-label {
+  font-size: var(--font-base);
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+.pending-label { color: #999; }
+
+/* 故事卡 */
+.story-card {
+  background: #ffffff;
+  border: 1rpx solid #eee3d5;
+  border-radius: 16rpx;
+  padding: 16rpx 20rpx;
+  margin-bottom: 10rpx;
+}
+.pending-card { background: #f7f7f7; border-color: #e5e5e5; }
+
+.story-title { font-size: var(--font-base); }
+.story-time { font-size: 26rpx; color: #999; margin-top: 6rpx; }
+.ui-large .story-time { font-size: 40rpx; color: #666; }
+
+.anchor-tag {
+  display: inline-block;
+  font-size: 22rpx;
+  color: #ffffff;
+  background: var(--color-accent);
+  border-radius: 8rpx;
+  padding: 0 8rpx;
+  margin-left: 8rpx;
+}
+.confirmed-tag { font-size: 24rpx; color: #b08a5a; margin-left: 6rpx; }
+.fuzzy-tag { color: #b08a5a; }
+
+/* 改时间三字（大字版放大到可一指点击） */
+.edit-time {
+  display: inline-block;
+  margin-top: 10rpx;
+  padding: 8rpx 20rpx;
+  font-size: 28rpx;
+  color: var(--color-accent);
+  border: 1rpx solid var(--color-accent);
+  border-radius: 12rpx;
+}
+.ui-large .edit-time {
+  font-size: 44rpx;
+  padding: 16rpx 32rpx;
+}
+
+/* ===== 改时间弹层 ===== */
+.mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+}
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: #ffffff;
+  border-radius: 28rpx 28rpx 0 0;
+  padding: calc(var(--space) * 1.2);
+  z-index: 101;
+  box-sizing: border-box;
+}
+.sheet-read { font-size: var(--font-title); font-weight: 600; margin-bottom: 12rpx; }
+.sheet-ask { color: #999; margin-bottom: calc(var(--space) * 1.2); }
+
+.sheet-btn {
+  width: 100%;
+  height: var(--btn-h);
+  line-height: var(--btn-h);
+  text-align: center;
+  font-size: var(--font-base);
+  border-radius: 18rpx;
+  background: var(--color-accent);
+  color: #ffffff;
+  margin-bottom: var(--space);
+}
+.sheet-btn.ghost {
+  background: #ffffff;
+  color: var(--color-accent);
+  border: 1rpx solid var(--color-accent);
+}
+.sheet-year {
+  height: var(--btn-h);
+  line-height: var(--btn-h);
+  text-align: center;
+  font-size: var(--font-base);
+  border: 1rpx solid #e2d6c6;
+  border-radius: 18rpx;
+  margin-bottom: var(--space);
+}
+.sheet-cancel { text-align: center; color: #999; padding: 12rpx 0; }
