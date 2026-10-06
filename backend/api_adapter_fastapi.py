@@ -38,6 +38,7 @@ import collect_av as av
 import claim_api
 import login_api
 import story_api
+import timeline_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -419,3 +420,57 @@ def delete_story(story_id: str, owner_id: str = "", actor_id: str = "",
     return story_api.api_delete_story(
         db, story_id=story_id, owner_id=owner_id, actor_id=actor_id or owner_id,
     )
+
+
+# ============================================================
+# 时间轴路由（2026-10-06，第2期「能排对」后端）
+# 小龙虾 10-06《第2期前端设计预案》§4 在等《时间轴接口定义》(N1~N4)，
+# 本组路由即该接口。日期为「等出码日历波谷日」时的并行推进（不空转）。
+# ============================================================
+
+class SetStoryTimeReq(BaseModel):
+    story_id: str
+    actor_id: str
+    new_time_text: str = ""       # 用户说的话 / 手输，如「1980年5月」「八十年代」
+    anchors: dict = {}            # 已知人生锚点（可选），供「我八岁那年」反推
+    force_raw: str = ""           # 只留原话、不解析时填（此时落「时间待定」但保留原话）
+
+
+@app.get("/api/echoes/timeline")
+def get_timeline(owner_id: str, viewer_id: str = "", db=Depends(get_db)):
+    """取整本时间轴（分节 nodes + 待定区 pending）。"""
+    return timeline_api.api_get_timeline(
+        db, owner_id=owner_id, viewer_id=viewer_id or owner_id,
+    )
+
+
+@app.get("/api/echoes/timeline/grouped")
+def get_timeline_grouped(owner_id: str, viewer_id: str = "", db=Depends(get_db)):
+    """同 /timeline，兼容旧前端 grouped 命名。"""
+    return timeline_api.api_get_timeline_grouped(
+        db, owner_id=owner_id, viewer_id=viewer_id or owner_id,
+    )
+
+
+@app.get("/api/echoes/timeline/pending")
+def get_timeline_pending(owner_id: str, viewer_id: str = "", db=Depends(get_db)):
+    """只取【时间待定】区（不猜、单列）。"""
+    return timeline_api.api_timeline_pending(
+        db, owner_id=owner_id, viewer_id=viewer_id or owner_id,
+    )
+
+
+@app.post("/api/echoes/timeline/set_time")
+def set_story_time(req: SetStoryTimeReq, db=Depends(get_db)):
+    """★「改时间」——用户手动把一段挪到新时间（改过不再被自动覆盖）。"""
+    return timeline_api.api_set_story_time(
+        db, story_id=req.story_id, actor_id=req.actor_id,
+        new_time_text=req.new_time_text, anchors=req.anchors or {},
+        force_raw=req.force_raw,
+    )
+
+
+@app.post("/api/echoes/timeline/auto_place")
+def auto_place(story_id: str, db=Depends(get_db)):
+    """保存即触发自动归位（用户手改过的会自动跳过，不覆盖）。"""
+    return timeline_api.auto_place_story(db, story_id=story_id)
