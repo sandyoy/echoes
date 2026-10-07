@@ -362,8 +362,10 @@ def auto_place_story(db, *, story_id: str) -> dict:
                    "reason": "用户已手动改过，不覆盖",
                    "time": _story_time_dict(story)})
 
-    # 2. 取文本：优先 title/summary，其次该故事的文字素材
-    texts = [story.title or "", story.summary or ""]
+    # 2. 取文本：time_raw（用户原话，常是相对表述如"嫁过来第二年"）+ title/summary + 素材
+    #    ⚠️ 2026-10-07 修：旧实现漏了 time_raw，导致相对表述永远算不出年份 →
+    #       明明有锚点也归不到位。time_raw 必进 blob。
+    texts = [story.time_raw or "", story.title or "", story.summary or ""]
     try:
         from models import Clip  # 局部导入避免循环
         clips = db.query(Clip).filter(Clip.story_id == story.id).all()
@@ -376,17 +378,27 @@ def auto_place_story(db, *, story_id: str) -> dict:
         pass
     blob = " ".join(t for t in texts if t).strip()
 
-    # 3. 锚点：同书里已确认的锚点故事 → 反推用
+    # 3. 锚点：走 LifeAnchor 表（v2.4 §5.3「人生锚点表」）
+    #    先 harvest 一遍整本书（含正文/语音转写），再取表里的锚点给 extract_time 用。
+    #    注：老实现只扫 title/summary/time_raw，会漏掉正文里的「我1950年出生」；
+    #    改走 anchor_api，正文/转写全扫，且落库可复用（前端也能查/纠正）。
     anchors = {}
     try:
-        for s2 in db.query(Story).filter(Story.owner_id == story.owner_id).all():
-            if s2.id == story.id:
-                continue
-            found = extract_anchors(f"{s2.time_raw or ''} {s2.title or ''} {s2.summary or ''}")
-            for k, v in found.items():
-                anchors.setdefault(k, v)
+        from anchor_api import harvest_anchors, get_anchors
+        h = harvest_anchors(db, owner_id=story.owner_id, commit=False)
+        if h.get("ok"):
+            anchors = get_anchors(db, owner_id=story.owner_id)
     except Exception:
-        pass
+        # 兜底：老逻辑（锚点表不可用时不至于整条链挂掉）
+        try:
+            for s2 in db.query(Story).filter(Story.owner_id == story.owner_id).all():
+                if s2.id == story.id:
+                    continue
+                found = extract_anchors(f"{s2.time_raw or ''} {s2.title or ''} {s2.summary or ''}")
+                for k, v in found.items():
+                    anchors.setdefault(k, v)
+        except Exception:
+            pass
 
     if not blob:
         return ok({"story_id": story.id, "placed": False, "skipped": False,
