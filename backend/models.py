@@ -115,6 +115,7 @@ class User(Base):
     phone = Column(String(32), index=True, default="")   # 手机号（认领钥匙）
     real_name = Column(String(64), index=True, default="")  # 真实姓名（按名字搜索认领用）
     ui_mode = Column(SAEnum(UiMode), default=UiMode.STANDARD)  # 双界面
+    prefs = Column(JSON, default=dict)   # 采访偏好等扩展点（muted_ask/sensitivity）
     created_at = Column(DateTime, default=datetime.utcnow)
     last_login_at = Column(DateTime, default=datetime.utcnow)
 

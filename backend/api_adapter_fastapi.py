@@ -39,6 +39,7 @@ import claim_api
 import login_api
 import story_api
 import timeline_api
+import interview_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -474,3 +475,101 @@ def set_story_time(req: SetStoryTimeReq, db=Depends(get_db)):
 def auto_place(story_id: str, db=Depends(get_db)):
     """保存即触发自动归位（用户手改过的会自动跳过，不覆盖）。"""
     return timeline_api.auto_place_story(db, story_id=story_id)
+
+
+# ============================================================
+# 采访引导（AI 当记者 + 可打断）路由（2026-10-08，第2期 §七）
+# 日历 10-08 原文「按反馈修复」——出码仍卡 sandy 账号授权、真机反馈未到手，
+# 依硬规矩 5「卡点不架空日历」转做第2期后端 §七 采访引导。
+# ============================================================
+
+class NextQuestionReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    last_answer: str = ""
+    interrupted_question: str = ""    # 被打断时刚才问的那句（★不丢话题）
+    interrupt_count: int = 0
+
+
+class BargeInReq(BaseModel):
+    owner_id: str = ""
+    energy_db: float = None           # 当前环境能量（dB）；前端没有可留空
+    assuming_norm: str = ""           # normal / tv / crowd / baby
+
+
+class AskClassifyReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    new_story_id: str = ""
+
+
+class ClassifyAnswerReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    new_story_id: str = ""
+    answer_text: str = ""
+    answer_key: str = ""              # new / existing / timeout
+    retry_used: int = 0
+
+
+class InterviewPrefReq(BaseModel):
+    owner_id: str
+    muted_ask: bool = None            # 「别问了」
+    sensitivity: str = ""             # low / normal / high
+
+
+@app.post("/api/echoes/interview/start")
+def interview_start(owner_id: str, viewer_id: str = "", db=Depends(get_db)):
+    """开始采访：AI 记者主动出第一问（优先问人生锚点）。"""
+    _err = _require_owner(owner_id)
+    if _err:
+        return _err
+    return interview_api.api_start_interview(db, owner_id=owner_id,
+                                             viewer_id=viewer_id or owner_id)
+
+
+@app.post("/api/echoes/interview/next")
+def interview_next(req: NextQuestionReq, db=Depends(get_db)):
+    """老人答完 → 出下一问（打断则不丢话题，先接回刚才那问）。"""
+    return interview_api.api_next_question(
+        db, owner_id=req.owner_id, viewer_id=req.viewer_id or req.owner_id,
+        last_answer=req.last_answer, interrupted_question=req.interrupted_question,
+        interrupt_count=req.interrupt_count,
+    )
+
+
+@app.post("/api/echoes/interview/barge_in")
+def interview_barge_in(req: BargeInReq, db=Depends(get_db)):
+    """★老人打断判定：出声 → 1 秒内停 TTS（延迟本身须真机测）。"""
+    return interview_api.api_barge_in(db, owner_id=req.owner_id,
+                                      energy_db=req.energy_db,
+                                      assuming_norm=req.assuming_norm)
+
+
+@app.post("/api/echoes/interview/ask_classify")
+def interview_ask_classify(req: AskClassifyReq, db=Depends(get_db)):
+    """自述页保存后：是否弹归类问（含频率保护，防烦）。"""
+    return interview_api.api_ask_classify(
+        db, owner_id=req.owner_id, viewer_id=req.viewer_id or req.owner_id,
+        new_story_id=req.new_story_id,
+    )
+
+
+@app.post("/api/echoes/interview/classify_answer")
+def interview_classify_answer(req: ClassifyAnswerReq, db=Depends(get_db)):
+    """老人对归类问的回答 → 新建 / 某一件（安全兜底：含糊=新建）。"""
+    return interview_api.api_classify_answer(
+        db, owner_id=req.owner_id, viewer_id=req.viewer_id or req.owner_id,
+        new_story_id=req.new_story_id, answer_text=req.answer_text,
+        answer_key=req.answer_key, retry_used=req.retry_used,
+    )
+
+
+@app.post("/api/echoes/interview/pref")
+def interview_pref(req: InterviewPrefReq, db=Depends(get_db)):
+    """「别问了」开关 + 打断灵敏度档位。"""
+    return interview_api.api_set_interview_pref(
+        db, owner_id=req.owner_id, muted_ask=req.muted_ask,
+        sensitivity=req.sensitivity,
+    )
+
