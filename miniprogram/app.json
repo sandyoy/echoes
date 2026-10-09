@@ -3,6 +3,7 @@
     "pages/index/index",
     "pages/capture/capture",
     "pages/timeline/timeline",
+    "pages/interview/interview",
     "pages/book/book",
     "pages/claim/claim"
   ],

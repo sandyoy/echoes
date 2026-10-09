@@ -298,6 +298,77 @@ function timelineAutoPlace(storyId) {
   return post(TIMELINE.AUTO_PLACE + '?story_id=' + encodeURIComponent(storyId));
 }
 
+// ============ 采访引导 线（小鲸鱼 10-08 接口 v1，形状已冻结）============
+// 定义：docs/事卷/接口定义_采访引导v1_20261008.md（后端 backend/interview_api.py，自测 37/37；
+//       6 条路由已由小龙虾本机 uvicorn 实测 30/30）
+// 四条铁律（前端必须守，接口定义 §四）：
+//   1) 打断要快 —— 出声 → stop_tts 就停 TTS（延迟须真机测，不许凭印象承诺）
+//   2) 打断不丢话题 —— next 回填 interrupted_question，先接回再接别的
+//   3) AI 主动让路 —— 每问完留 wait_ms，不连珠炮
+//   4) 任何反应都不算错 —— 含糊/超时/重问耗尽 → 一律默认新建，绝不卡住老人
+const INTERVIEW = {
+  START: '/api/echoes/interview/start',            // ?owner_id=&viewer_id=
+  NEXT: '/api/echoes/interview/next',
+  BARGE_IN: '/api/echoes/interview/barge_in',
+  ASK_CLASSIFY: '/api/echoes/interview/ask_classify',
+  CLASSIFY_ANSWER: '/api/echoes/interview/classify_answer',
+  PREF: '/api/echoes/interview/pref'
+};
+
+/** 开始采访：AI 主动出第一问（优先问人生锚点） */
+function interviewStart(ownerId, viewerId) {
+  return post(INTERVIEW.START + '?owner_id=' + encodeURIComponent(ownerId || '') +
+              (viewerId ? '&viewer_id=' + encodeURIComponent(viewerId) : ''));
+}
+
+/**
+ * 答完出下一问；若上一问被打断，回填 interrupted_question（铁律 2 不丢话题）
+ * @returns {Promise<{question,state,wait_ms,follow_digression}>} state=resumed 表示接回原问
+ */
+function interviewNext(ownerId, viewerId, lastAnswer, interruptedQuestion, interruptCount) {
+  return post(INTERVIEW.NEXT, {
+    owner_id: ownerId, viewer_id: viewerId || '',
+    last_answer: lastAnswer || '', interrupted_question: interruptedQuestion || '',
+    interrupt_count: interruptCount || 0
+  });
+}
+
+/** ★老人打断判定：出声 → stop_tts 就该 1 秒内停 TTS（延迟须真机测） */
+function interviewBargeIn(ownerId, energyDb, assumingNorm) {
+  const body = { owner_id: ownerId || '' };
+  if (energyDb !== undefined && energyDb !== null) body.energy_db = energyDb;
+  if (assumingNorm) body.assuming_norm = assumingNorm;
+  return post(INTERVIEW.BARGE_IN, body);
+}
+
+/** 自述页保存后：要不要弹归类问（含频率保护，防烦） */
+function interviewAskClassify(ownerId, viewerId, newStoryId) {
+  return post(INTERVIEW.ASK_CLASSIFY, {
+    owner_id: ownerId, viewer_id: viewerId || '', new_story_id: newStoryId || ''
+  });
+}
+
+/**
+ * 老人对归类问的回答 → new / existing（安全兜底：含糊=新建）
+ * @param {object} o {ownerId, viewerId, newStoryId, answerText, answerKey, retryUsed}
+ */
+function interviewClassifyAnswer(o) {
+  const d = o || {};
+  return post(INTERVIEW.CLASSIFY_ANSWER, {
+    owner_id: d.ownerId || '', viewer_id: d.viewerId || '', new_story_id: d.newStoryId || '',
+    answer_text: d.answerText || '', answer_key: d.answerKey || '', retry_used: d.retryUsed || 0
+  });
+}
+
+/** 「别问了」开关 + 打断灵敏度档位（内部档 low/normal/high） */
+function interviewPref(ownerId, opts) {
+  const o = opts || {};
+  const body = { owner_id: ownerId || '' };
+  if (o.mutedAsk !== undefined && o.mutedAsk !== null) body.muted_ask = !!o.mutedAsk;
+  if (o.sensitivity) body.sensitivity = o.sensitivity;
+  return post(INTERVIEW.PREF, body);
+}
+
 module.exports = {
   request, get, post,
   CLAIM,
@@ -309,5 +380,8 @@ module.exports = {
   CLIP,
   clipAudio, clipOriginal, clipVideo, clipTranscribe, clipList, uploadUrl,
   TIMELINE,
-  timelineGet, timelinePending, timelineSetTime, timelineAutoPlace
+  timelineGet, timelinePending, timelineSetTime, timelineAutoPlace,
+  INTERVIEW,
+  interviewStart, interviewNext, interviewBargeIn,
+  interviewAskClassify, interviewClassifyAnswer, interviewPref
 };

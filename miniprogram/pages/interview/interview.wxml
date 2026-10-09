@@ -1,0 +1,75 @@
+<!--
+  pages/interview/interview.wxml —— 采访页（AI 记者对话流 + 可打断 + 归类弹层）
+  铁律：老人只用听/说；任何反应都不算错；不确定的地方给「说完了」这种明确按钮，
+        不靠猜、不连珠炮、不卡住他。
+-->
+<view class="container ui-{{uiMode}}">
+
+  <view class="page-title">往事可追忆 · 采访</view>
+
+  <!-- 未登录/无书 -->
+  <view wx:if="{{!ownerId}}" class="hint soft">请先登录后再开始</view>
+
+  <block wx:else>
+    <!-- 加载中 -->
+    <view wx:if="{{loading}}" class="hint">正在准备…</view>
+
+    <!-- 错误（中文人话，可直接看） -->
+    <view wx:elif="{{error}}" class="hint error">{{error}}</view>
+
+    <block wx:else>
+      <!-- 标题条：AI 记者状态 -->
+      <view class="stage-bar">
+        <text wx:if="{{speaking}}" class="stage-dot on"></text>
+        <text wx:elif="{{listening}}" class="stage-dot listen"></text>
+        <text class="stage-text">
+          {{speaking ? '我在说，您听着' : (listening ? '您说，我听着' : '等一等')}}
+        </text>
+      </view>
+
+      <!-- 当前问句（大字版更大） -->
+      <view class="question-card">
+        <view class="q-label" wx:if="{{question.anchor_label}}">关于「{{question.anchor_label}}」</view>
+        <view class="q-text">{{question.text || '……'}}</view>
+        <view class="q-follow" wx:if="{{question.follow_up}}">{{question.follow_up}}</view>
+        <view class="q-hint" wx:if="{{question.audio_hint}}">{{question.audio_hint}}</view>
+        <view class="q-resumed" wx:if="{{state === 'resumed'}}">（接着刚才那句问）</view>
+      </view>
+
+      <!-- ★打断提示（老人一出声就显示） -->
+      <view wx:if="{{bargeTip}}" class="barge-tip">{{bargeTip}}</view>
+
+      <!-- 收声区：本机联调用输入框模拟；真机由语音识别填 -->
+      <view wx:if="{{listening}}" class="listen-box">
+        <input class="answer-input" placeholder="（本机联调：老人说的大致意思）"
+               value="{{lastAnswer}}" bindinput="onAnswerInput" />
+        <view class="big-btn" bindtap="onFinishAnswer">说完了</view>
+      </view>
+
+      <!-- 打断按钮（真机由能量检测自动触发；这里留手动入口便于联调/老人按键） -->
+      <view class="barge-row">
+        <view class="ghost-btn" bindtap="onBargeIn" data-energy="-10">我要插话</view>
+        <view class="ghost-btn" bindtap="onMuteAsk">别问了</view>
+      </view>
+    </block>
+  </block>
+
+  <!-- ===== 归类弹层（自述页保存后；含 5 秒浮大字按钮） ===== -->
+  <view wx:if="{{classifyAsk}}" class="mask" bindtap="onCloseClassify"></view>
+  <view wx:if="{{classifyAsk}}" class="sheet" catchtap="noop">
+    <view class="sheet-read">这段是新的一件事吗？</view>
+    <view class="sheet-ask">{{classifyQ.text}}</view>
+
+    <block wx:if="{{classifyButtonsShown}}">
+      <view class="sheet-btn" wx:for="{{classifyQ.buttons}}" wx:key="key"
+            bindtap="onTapClassifyButton" data-key="{{item.key}}">{{item.label}}</view>
+      <view class="sheet-cancel" bindtap="onCloseClassify">（先不管）</view>
+    </block>
+    <block wx:else>
+      <view class="sheet-ask">您说说就行…（{{classifyQ.buttons.length ? '想不起来就点下面' : ''}}）</view>
+      <view class="sheet-btn ghost" bindtap="onClassifyTimeout">想不起来 / 是新的一件事</view>
+      <view class="sheet-cancel" bindtap="onCloseClassify">（先不管）</view>
+    </block>
+  </view>
+
+</view>

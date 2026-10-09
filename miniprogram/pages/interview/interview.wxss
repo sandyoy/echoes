@@ -1,0 +1,125 @@
+/* pages/interview/interview.wxss —— 采访页样式
+   双界面：根节点 ui-standard / ui-large 切换（与全局 CSS 变量一致，v2.4 §3.4）。
+   大字版：加大字号 + 加大点击区；禁词「设置/权限/分享」不得出现在用户可见文案。 */
+
+.page-title {
+  font-size: var(--font-title);
+  font-weight: 600;
+  margin-bottom: var(--space);
+}
+
+.hint { color: #999; padding: var(--space) 0; }
+.hint.error { color: #c0392b; }
+.hint.soft { color: #b08a5a; }
+
+/* 状态条 */
+.stage-bar { display: flex; align-items: center; margin-bottom: var(--space); }
+.stage-dot {
+  width: 20rpx; height: 20rpx; border-radius: 50%;
+  background: #cccccc; margin-right: 12rpx;
+}
+.stage-dot.on { background: var(--color-accent); }
+.stage-dot.listen { background: #4caf50; }
+.stage-text { color: #666; font-size: var(--font-base); }
+.ui-large .stage-text { font-size: 44rpx; }
+
+/* 问句卡 */
+.question-card {
+  background: #ffffff;
+  border: 1rpx solid #eee3d5;
+  border-radius: 20rpx;
+  padding: calc(var(--space) * 1.2);
+  margin-bottom: var(--space);
+}
+.q-label { font-size: 26rpx; color: var(--color-accent); margin-bottom: 8rpx; }
+.ui-large .q-label { font-size: 40rpx; }
+.q-text { font-size: var(--font-title); font-weight: 600; line-height: 1.4; }
+.ui-large .q-text { font-size: 56rpx; }
+.q-follow { font-size: var(--font-base); color: #666; margin-top: 12rpx; line-height: 1.4; }
+.q-hint { font-size: 26rpx; color: #b08a5a; margin-top: 10rpx; }
+.q-resumed { font-size: 28rpx; color: #4caf50; margin-top: 10rpx; }
+
+/* 打断提示 */
+.barge-tip {
+  text-align: center;
+  color: #4caf50;
+  font-size: var(--font-base);
+  padding: 12rpx 0;
+}
+.ui-large .barge-tip { font-size: 44rpx; }
+
+/* 收声区 */
+.listen-box { margin: var(--space) 0; }
+.answer-input {
+  background: #ffffff;
+  border: 1rpx solid #e2d6c6;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  font-size: var(--font-base);
+  margin-bottom: var(--space);
+}
+
+/* 大按钮（老人一指可点） */
+.big-btn {
+  width: 100%;
+  height: var(--btn-h);
+  line-height: var(--btn-h);
+  text-align: center;
+  font-size: var(--font-base);
+  border-radius: 18rpx;
+  background: var(--color-accent);
+  color: #ffffff;
+}
+.big-btn.ghost { background: #ffffff; color: var(--color-accent); border: 1rpx solid var(--color-accent); }
+
+/* 插话/别问了 两枚小按钮 */
+.barge-row { display: flex; gap: 20rpx; margin-top: var(--space); }
+.ghost-btn {
+  flex: 1;
+  height: calc(var(--btn-h) * 0.85);
+  line-height: calc(var(--btn-h) * 0.85);
+  text-align: center;
+  font-size: var(--font-base);
+  color: var(--color-accent);
+  border: 1rpx solid var(--color-accent);
+  border-radius: 16rpx;
+}
+
+/* ===== 归类弹层 ===== */
+.mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+}
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  background: #ffffff;
+  border-radius: 28rpx 28rpx 0 0;
+  padding: calc(var(--space) * 1.2);
+  z-index: 101;
+  box-sizing: border-box;
+}
+.sheet-read { font-size: var(--font-title); font-weight: 600; margin-bottom: 12rpx; }
+.ui-large .sheet-read { font-size: 52rpx; }
+.sheet-ask { color: #999; margin-bottom: calc(var(--space) * 1.2); }
+.ui-large .sheet-ask { font-size: 40rpx; }
+
+.sheet-btn {
+  width: 100%;
+  height: var(--btn-h);
+  line-height: var(--btn-h);
+  text-align: center;
+  font-size: var(--font-base);
+  border-radius: 18rpx;
+  background: var(--color-accent);
+  color: #ffffff;
+  margin-bottom: var(--space);
+}
+.sheet-btn.ghost {
+  background: #ffffff;
+  color: var(--color-accent);
+  border: 1rpx solid var(--color-accent);
+}
+.sheet-cancel { text-align: center; color: #999; padding: 12rpx 0; }
