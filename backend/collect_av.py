@@ -191,6 +191,11 @@ def api_add_audio_clip(
     caption: str = "",
     audio_path: str = "",
     do_transcribe: bool = True,
+    visibility: str = "",
+    provider_id: str = "",
+    source_type: str = "",
+    ref_from_id: str = "",
+    ref_author_name: str = "",
 ) -> dict:
     """
     往里挂一件**语音**素材。
@@ -230,6 +235,11 @@ def api_add_audio_clip(
             caption=(caption or "")[:MAX_CAPTION_CHARS],
             keep_original_voice=True,          # 铁律，permissions 里也会强制为 True
             created_by=actor_id,
+            visibility=visibility,
+            provider_id=provider_id or actor_id,
+            source_type=source_type,
+            ref_from_id=ref_from_id,
+            ref_author_name=ref_author_name,
         )
     except ValueError as e:
         return fail(str(e), "attach_failed")
@@ -273,6 +283,11 @@ def api_add_original_clip(
     mime: str = "",
     duration: float = 0.0,
     caption: str = "",
+    visibility: str = "",
+    provider_id: str = "",
+    source_type: str = "",
+    ref_from_id: str = "",
+    ref_author_name: str = "",
 ) -> dict:
     """
     往里挂一件**原声**素材（ClipType.ORIGINAL）。
@@ -337,6 +352,11 @@ def api_add_video_clip(
     duration: float = 0.0,
     cover_url: str = "",
     caption: str = "",
+    visibility: str = "",
+    provider_id: str = "",
+    source_type: str = "",
+    ref_from_id: str = "",
+    ref_author_name: str = "",
 ) -> dict:
     """
     往里挂一件**视频**素材。

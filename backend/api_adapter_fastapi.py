@@ -70,6 +70,11 @@ class AddTextReq(BaseModel):
     owner_id: str = ""       # 书主人（权限判定的根）；缺则拒
     text: str
     caption: str = ""
+    # v3.0 §1.3 来路 + 公开/私有（第1期起必带；缺省 = 默认私有 + 原创）
+    visibility: str = ""      # ""/private/public；缺省 private
+    source_type: str = ""     # ""/origin/quote
+    ref_from_id: str = ""     # 引用自哪条素材（可空）
+    ref_author_name: str = "" # 出处署名（可能为称呼/笔名）
 
 
 class AddPhotoReq(BaseModel):
@@ -82,6 +87,16 @@ class AddPhotoReq(BaseModel):
     mime: str = ""
     cover_url: str = ""
     caption: str = ""
+    visibility: str = ""
+    source_type: str = ""
+    ref_from_id: str = ""
+    ref_author_name: str = ""
+
+
+class SetClipVisibilityReq(BaseModel):
+    clip_id: str
+    actor_id: str
+    visibility: str          # public / private
 
 
 class UploadUrlReq(BaseModel):
@@ -157,6 +172,8 @@ def add_text(req: AddTextReq, db=Depends(get_db)):
     return api.api_add_text_clip(
         db, story_id=req.story_id, owner_id=req.owner_id,
         actor_id=req.actor_id, text=req.text, caption=req.caption,
+        visibility=req.visibility, source_type=req.source_type,
+        ref_from_id=req.ref_from_id, ref_author_name=req.ref_author_name,
     )
 
 
@@ -170,6 +187,8 @@ def add_photo(req: AddPhotoReq, db=Depends(get_db)):
         actor_id=req.actor_id, media_url=req.media_url,
         file_name=req.file_name, file_size=req.file_size, mime=req.mime,
         cover_url=req.cover_url, caption=req.caption,
+        visibility=req.visibility, source_type=req.source_type,
+        ref_from_id=req.ref_from_id, ref_author_name=req.ref_author_name,
     )
 
 
@@ -180,6 +199,14 @@ def list_clips(story_id: str, viewer_id: str, owner_id: str = "", db=Depends(get
         return _r
     return api.api_list_clips(
         db, story_id=story_id, owner_id=owner_id, viewer_id=viewer_id,
+    )
+
+
+@app.post("/api/echoes/clip/visibility")
+def set_clip_visibility(req: SetClipVisibilityReq, db=Depends(get_db)):
+    """v3.0 §1.2：提供人主动把一条素材设为公开/私有（默认私有）。"""
+    return api.api_set_clip_visibility(
+        db, clip_id=req.clip_id, actor_id=req.actor_id, visibility=req.visibility,
     )
 
 

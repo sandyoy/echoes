@@ -167,17 +167,34 @@ check("③6 二次取筐条数一致（幂等）",
       len(box2.get("data", {}).get("clips", [])) == 5)
 
 # ============================================================
-# ④ 家人：看整本书
+# ④ 家人：看整本（v3.0 §1.2 两维闸门：可见范围 × 公开/私有）
 # ============================================================
-section("④ 家人｜加家人 → 看得到整本")
+# v3.0 起默认私有（只有提供人本人可见）。故先验证「私有默认挡住家人」，
+# 再把 5 件设公开，验证「可见范围」这一维家人能看整本——两维都要过。
+section("④ 家人｜默认私有挡住 → 公开后看得到整本")
+
+_owner_box = C.api_list_clips(db, story_id=SID, owner_id=MY_ID, viewer_id=MY_ID)
+_owner_clips = _owner_box.get("data", {}).get("clips", [])
+
+PRIVATE_ID = _owner_clips[0]["clip_id"] if _owner_clips else ""
+_pv = C.api_set_clip_visibility(db, clip_id=PRIVATE_ID, actor_id=MY_ID, visibility="private")
+check("④0a 主人主动设为私有成功", _pv.get("ok") is True, str(_pv.get("code", "")))
+
+# 把其余 4 件设为公开（保留一件私有，用于测「私有对家人不可见」）
+for _c in _owner_clips[1:]:
+    C.api_set_clip_visibility(db, clip_id=_c["clip_id"], actor_id=MY_ID, visibility="public")
 
 FAMILY_ID = L.code2session("code_family", force_stub=True)["openid"]
 P.add_family_member(db, owner_id=MY_ID, display_name="小芳", user_id=FAMILY_ID, relation="女儿")
 
 fam_box = C.api_list_clips(db, story_id=SID, owner_id=MY_ID, viewer_id=FAMILY_ID)
-check("④1 家人看得到这条故事的全部 5 件",
-      fam_box.get("ok") is True and len(fam_box.get("data", {}).get("clips", [])) == 5,
-      str(fam_box.get("code", "")))
+fam_clips = fam_box.get("data", {}).get("clips", [])
+check("④1 家人看得到【公开】的素材（4 件），私有那件被挡",
+      fam_box.get("ok") is True and len(fam_clips) == 4,
+      f"adult={len(fam_clips)}")
+check("④2 私有素材对家人不可见（v3.0 §1.2：私有库给提到人也不看）",
+      all(c.get("clip_id") != PRIVATE_ID for c in fam_clips),
+      f"private_id={PRIVATE_ID}")
 
 # 家人能添
 story2 = make_story(db, owner_id=MY_ID, title="1980年返城")
@@ -194,8 +211,8 @@ MEMBER_ID = L.code2session("code_member", force_stub=True)["openid"]
 P.add_story_member(db, owner_id=MY_ID, story_id=SID, display_name="老张", user_id=MEMBER_ID)
 
 mem_box = C.api_list_clips(db, story_id=SID, owner_id=MY_ID, viewer_id=MEMBER_ID)
-check("⑤1 故事成员看得到被点名的这一篇",
-      mem_box.get("ok") is True and len(mem_box.get("data", {}).get("clips", [])) == 5,
+check("⑤1 故事成员看得到公开的素材（4 件，私有那件不给看）",
+      mem_box.get("ok") is True and len(mem_box.get("data", {}).get("clips", [])) == 4,
       str(mem_box.get("code", "")))
 
 other_box = C.api_list_clips(db, story_id=story2.id, owner_id=MY_ID, viewer_id=MEMBER_ID)
@@ -217,8 +234,8 @@ owners = r_claim.get("data", {}).get("owners", [])
 check("⑥3 认领后拿到这本书的归属（owners 非空）", len(owners) >= 1, f"owners={len(owners)}")
 
 kin_box = C.api_list_clips(db, story_id=SID, owner_id=MY_ID, viewer_id=KIN_ID)
-check("⑥4 认领后能看这本书的全部素材",
-      kin_box.get("ok") is True and len(kin_box.get("data", {}).get("clips", [])) == 5)
+check("⑥4 认领后能看这本书的【公开】素材（4 件，私有那件不给看）",
+      kin_box.get("ok") is True and len(kin_box.get("data", {}).get("clips", [])) == 4)
 
 # ============================================================
 # ⑦ 首页红点：「有 N 篇提到了你」

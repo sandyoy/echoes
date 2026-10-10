@@ -26,7 +26,7 @@
 import os
 import math
 
-from permissions import attach_clip, list_clips, can_add_clip, can_view_story
+from permissions import attach_clip, list_clips, can_add_clip, can_view_story, visible_clips
 from models import SessionLocal, Story, Clip, ClipType, init_db
 
 
@@ -74,6 +74,10 @@ def api_add_text_clip(
     actor_id: str,
     text: str,
     caption: str = "",
+    visibility: str = "",
+    source_type: str = "",
+    ref_from_id: str = "",
+    ref_author_name: str = "",
 ) -> dict:
     """
     往里挂一件**文字**素材。
@@ -84,6 +88,7 @@ def api_add_text_clip(
       actor_id  —— 谁在传（老人自己 / 子女 / 故事里的人）
       text      —— 正文
       caption   —— 可选小标题
+      visibility/source_type/ref_*  —— v3.0 §1.3 来路字段（第1期起必带；缺省=默认私有+原创）
 
     返回：{"ok": True, "data": {"clip_id":..., "sort_order":...}}
     """
@@ -93,6 +98,8 @@ def api_add_text_clip(
         return fail("文字内容不能为空", "empty_text")
     if len(text) > MAX_TEXT_CHARS:
         return fail(f"文字太长了（上限{MAX_TEXT_CHARS}字）", "text_too_long")
+    if source_type and str(source_type).strip().lower() not in ("", "origin", "quote"):
+        return fail("source_type 只能是 origin（原创）或 quote（引用）", "bad_source_type")
 
     # 权限前置：能不能往这条故事里添（v2.4：能看就能添）
     if not can_add_clip(db, owner_id=owner_id, viewer_id=actor_id, story_id=story_id):
@@ -106,6 +113,10 @@ def api_add_text_clip(
             text=text.strip(),
             caption=(caption or "")[:MAX_CAPTION_CHARS],
             created_by=actor_id,
+            visibility=visibility or None,
+            source_type=source_type or None,
+            ref_from_id=ref_from_id or "",
+            ref_author_name=ref_author_name or "",
         )
     except ValueError as e:
         return fail(str(e), "attach_failed")
@@ -115,6 +126,9 @@ def api_add_text_clip(
         "story_id": clip.story_id,
         "clip_type": clip.clip_type.value,
         "sort_order": clip.sort_order,
+        "visibility": clip.visibility.value,
+        "source_type": clip.source_type.value,
+        "provider_id": clip.provider_id or "",
         "created_at": clip.created_at.isoformat() if clip.created_at else "",
     }, message="文字已记下")
 
@@ -155,6 +169,10 @@ def api_add_photo_clip(
     mime: str = "",
     cover_url: str = "",
     caption: str = "",
+    visibility: str = "",
+    source_type: str = "",
+    ref_from_id: str = "",
+    ref_author_name: str = "",
 ) -> dict:
     """
     往里挂一件**照片**素材。
@@ -185,6 +203,10 @@ def api_add_photo_clip(
             cover_url=cover_url or media_url,   # 没缩略图时先用原图顶
             caption=(caption or "")[:MAX_CAPTION_CHARS],
             created_by=actor_id,
+            visibility=visibility or None,
+            source_type=source_type or None,
+            ref_from_id=ref_from_id or "",
+            ref_author_name=ref_author_name or "",
         )
     except ValueError as e:
         return fail(str(e), "attach_failed")
@@ -196,6 +218,8 @@ def api_add_photo_clip(
         "sort_order": clip.sort_order,
         "media_url": clip.media_url,
         "cover_url": clip.cover_url,
+        "visibility": clip.visibility.value,
+        "provider_id": clip.provider_id or "",
     }, message="照片已存下")
 
 
@@ -207,13 +231,17 @@ def api_list_clips(db, *, story_id: str, owner_id: str, viewer_id: str) -> dict:
     """
     前端进故事详情页时拉这个：这条故事现在有哪些素材（按顺序）。
     权限：看不到就不给（且不告诉"存在但你没权限"，直接空列表 = 不泄露）。
+
+    v3.0 §1.2：在「可见范围」之上再过一层**公开/私有闸门**——
+      私有素材只有提供人自己能看到；别人（含被提及者）看不到。
+    一条素材能看 = 能看这条故事 AND 这条素材对该查看者公开（或查看者就是提供人）。
     """
     if not story_id:
         return fail("缺少 story_id", "missing_story_id")
     if not can_view_story(db, owner_id=owner_id, viewer_id=viewer_id, story_id=story_id):
         return fail("看不到这条故事", "no_permission")
 
-    clips = list_clips(db, story_id)
+    clips = visible_clips(db, story_id=story_id, owner_id=owner_id, viewer_id=viewer_id)
     items = []
     for c in clips:
         items.append({
@@ -225,6 +253,11 @@ def api_list_clips(db, *, story_id: str, owner_id: str, viewer_id: str) -> dict:
             "caption": c.caption or "",
             "keep_original_voice": bool(c.keep_original_voice),
             "created_by": c.created_by or "",
+            "provider_id": c.provider_id or "",
+            "visibility": c.visibility.value,
+            "source_type": c.source_type.value,
+            "ref_from_id": c.ref_from_id or "",
+            "ref_author_name": c.ref_author_name or "",
             "sort_order": c.sort_order,
             "created_at": c.created_at.isoformat() if c.created_at else "",
         })
@@ -238,6 +271,46 @@ def api_list_clips(db, *, story_id: str, owner_id: str, viewer_id: str) -> dict:
         "count_by_type": by_type,
         "clips": items,
     })
+
+
+# ============================================================
+# 五之二、handler：改一条素材的公开/私有（v3.0 §1.2 主动动作）
+# ============================================================
+
+def api_set_clip_visibility(
+    db,
+    *,
+    clip_id: str,
+    actor_id: str,
+    visibility: str,
+) -> dict:
+    """
+    提供人**主动**把一条素材设为公开或私有（v3.0：默认私有，公开要主动点一下）。
+    只有**提供人本人**能改；改不了返回明确中文原因（不静默）。
+    - visibility="public"  → 进公共池（故事的角色能看/引用/写）
+    - visibility="private" → 收回，只自己可见
+    """
+    vis = str(visibility or "").strip().lower()
+    if vis not in ("public", "private"):
+        return fail("visibility 只能是 public（公开）或 private（私有）", "bad_visibility")
+
+    clip = db.get(Clip, clip_id)
+    if clip is None:
+        return fail("找不到这条素材", "clip_not_found")
+
+    provider = clip.provider_id or clip.created_by or ""
+    if not actor_id or actor_id != provider:
+        return fail("只有这条素材的提供人本人才能改公开/私有", "no_permission")
+
+    from permissions import set_clip_visibility as _set_vis
+    ok_set = _set_vis(db, clip_id=clip_id, actor_id=actor_id, visibility=vis)
+    if not ok_set:
+        return fail("设置未生效（可能你不是提供人）", "not_applied")
+
+    return ok({
+        "clip_id": clip_id,
+        "visibility": vis,
+    }, message="已设为公开" if vis == "public" else "已收回为私有")
 
 
 # ============================================================

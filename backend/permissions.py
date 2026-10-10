@@ -31,6 +31,7 @@ from sqlalchemy import select
 from models import (
     SessionLocal, Story, Clip, Member, StoryPermission, LifeAnchor,
     ClipType, GrantVia, ClaimStatus, TimePrecision,
+    Visibility, SourceType,
 )
 
 
@@ -52,6 +53,11 @@ def attach_clip(
     caption: str = "",
     keep_original_voice: bool = True,
     created_by: str = "",
+    provider_id: str = "",
+    visibility=None,
+    source_type=None,
+    ref_from_id: str = "",
+    ref_author_name: str = "",
 ) -> Clip:
     """
     把一件素材挂到指定故事上。返回落库后的 Clip。
@@ -61,6 +67,11 @@ def attach_clip(
       2. clip_type 必须是 ClipType 之一
       3. 语音/原声类：keep_original_voice 强制 True（v2.4 铁律，不许关）
       4. sort_order 自动取该故事现有素材最大值 +1
+
+    来路 + 公开/私有（v3.0 §1.3）：
+      - provider_id 默认取 created_by（谁放的，谁提供）
+      - visibility **默认私有**（Visibility.PRIVATE），公开必须显式传 public
+      - source_type 默认原创；引用（quote）时给 ref_from_id / ref_author_name
     """
     story = db.get(Story, story_id)
     if story is None:
@@ -100,6 +111,12 @@ def attach_clip(
         keep_original_voice=keep_original_voice,
         sort_order=next_order,
         created_by=created_by,
+        # 来路 + 公开/私有（v3.0 §1.3 预埋，默认私有）
+        provider_id=provider_id or created_by,
+        visibility=_coerce_visibility(visibility),
+        source_type=_coerce_source_type(source_type),
+        ref_from_id=(ref_from_id or None),
+        ref_author_name=ref_author_name or "",
     )
     db.add(clip)
     db.commit()
@@ -297,3 +314,103 @@ def _normalize_phone(phone: str) -> str:
         return digits
     return s
 
+
+
+# ============================================================
+# 十、来路 + 公开/私有闸门（v3.0 §1.2 / §1.3）
+# ------------------------------------------------------------
+# 两个正交维度（v3.0 §2.2 明确：互不替代）：
+#   ① 可见范围维度（v2.4）：由「从哪个入口加进来」决定 → 家人看全本 / 故事成员看单篇
+#   ② 公开私有维度（v3.0）：由「提供人主动点公开」决定 → 私有默认，只有提供人自己能看到
+# 一条素材「谁能看」= ① AND ②：
+#   私有素材：仅提供人本人（provider_id）能看，连被提及的人也不给看（v3.0 新拍）
+#   公开素材：按 ① 的可见范围看；被提及的人在公开篇里能看到（v2.4 铁律只在公开篇成立）
+# ============================================================
+
+def _coerce_visibility(v):
+    """把入参（None / 字符串 / 枚举）归一成 Visibility，**默认私有**。"""
+    if v is None:
+        return Visibility.PRIVATE
+    if isinstance(v, Visibility):
+        return v
+    try:
+        return Visibility(str(v).strip().lower())
+    except Exception:
+        return Visibility.PRIVATE
+
+
+def _coerce_source_type(s):
+    """把入参归一成 SourceType，**默认原创**。"""
+    if s is None:
+        return SourceType.ORIGIN
+    if isinstance(s, SourceType):
+        return s
+    try:
+        return SourceType(str(s).strip().lower())
+    except Exception:
+        return SourceType.ORIGIN
+
+
+def can_show_clip(db, *, clip, viewer_id: str) -> bool:
+    """
+    单条素材对某查看者是否**可见**（v3.0 §1.2 的公开/私有闸门）。
+    注意：本函数只管「公开/私有」这一维；「可见范围」那一维由 can_view_story 管，
+    调用方须**两个都过**才算真能看（见 visible_clips 的用法）。
+
+    规则：
+      私有（默认）→ 只有提供人本人能看（provider_id 为空时退化为 created_by）
+      公开        → 进公共池，交给调用方按可见范围判
+    """
+    vis = _coerce_visibility(getattr(clip, "visibility", None))
+    if vis == Visibility.PRIVATE:
+        owner_of_clip = (getattr(clip, "provider_id", "") or getattr(clip, "created_by", "") or "")
+        return bool(viewer_id) and viewer_id == owner_of_clip
+    return True   # 公开：这一维放行
+
+
+def visible_clips(db, *, story_id: str, owner_id: str, viewer_id: str):
+    """
+    取某条故事里**该查看者能看见**的素材（两维都过）。
+    返回 Clip 列表（保序）。看不到故事 → 空列表（不泄露存在性）。
+
+    用途：采集接口 api_list_clips 的读侧、成书取材。
+    第1期：主人自己看自己的故事时，私有素材当然能看到（provider_id==viewer_id）。
+    """
+    if not can_view_story(db, owner_id=owner_id, viewer_id=viewer_id, story_id=story_id):
+        return []
+    out = []
+    for c in list_clips(db, story_id):
+        if can_show_clip(db, clip=c, viewer_id=viewer_id):
+            out.append(c)
+    return out
+
+
+def can_quote_clip(db, *, clip, viewer_id: str) -> bool:
+    """
+    能不能**引用**这条素材（v3.0 §1.2：只有公开素材能被别人引用）。
+    自己的素材：无论公私都能用（自己引用自己无意义，但不算越权）。
+    别人的素材：必须公开才可引用。
+    """
+    vis = _coerce_visibility(getattr(clip, "visibility", None))
+    provider = (getattr(clip, "provider_id", "") or getattr(clip, "created_by", "") or "")
+    if viewer_id and viewer_id == provider:
+        return True
+    return vis == Visibility.PUBLIC
+
+
+def set_clip_visibility(db, *, clip_id: str, actor_id: str, visibility) -> bool:
+    """
+    提供人**主动**改一条素材的公开/私有（v3.0 §1.2：公开是主动动作，可收可放）。
+    只有提供人本人能改；改不了返回 False。
+    返回 True 表示已改并落库。
+    """
+    clip = db.get(Clip, clip_id)
+    if clip is None:
+        return False
+    provider = (clip.provider_id or clip.created_by or "")
+    if not actor_id or actor_id != provider:
+        return False
+    clip.visibility = _coerce_visibility(visibility)
+    db.commit()
+    db.refresh(clip)
+    return True

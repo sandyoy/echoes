@@ -57,8 +57,11 @@ def main():
     inner = add_story_member(db, owner_id=OWNER, story_id="s_1", user_id=INNER, display_name="叔叔")
 
     print("=== A. 文字接口 ===")
+    # ⚠️ v3.0 §1.2（2026-10-10 起）：素材**默认私有**，别人看不到。
+    #    本自测的多个场景（家人/故事成员看同一筐）需要跨用户可见 → 显式 public。
     r = api.api_add_text_clip(db, story_id="s_1", owner_id=OWNER, actor_id=OWNER,
-                              text="  1968年我第一次坐火车去北京，车厢里全是人。  ")
+                              text="  1968年我第一次坐火车去北京，车厢里全是人。  ",
+                              visibility="public")
     check("A1 主人能挂文字", r["ok"], str(r.get("error", "")))
     clip1_id = r.get("data", {}).get("clip_id")
     check("A2 返回了 clip_id", bool(clip1_id), str(clip1_id))
@@ -73,10 +76,12 @@ def main():
     r = api.api_add_text_clip(db, story_id="s_1", owner_id=OWNER, actor_id=STRANGER, text="外人乱写")
     check("A6 陌生人没有权限被拒", not r["ok"], r.get("code", ""))
 
-    r = api.api_add_text_clip(db, story_id="s_1", owner_id=OWNER, actor_id=FAMILY, text="爸，我还记得那年下大雪。")
+    r = api.api_add_text_clip(db, story_id="s_1", owner_id=OWNER, actor_id=FAMILY,
+                              text="爸，我还记得那年下大雪。", visibility="public")
     check("A7 家人（能看整本）能补充", r["ok"], str(r.get("error", "")))
 
-    r = api.api_add_text_clip(db, story_id="s_1", owner_id=OWNER, actor_id=INNER, text="对，我作证。")
+    r = api.api_add_text_clip(db, story_id="s_1", owner_id=OWNER, actor_id=INNER,
+                              text="对，我作证。", visibility="public")
     check("A8 故事成员（绑了s1）能补充s1", r["ok"], str(r.get("error", "")))
 
     r = api.api_add_text_clip(db, story_id="s_2", owner_id=OWNER, actor_id=INNER, text="我没被加进s2")
@@ -151,7 +156,9 @@ def main():
     check("E2 上传前仍先校验图片格式", not r["ok"] and r.get("code") == "invalid_image", r.get("code", ""))
 
     print("=== F. 跨权限组合（家人/故事成员同挂一条故事）===")
-    r = api.api_add_text_clip(db, story_id="s_1", owner_id=OWNER, actor_id=FAMILY, text="妈妈也补一句")
+    # ⚠️ v3.0：默认私有，跨用户共看同一筐须显式 public
+    r = api.api_add_text_clip(db, story_id="s_1", owner_id=OWNER, actor_id=FAMILY,
+                              text="妈妈也补一句", visibility="public")
     r2 = api.api_list_clips(db, story_id="s_1", owner_id=OWNER, viewer_id=OWNER)
     # 4件(D线) + 1件(F线新增) = 5件
     check("F1 三个人（主人/家人/故事成员）的素材落在同一个筐",

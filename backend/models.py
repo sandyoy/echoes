@@ -92,6 +92,28 @@ class UiMode(str, enum.Enum):
     LARGE = "large"
 
 
+class Visibility(str, enum.Enum):
+    """
+    素材公开/私有闸门（v3.0 §1.2，第1期预埋）
+      - PRIVATE 私有（**默认**）：只进提供人自己的私有库，别人不能看/引用/写，
+        连被提及的人也不给看（v3.0 新拍：私有库提到谁，不给谁看）
+      - PUBLIC  公开（提供人**主动**点一下）：进公共池（故事的角色池），
+        故事的所有角色能看/引用/写；被提及的人能看到（v2.4 铁律只在公开篇成立）
+    """
+    PRIVATE = "private"   # 默认私有
+    PUBLIC = "public"     # 公开（需主动动作）
+
+
+class SourceType(str, enum.Enum):
+    """
+    素材来路（v3.0 §1.1，第1期预埋）
+      - ORIGIN  原创：我自己写的/录的
+      - QUOTE   引用：引用别人的原话（标出处、改不了、不算引用者署名）
+    """
+    ORIGIN = "origin"     # 原创
+    QUOTE = "quote"       # 引用
+
+
 class EbookStatus(str, enum.Enum):
     DRAFT = "draft"
     GENERATED = "generated"
@@ -217,6 +239,17 @@ class Clip(Base):
     sort_order = Column(Integer, default=0)
     created_by = Column(String(128), default="")        # 谁传的（老人自己/子女/故事里的人）
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # ============================================================
+    # 来路 + 公开/私有（v3.0 §1.3 全局接口预埋 —— 铁律）
+    # 第1期可不用第3期的成书逻辑，但这 5 个字段一个都不能少，否则第3期
+    # 回头撬接口会牵动整条链（故事归属 / 引用署名 / 公共池）。
+    # ============================================================
+    provider_id = Column(String(128), index=True, default="")   # 谁放的（提供人）—— 引用署名/归属的根
+    visibility = Column(SAEnum(Visibility), default=Visibility.PRIVATE, index=True)  # 公开/私有（**默认私有**）
+    source_type = Column(SAEnum(SourceType), default=SourceType.ORIGIN)              # 原创/引用
+    ref_from_id = Column(String(64), nullable=True)             # 引用自哪条素材（可空）
+    ref_author_name = Column(String(64), default="")            # 出处署名（可能是称呼/笔名，非账号）
 
     story = relationship("Story", back_populates="clips")
 
