@@ -1,5 +1,142 @@
-<!-- 成书页占位（第1期只做入口，第3期做电子书） -->
-<view class="container">
-  <view class="title">我要成书</view>
-  <view class="empty">电子书功能在第 3 期上线</view>
+<!--
+  pages/book/book.wxml —— 成书页（v3.0 §八：两筐素材装书）
+  一页两态：取材（两筐）→ 生成 → 我的书（章节 + 引用块）。
+  铁律：
+    · own 筐不可取消勾选（自己的自动装）
+    · public 筐可勾（点选才装）
+    · is_quote==true 的条目 → 渲染引用块 + quote_label，**不给编辑按钮**
+-->
+<view class="container ui-{{uiMode}}">
+
+  <view class="page-title">往事可追忆 · {{tab === 'ebook' ? '我的书' : '做成书'}}</view>
+
+  <!-- 顶部切换：取材 / 我的书 -->
+  <view class="tabs">
+    <view class="tab {{tab === 'source' ? 'on' : ''}}" bindtap="onTabSource">挑素材</view>
+    <view class="tab {{tab === 'ebook' ? 'on' : ''}}" bindtap="onTabEbook">我的书</view>
+  </view>
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="hint">正在整理…</view>
+
+  <!-- 错误（中文人话） -->
+  <view wx:elif="{{error}}" class="hint error">{{error}}</view>
+
+  <!-- ===================== 取材态（两筐） ===================== -->
+  <block wx:elif="{{tab === 'source'}}">
+
+    <view wx:if="{{sourceEmpty}}" class="empty">
+      <view class="empty-text">还没有能装进书里的内容，先去说几句吧</view>
+      <view class="big-btn" bindtap="onTapGoCapture">去说说</view>
+      <view class="big-btn ghost" bindtap="onTapGoTimeline">看看时间轴</view>
+    </view>
+
+    <block wx:else>
+      <!-- 书名（可不填，空则用「我的一生」） -->
+      <view class="field">
+        <view class="field-label">书的名字</view>
+        <input class="field-input" value="{{title}}" placeholder="不填就叫「我的一生」"
+               bindinput="onTitleInput" />
+      </view>
+
+      <!-- ===== 筐① 自己的：自动收录，不可取消 ===== -->
+      <view class="basket">
+        <view class="basket-head">
+          <text class="basket-title">你的记录</text>
+          <text class="basket-sub">自动收录（{{ownCount}} 条）</text>
+        </view>
+        <view wx:if="{{ownCount === 0}}" class="basket-empty">这里空着呢</view>
+        <view wx:else class="clip-card locked"
+              wx:for="{{own}}" wx:key="clip_id">
+          <view class="clip-check locked">✓</view>
+          <view class="clip-body">
+            <view class="clip-text">{{item.text}}</view>
+            <view class="clip-meta">
+              <text>{{item.time_label}}</text>
+              <text wx:if="{{item.ref_author_name}}" class="quote-from">这段来自{{item.ref_author_name}}的讲述</text>
+            </view>
+          </view>
+        </view>
+        <view class="basket-note">自己的内容会自动装进书里</view>
+      </view>
+
+      <!-- ===== 筐② 别人提到的：点选加入，可勾 ===== -->
+      <view class="basket">
+        <view class="basket-head">
+          <text class="basket-title">别人提到的</text>
+          <text class="basket-sub">点选加入（已选 {{checkedCount}} 条）</text>
+        </view>
+        <view wx:if="{{publicCount === 0}}" class="basket-empty">暂时没有别人提到您的内容</view>
+        <block wx:else>
+          <view class="clip-card {{checked[item.clip_id] ? 'picked' : ''}}"
+                wx:for="{{public}}" wx:key="clip_id"
+                bindtap="onTogglePublic" data-clip-id="{{item.clip_id}}">
+            <view class="clip-check {{checked[item.clip_id] ? 'on' : ''}}">{{checked[item.clip_id] ? '✓' : ''}}</view>
+            <view class="clip-body">
+              <view class="clip-text">{{item.text}}</view>
+              <view class="clip-meta">
+                <text>{{item.time_label}}</text>
+                <text wx:if="{{item.ref_author_name}}" class="quote-from">这段来自{{item.ref_author_name}}的讲述</text>
+              </view>
+            </view>
+          </view>
+        </block>
+        <view class="basket-note">点一下选中；别人说的话装进书里会标明来处</view>
+      </view>
+
+      <!-- 生成按钮 -->
+      <view class="big-btn {{generating ? 'hold' : ''}}" bindtap="onGenerate">
+        {{generating ? '正在做书…' : (ebookId ? '重新做一本' : '做成书')}}
+      </view>
+    </block>
+  </block>
+
+  <!-- ===================== 我的书（成书态） ===================== -->
+  <block wx:else>
+
+    <view wx:if="{{ebookEmpty}}" class="empty">
+      <view class="empty-text">这本书还没做呢，先去挑素材吧</view>
+      <view class="big-btn" bindtap="onTabSource">去挑素材</view>
+    </view>
+
+    <block wx:else>
+      <view class="book-title">{{bookTitle}}</view>
+      <view class="book-meta">
+        共 {{storyCount}} 篇 · {{clipCount}} 段
+      </view>
+
+      <!-- 贡献者（引用过的人） -->
+      <view wx:if="{{contributors.length > 0}}" class="contrib">
+        <text class="contrib-label">书里还有这些人的讲述：</text>
+        <text class="contrib-name" wx:for="{{contributors}}" wx:key="*this">{{item}}</text>
+      </view>
+
+      <!-- 章节：按时间轴顺序（后端已排） -->
+      <view class="chapter" wx:for="{{chapters}}" wx:key="story_id">
+        <view class="chapter-head">
+          <text class="chapter-title">{{item.story_title}}</text>
+          <text class="chapter-time">{{item.time_label}}</text>
+        </view>
+
+        <!-- 条目：引用段渲染成引用块，不给编辑按钮 -->
+        <block wx:for="{{item.entries}}" wx:for-item="entry" wx:key="clip_id">
+          <!-- 引用段（别人的讲述 / is_quote 标记） -->
+          <view wx:if="{{entry.is_quote}}" class="entry quote-block">
+            <view class="quote-label">{{entry.quote_label}}</view>
+            <view class="quote-text">{{entry.text}}</view>
+          </view>
+          <!-- 本人原话 -->
+          <view wx:else class="entry own-entry">
+            <view class="entry-text">{{entry.text}}</view>
+            <!-- editable==true 才显示编辑入口；引用段永不显示 -->
+            <view wx:if="{{entry.editable}}" class="entry-edit">改一改</view>
+          </view>
+        </block>
+      </view>
+
+      <!-- 活文档：再点生成可把新素材续进去 -->
+      <view class="big-btn ghost" bindtap="onTabSource">去挑素材，把新的续进去</view>
+    </block>
+  </block>
+
 </view>
