@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="750" height="1624" viewBox="0 0 750 1624">
+  <rect width="750" height="1624" fill="#FAF6F0"/>
+  <!-- 状态栏 -->
+  <rect x="0" y="0" width="750" height="88" fill="#FAF6F0"/>
+  <text x="48" y="58" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="30" fill="#2E2823" font-weight="600">9:41</text>
+  <g fill="#2E2823">
+    <rect x="620" y="42" width="10" height="16" rx="2"/>
+    <rect x="636" y="38" width="10" height="20" rx="2"/>
+    <rect x="652" y="34" width="10" height="24" rx="2"/>
+    <rect x="668" y="30" width="10" height="28" rx="2" opacity="0.35"/>
+    <rect x="688" y="38" width="44" height="22" rx="6" fill="none" stroke="#2E2823" stroke-width="3"/>
+    <rect x="694" y="44" width="26" height="10" rx="3"/>
+    <rect x="736" y="43" width="4" height="12" rx="2"/>
+  </g>
+  <!-- 导航标题 -->
+  <rect x="0" y="88" width="750" height="110" fill="#FAF6F0"/>
+  <path d="M 52 132 L 36 148 L 52 164" fill="none" stroke="#2E2823" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="375" y="158" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="40" fill="#2E2823" font-weight="700" text-anchor="middle">拿给别人看</text>
+
+  <!-- 顶部闸门提示条 -->
+  <rect x="40" y="218" width="670" height="92" rx="24" fill="#FDEFE3" stroke="#F0C9A8" stroke-width="2"/>
+  <ellipse cx="96" cy="264" rx="26" ry="16" fill="none" stroke="#C8642F" stroke-width="4"/>
+  <circle cx="96" cy="264" r="7" fill="#C8642F"/>
+  <text x="146" y="272" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="30" fill="#2E2823" font-weight="600">只分「公开」的，私下的不外露</text>
+
+  <!-- 读者视角预览卡（NEW：v3.0 引用段标出处） -->
+  <text x="40" y="368" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="34" fill="#2E2823" font-weight="700">别人打开时，看到的是这样</text>
+
+  <rect x="40" y="392" width="670" height="548" rx="28" fill="#FFFFFF" stroke="#E8DFD5" stroke-width="2"/>
+  <!-- 书页标题 -->
+  <text x="76" y="448" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="30" fill="#7A6F66">1976年 · 嫁过来那年</text>
+  <line x1="76" y1="470" x2="674" y2="470" stroke="#F0E7DC" stroke-width="2"/>
+
+  <!-- 我的原话（本人写的，正常体） -->
+  <text x="76" y="520" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="28" fill="#2E2823">那年我从隔壁村嫁过来，</text>
+  <text x="76" y="560" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="28" fill="#2E2823">一路走了三十里，进了这个院子。</text>
+
+  <!-- 引用段（别人公开的，灰底+左侧竖线+出处标签，不可改） -->
+  <rect x="76" y="588" width="598" height="200" rx="18" fill="#F4F1EC" stroke="#E3DCD2" stroke-width="2"/>
+  <rect x="76" y="608" width="8" height="160" rx="4" fill="#8C8375"/>
+  <text x="104" y="636" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="26" fill="#5A5248">那天我在灶房门口看见她进门，</text>
+  <text x="104" y="674" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="26" fill="#5A5248">挎着个红布包，脸冻得通红。</text>
+  <!-- 出处标签 -->
+  <g>
+    <rect x="104" y="700" width="360" height="60" rx="14" fill="#EDE6DA"/>
+    <text x="124" y="740" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="24" fill="#7A5A2E">— 这段来自「张大叔」的讲述</text>
+  </g>
+
+  <!-- 我在这段旁边补的话（引用者自己的话） -->
+  <text x="104" y="800" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="28" fill="#2E2823">他说的那天，我也记着呢。</text>
+
+  <!-- 引用纪律说明 -->
+  <rect x="40" y="960" width="670" height="150" rx="24" fill="#FBF3E9" stroke="#F0DCC4" stroke-width="2"/>
+  <circle cx="98" cy="1014" r="30" fill="#C8642F"/>
+  <line x1="98" y1="1000" x2="98" y2="1022" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="98" cy="1034" r="3.6" fill="#FFFFFF"/>
+  <text x="146" y="1004" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="28" fill="#2E2823" font-weight="600">灰底的两句不是我写的</text>
+  <text x="146" y="1046" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="26" fill="#7A6F66">是张大叔公开的原话 · 一个字都不改</text>
+  <text x="146" y="1084" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="26" fill="#7A6F66">出处永远跟着这段走，署的是他</text>
+
+  <!-- 分享入口 -->
+  <text x="40" y="1178" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="34" fill="#2E2823" font-weight="700">分享出去</text>
+
+  <rect x="40" y="1204" width="325" height="150" rx="28" fill="#FFFFFF" stroke="#E8DFD5" stroke-width="2"/>
+  <circle cx="112" cy="1268" r="34" fill="#4C8C5A"/>
+  <path d="M 96 1260 L 128 1268 L 96 1276 Z" fill="#FFFFFF"/>
+  <text x="164" y="1258" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="28" fill="#2E2823" font-weight="600">发给微信朋友</text>
+  <text x="164" y="1300" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="23" fill="#7A6F66">家人、老同事</text>
+
+  <rect x="385" y="1204" width="325" height="150" rx="28" fill="#FFFFFF" stroke="#E8DFD5" stroke-width="2"/>
+  <circle cx="457" cy="1268" r="34" fill="#C8642F"/>
+  <rect x="440" y="1252" width="34" height="26" rx="5" fill="none" stroke="#FFFFFF" stroke-width="4"/>
+  <circle cx="450" cy="1262" r="4" fill="#FFFFFF"/>
+  <path d="M 444 1275 L 454 1264 L 461 1271 L 465 1267 L 470 1275 Z" fill="#FFFFFF"/>
+  <text x="509" y="1258" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="28" fill="#2E2823" font-weight="600">做成卡片图</text>
+  <text x="509" y="1300" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="23" fill="#7A6F66">一张图，发朋友圈</text>
+
+  <!-- 底部提示 -->
+  <rect x="40" y="1394" width="670" height="100" rx="24" fill="#FFFFFF" stroke="#E8DFD5" stroke-width="2"/>
+  <text x="375" y="1454" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="26" fill="#7A6F66" text-anchor="middle">大字版也叫「拿给别人看看」，不叫「分享」</text>
+
+  <text x="375" y="1578" font-family="WenQuanYi Zen Hei, Noto Sans CJK SC, DejaVu Sans" font-size="24" fill="#B3A99E" text-anchor="middle">Echoes · 原型 v3.0 · 08 拿给别人看（引用段标出处）</text>
+</svg>
