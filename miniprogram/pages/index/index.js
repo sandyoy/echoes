@@ -80,6 +80,32 @@ Page({
     wx.navigateTo({ url: `/pages/capture/capture?type=${type}` });
   },
 
+  /** ★ 门2「让人问我」= 采访（v3.0 §6.0/§7.1：独立入口、与自述平级，直接进对话框） */
+  onOpenInterview() {
+    wx.navigateTo({
+      url: '/pages/interview/interview',
+      fail: () => { /* 采访页未就绪时静默，不打断 */ }
+    });
+  },
+
+  /** ★ 看时间轴（灵魂功能，v3.0 §五：时间轴是目录、故事是章节） */
+  onOpenTimeline() {
+    wx.navigateTo({
+      url: '/pages/timeline/timeline',
+      fail: () => { /* 时间轴页未就绪时静默 */ }
+    });
+  },
+
+  /** 点故事卡 → 展开看故事（§1.3-4：点是"看故事"，走采集页详情） */
+  onTapStory(e) {
+    const sid = (e && e.currentTarget && e.currentTarget.dataset.storyId) || '';
+    if (!sid) return;
+    wx.navigateTo({
+      url: '/pages/capture/capture?story_id=' + encodeURIComponent(sid),
+      fail: () => { /* 采集页未就绪时静默 */ }
+    });
+  },
+
   /** 进入成书页 */
   onOpenBook() {
     wx.navigateTo({ url: '/pages/book/book' });

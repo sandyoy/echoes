@@ -12,7 +12,7 @@
     <view class="more" bindtap="onToggleMode">更多</view>
   </block>
 
-  <!-- ===== 标准版：故事列表 / 成书 / 全部功能 ===== -->
+  <!-- ===== 标准版：两门（我自己说 / 让人问我）+ 故事列表 + 成书 ===== -->
   <block wx:else>
     <view class="title">往事可追忆</view>
 
@@ -22,12 +22,24 @@
       有 {{mentionedCount}} 篇故事提到了你
     </view>
 
-    <view class="big-btn" data-type="voice" bindtap="onCapture">+ 录一段</view>
+    <!-- ★ 首页两门（v3.0 §6.0）：上层是「两种写故事的姿态」，进门即模式，不给老人做选择题 -->
+    <!-- 门1：我自己说 = 自述 → 走四种录法（下层） -->
+    <view class="door">
+      <view class="door-title">我自己说</view>
+      <view class="door-sub">想到啥说啥，都记下来</view>
+      <view class="big-btn" data-type="voice" bindtap="onCapture">说话</view>
+      <view class="row">
+        <view class="big-btn small" data-type="text"  bindtap="onCapture">写文字</view>
+        <view class="big-btn small" data-type="photo" bindtap="onCapture">拍照片</view>
+        <view class="big-btn small" data-type="video" bindtap="onCapture">拍视频</view>
+      </view>
+    </view>
 
-    <view class="row">
-      <view class="big-btn small" data-type="text"  bindtap="onCapture">写文字</view>
-      <view class="big-btn small" data-type="photo" bindtap="onCapture">传照片</view>
-      <view class="big-btn small" data-type="video" bindtap="onCapture">传视频</view>
+    <!-- 门2：让人问我 = 采访 → 直接进对话框（AI 问-老人答，只有语音，v3.0 §7.1） -->
+    <view class="door">
+      <view class="door-title">让人问我</view>
+      <view class="door-sub">有人一问一答，想起来的更多</view>
+      <view class="big-btn" bindtap="onOpenInterview">开始采访</view>
     </view>
 
     <view class="big-btn" bindtap="onOpenBook">我要成书</view>
@@ -35,8 +47,10 @@
     <!-- 故事列表占位（数据主体=故事，v2.4 §2.1） -->
     <view class="list-title">我的故事</view>
     <view wx:if="{{stories.length === 0}}" class="empty">还没有故事，先录一段吧</view>
-    <view wx:for="{{stories}}" wx:key="id" class="story-item">{{item.title}}</view>
+    <view wx:for="{{stories}}" wx:key="id" class="story-item" data-story-id="{{item.id}}" bindtap="onTapStory">{{item.title}}</view>
 
+    <!-- 时间轴（灵魂功能，v3.0 §五）：目录，看故事排在哪 -->
+    <view class="switch" bindtap="onOpenTimeline">看时间轴</view>
     <view class="switch" bindtap="onToggleMode">切换大字版</view>
   </block>
 

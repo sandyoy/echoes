@@ -24,6 +24,23 @@
   border-radius: 12rpx;
   margin-bottom: calc(var(--space) / 2);
 }
+
+/* 首页两门（v3.0 §6.0）：【我自己说】= 自述 ｜ 【让人问我】= 采访，平级 */
+.door {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: var(--space);
+  margin-bottom: var(--space);
+}
+.door-title {
+  font-size: var(--font-title);
+  font-weight: 600;
+}
+.door-sub {
+  color: #999;
+  font-size: var(--font-base);
+  margin: calc(var(--space) / 3) 0 var(--space);
+}
 .switch {
   margin-top: var(--space);
   text-align: center;
