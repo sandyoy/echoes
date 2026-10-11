@@ -38,6 +38,7 @@ import collect_av as av
 import claim_api
 import login_api
 import story_api
+import book_api
 import timeline_api
 import interview_api
 
@@ -412,6 +413,43 @@ def create_book(req: CreateBookReq, db=Depends(get_db)):
 @app.get("/api/echoes/book/my")
 def my_books(user_id: str, db=Depends(get_db)):
     return story_api.api_my_books(db, user_id=user_id)
+
+
+# ============================================================
+# 成书（v3.0 §八 · 2026-10-11 新增）
+#   取材（两筐） → 生成电子书 → 取我的电子书
+# handler: book_api.py（本机无 fastapi 未实测路由，形状已冻结）
+# ============================================================
+
+class BookSourceReq(BaseModel):
+    owner_id: str
+    actor_id: str = ""
+
+
+class GenerateEbookReq(BaseModel):
+    owner_id: str
+    actor_id: str = ""
+    title: str = ""
+    picked_public_ids: list = []      # 从公共筐点选要装的素材 id
+    ebook_id: str = ""                # 传了则覆盖刷新（活文档）
+
+
+@app.post("/api/echoes/book/source")
+def book_source(req: BookSourceReq, db=Depends(get_db)):
+    return book_api.api_book_source_baskets(
+        db, owner_id=req.owner_id, actor_id=req.actor_id)
+
+
+@app.post("/api/echoes/book/generate")
+def book_generate(req: GenerateEbookReq, db=Depends(get_db)):
+    return book_api.api_generate_ebook(
+        db, owner_id=req.owner_id, actor_id=req.actor_id, title=req.title,
+        picked_public_ids=req.picked_public_ids, ebook_id=req.ebook_id)
+
+
+@app.get("/api/echoes/book/ebook")
+def my_ebook(owner_id: str, db=Depends(get_db)):
+    return book_api.api_my_ebook(db, owner_id=owner_id)
 
 
 @app.post("/api/echoes/story/create")
