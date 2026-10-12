@@ -41,6 +41,7 @@ import story_api
 import book_api
 import timeline_api
 import interview_api
+import share_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -637,4 +638,39 @@ def interview_pref(req: InterviewPrefReq, db=Depends(get_db)):
         db, owner_id=req.owner_id, muted_ask=req.muted_ask,
         sensitivity=req.sensitivity,
     )
+
+
+# ============================================================
+# 分享机制（v3.0 §八之二）—— 此前全无后端，2026-10-12 落地 v1.0
+# ============================================================
+
+class ShareReq(BaseModel):
+    actor_id: str = ""
+    kind: str = "story"          # story | book | app
+    target_id: str = ""          # story_id 或 owner_id（kind=app 时忽略）
+
+
+class ShareCardReq(BaseModel):
+    kind: str = "story"
+    target_id: str = ""
+
+
+@app.post("/api/echoes/share/make")
+def share_make(req: ShareReq, db=Depends(get_db)):
+    """造一条分享（登录态）。私有/全私有篇 -> not_shareable。"""
+    return share_api.api_make_share(
+        db, actor_id=req.actor_id, kind=req.kind, target_id=req.target_id,
+    )
+
+
+@app.get("/api/echoes/share/view")
+def share_view(t: str, db=Depends(get_db)):
+    """**无登录**读一条分享（§8之二.2 先看后登录）。只回公开素材。"""
+    return share_api.api_view_shared(db, share_token=t)
+
+
+@app.get("/api/echoes/share/card")
+def share_card(kind: str, target_id: str, db=Depends(get_db)):
+    """卡片图数据（§8之二.3.1 方式 B）。"""
+    return share_api.api_share_card(db, kind=kind, target_id=target_id)
 

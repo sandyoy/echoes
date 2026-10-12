@@ -175,9 +175,28 @@ st2 = Story(id="m2", title="参军", owner_id="child_openid",
             people_mentioned=[{"user_id": lg["data"]["user_id"]}])
 db6.add(st2)
 db6.commit()
+# ★ v3.0（§2.4 改）：只有在【公开篇】里提到你才算。给 m2 挂一条公开素材。
+from models import Clip, ClipType, Visibility  # noqa: E402
+db6.add(Clip(id="c_m2", story_id="m2", clip_type=ClipType.TEXT,
+             text="参军那年我十九", provider_id="child_openid",
+             visibility=Visibility.PUBLIC))
+db6.commit()
 lg2 = L.api_login(db6, code="coder_laoli", phone="", force_stub=True)
-check("E4 被提到的故事计入 count_stories", lg2["data"]["count_stories"] >= 1,
+check("E4 被提到的故事计入 count_stories（公开篇）", lg2["data"]["count_stories"] >= 1,
       f"count_stories={lg2['data']['count_stories']}")
+# ★ v3.0 新增：私有篇提到你 → 不计入
+st3 = Story(id="m3", title="私事", owner_id="child_openid",
+            people_mentioned=[{"user_id": lg["data"]["user_id"]}])
+db6.add(st3)
+db6.commit()
+db6.add(Clip(id="c_m3", story_id="m3", clip_type=ClipType.TEXT,
+             text="还没想好要不要说", provider_id="child_openid",
+             visibility=Visibility.PRIVATE))
+db6.commit()
+lg3 = L.api_login(db6, code="coder_laoli", phone="", force_stub=True)
+check("E5 v3.0 私有篇提到你→不计入 count_stories",
+      lg3["data"]["count_stories"] == lg2["data"]["count_stories"],
+      f"{lg2['data']['count_stories']} → {lg3['data']['count_stories']}")
 
 # ---------------- 汇总 ----------------
 print("\n" + "=" * 60)

@@ -36,7 +36,7 @@ from datetime import datetime
 from sqlalchemy import select, func
 
 from models import (
-    SessionLocal, Story, Member, Claim,
+    SessionLocal, Story, Member, Claim, Clip,
     GrantVia, ClaimStatus,
 )
 from permissions import _new_id, _normalize_phone  # noqa: F401  (复用同一套工具)
@@ -67,8 +67,20 @@ def register_claim(db, *, owner_id: str, phone: str = "", display_name: str = ""
 
     if not phone and not display_name:
         raise ValueError("登记待认领至少需要 手机号 或 名字 之一")
-    if story_id and db.get(Story, story_id) is None:
-        raise ValueError(f"故事不存在：{story_id}")
+    if story_id:
+        if db.get(Story, story_id) is None:
+            raise ValueError(f"故事不存在：{story_id}")
+        # ★ v3.0（§8之二.7 改）：**待认领只登记公开篇里提到的人**。
+        # 私有库里提到的人 → 不登记、不提醒（否则=泄密）。
+        # 但：登记时故事可能还没有任何素材（新建故事先登记人）→ 这种情况放行，
+        #     由「有 N 篇提到了你」的读取闸门（_mentioned_story_ids）兜底。
+        has_any_clip = db.scalar(
+            select(Clip.id).where(Clip.story_id == story_id).limit(1)
+        ) is not None
+        if has_any_clip and not _story_has_public_clip(db, story_id):
+            raise PermissionError(
+                "这篇还没有公开的内容，不能登记'被提到的人'——先公开一段再登记"
+            )
 
     # 幂等：同一登记人对同一手机号只留一条未认领记录
     if phone:
@@ -315,11 +327,30 @@ def reject_claim(db, *, claim_id: str, owner_id: str) -> bool:
 # 四、「有 N 篇故事提到了你」（首页提示 —— v2.4 明确要求）
 # ============================================================
 
+def _story_has_public_clip(db, story_id: str) -> bool:
+    """
+    v3.0 §1.2 铁律3 / §2.4 改 / §8之二.7 改 的落地判据：
+    **一篇故事里只要有一条公开素材，就算「公开篇」。**
+    私有库里提到谁 → 不给谁看、不提醒、不登记（否则=泄密）。
+    """
+    from models import Clip, Visibility  # 局部 import，避免循环
+    return db.scalar(
+        select(Clip.id).where(
+            Clip.story_id == story_id,
+            Clip.visibility == Visibility.PUBLIC,
+        ).limit(1)
+    ) is not None
+
+
 def _mentioned_story_ids(db, *, user_id: str, owners=None) -> list:
     """
-    找出所有「提到了这个 user_id」的故事 id。
+    找出所有「提到了这个 user_id」的**公开篇**故事 id。
 
-    命中三条路（任一即算提到）：
+    ★ v3.0 收紧（§2.4 改 / §8之二.7 改）：
+      只在「公开篇」里成立。旧 v2.4 口径「看提到自己的那篇永不需要授权」
+      已改为「**只在公开的篇里成立**」——私有篇里提到你 → 不提示、不给看。
+
+    命中三条路（任一即算提到，**且该篇须有公开素材**）：
       ① story.people_mentioned 里 user_id 命中
       ② Claim 表里 claimed_user_id == user_id 且带 story_id
       ③ Member 表里 user_id 命中且带 story_id（被绑到单篇的故事成员）
@@ -350,6 +381,8 @@ def _mentioned_story_ids(db, *, user_id: str, owners=None) -> list:
         if m.story_id:
             hit.add(m.story_id)
 
+    # ★ v3.0 闸门：只留「公开篇」
+    hit = {sid for sid in hit if _story_has_public_clip(db, sid)}
     return sorted(hit)
 
 

@@ -22,7 +22,7 @@ _tmp = tempfile.mktemp(suffix=".db")
 os.environ["DATABASE_URL"] = f"sqlite:///{_tmp}"
 
 from models import (  # noqa: E402
-    SessionLocal, init_db, Story, Member, Claim,
+    SessionLocal, init_db, Story, Member, Claim, Clip, ClipType, Visibility,
     GrantVia, ClaimStatus,
 )
 from permissions import (  # noqa: E402
@@ -53,10 +53,21 @@ def main():
     LI_PHONE = "13800138000"
 
     # ---------- 造两条故事 ----------
+    # ★ v3.0（§2.4 改）：本测涉及「提到了你」的判定，须让这些篇成为【公开篇】，
+    #    否则 v3.0 的公开闸门会把它们全挡掉（那是对的，但会与本测初衷无关地失败）。
+    #    故给下面每条参与 mention 判定的故事各挂一条**公开**素材。
+    def _give_public(story, owner):
+        db.add(Clip(id=_new_id("clip"), story_id=story.id, clip_type=ClipType.TEXT,
+                    text=f"[公开素材]{story.title}", provider_id=owner,
+                    visibility=Visibility.PUBLIC))
+        db.commit()
+
     s1 = Story(id=_new_id("story"), owner_id=OWNER, title="和李叔一起下矿")
     s2 = Story(id=_new_id("story"), owner_id=OWNER, title="那年搬家")
     db.add_all([s1, s2])
     db.commit()
+    _give_public(s1, OWNER)
+    _give_public(s2, OWNER)
 
     # ---------- 1. 登记待认领 ----------
     c1 = register_claim(db, owner_id=OWNER, phone=LI_PHONE,
@@ -159,26 +170,53 @@ def main():
     # ---------- 5. 「有 N 篇故事提到了你」----------
     # 老李：Claim 带 story_id=s1（登记时给了 s1），且 s2 也在幂等补齐时挂上了
     # → 用 people_mentioned 精确构造一个干净案例
+    # ★ v3.0（§2.4 改）：只有在【公开篇】里提到才算。故这里给 s3 加一条**公开**素材。
     s3 = Story(id=_new_id("story"), owner_id=OWNER, title="提到了老李但没登记",
                people_mentioned=[{"name": "李叔", "user_id": LAOLI}])
     db.add(s3)
     db.commit()
+    db.add(Clip(id=_new_id("clip"), story_id=s3.id, clip_type=ClipType.TEXT,
+                text="老李那天也在场", provider_id=OWNER, visibility=Visibility.PUBLIC))
+    db.commit()
 
     n = pending_mentioned_count(db, user_id=LAOLI)
-    check("5.1 N 算得出来（>=1）", n >= 1, f"N={n}")
+    check("5.1 N 算得出来（>=1，公开篇）", n >= 1, f"N={n}")
     titles = {s.title for s in mentioned_stories(db, user_id=LAOLI)}
     check("5.2 people_mentioned 命中的那篇在列表里",
           "提到了老李但没登记" in titles, str(titles))
 
+    # ★ v3.0 新增：私有篇里提到你 → 不提示（不泄密）
+    s_priv = Story(id=_new_id("story"), owner_id=OWNER, title="私有篇提到了老李",
+                   people_mentioned=[{"name": "李叔", "user_id": LAOLI}])
+    db.add(s_priv)
+    db.commit()
+    db.add(Clip(id=_new_id("clip"), story_id=s_priv.id, clip_type=ClipType.TEXT,
+                text="私事，还没想好要不要说", provider_id=OWNER,
+                visibility=Visibility.PRIVATE))
+    db.commit()
+    titles2 = {s.title for s in mentioned_stories(db, user_id=LAOLI)}
+    check("5.4 v3.0 私有篇提到你→不提示", "私有篇提到了老李" not in titles2, str(titles2))
+    n_priv = pending_mentioned_count(db, user_id=LAOLI)
+    check("5.5 v3.0 私有篇不计入 N", n_priv == n, f"{n} → {n_priv}")
+
     # 没提到他的人 → N=0
     check("5.3 没被提到的人 N=0",
           pending_mentioned_count(db, user_id="u_nobody") == 0)
+
+    # ★ v3.0 新增：私有篇不给"被提到的人"登记（登记即泄密）
+    try:
+        register_claim(db, owner_id=OWNER, phone="13711112222", story_id=s_priv.id)
+        check("5.6 v3.0 私有篇登记被提到的人→被拒", False, "(没报错)")
+    except PermissionError:
+        check("5.6 v3.0 私有篇登记被提到的人→被拒", True)
 
     # ---------- 6. 登录总入口 ----------
     OTHER_OWNER = "u_lisi"
     s9 = Story(id=_new_id("story"), owner_id=OTHER_OWNER, title="另一本书里的故事")
     db.add(s9)
     db.commit()   # 必须先 commit —— 待认领登记会回查故事是否真的在库里
+    # ★ v3.0：跨书认领也须是公开篇才算「提到了你」，故补一条公开素材
+    _give_public(s9, OTHER_OWNER)
     register_claim(db, owner_id=OTHER_OWNER, phone=LI_PHONE, story_id=s9.id)
     m2 = add_story_member(db, owner_id=OTHER_OWNER, story_id=s9.id,
                           phone=LI_PHONE, display_name="李叔")
