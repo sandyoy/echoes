@@ -42,6 +42,7 @@ import book_api
 import timeline_api
 import interview_api
 import share_api
+import payment_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -673,4 +674,73 @@ def share_view(t: str, db=Depends(get_db)):
 def share_card(kind: str, target_id: str, db=Depends(get_db)):
     """卡片图数据（§8之二.3.1 方式 B）。"""
     return share_api.api_share_card(db, kind=kind, target_id=target_id)
+
+
+# ============================================================
+# 收付款（v3.0 §九 后台配置化 —— 2026-10-12 新增）
+# 原则：程序只提供"能收"的能力；收不收/收多少 = 后台配置，代码零写死。
+# ============================================================
+
+class PlanSetReq(BaseModel):
+    plan_code: str                 # free / single_book / yearly
+    price: float | None = None
+    active: bool | None = None
+    plan_name: str = ""
+    period_days: int | None = None
+    remark: str = ""
+
+
+class OrderCreateReq(BaseModel):
+    user_id: str
+    plan_code: str
+    pay_channel: str = "wechat"
+
+
+@app.get("/api/echoes/pay/plans")
+def pay_plans(db=Depends(get_db)):
+    """列出收费模式（前端付费页展示；只读 Pricing 表）。"""
+    return payment_api.api_list_plans(db)
+
+
+@app.post("/api/echoes/pay/admin/set_plan")
+def pay_admin_set_plan(req: PlanSetReq, db=Depends(get_db)):
+    """★后台配置：改价/开关（§9.2/§9.3 —— 不需要重发小程序版本）。"""
+    return payment_api.api_admin_set_plan(
+        db, plan_code=req.plan_code, price=req.price, active=req.active,
+        plan_name=req.plan_name, period_days=req.period_days, remark=req.remark,
+    )
+
+
+@app.get("/api/echoes/pay/quote")
+def pay_quote(user_id: str, plan_code: str, db=Depends(get_db)):
+    """报价：金额服务端现算（防篡改），不写死。"""
+    return payment_api.api_quote(db, user_id=user_id, plan_code=plan_code)
+
+
+@app.post("/api/echoes/pay/order")
+def pay_order(req: OrderCreateReq, db=Depends(get_db)):
+    """下单：未配凭证 → code=not_configured（不假成功）。"""
+    return payment_api.api_create_order(
+        db, user_id=req.user_id, plan_code=req.plan_code, pay_channel=req.pay_channel,
+    )
+
+
+@app.get("/api/echoes/pay/order")
+def pay_get_order(order_id: str, user_id: str = "", db=Depends(get_db)):
+    """查单（越权：非本人单 → forbidden）。"""
+    return payment_api.api_get_order(db, order_id=order_id, user_id=user_id)
+
+
+@app.get("/api/echoes/pay/orders")
+def pay_my_orders(user_id: str, db=Depends(get_db)):
+    """我的购买记录。"""
+    return payment_api.api_my_orders(db, user_id=user_id)
+
+
+@app.post("/api/echoes/pay/callback")
+def pay_callback(order_id: str, transaction_id: str = "", db=Depends(get_db)):
+    """支付回调（桩；第4期真上线须验签）。未配凭证 → 拒（防伪造白嫖）。"""
+    return payment_api.api_pay_callback(
+        db, order_id=order_id, transaction_id=transaction_id,
+    )
 
