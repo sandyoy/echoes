@@ -46,17 +46,19 @@
           <text class="basket-sub">自动收录（{{ownCount}} 条）</text>
         </view>
         <view wx:if="{{ownCount === 0}}" class="basket-empty">这里空着呢</view>
-        <view wx:else class="clip-card locked"
-              wx:for="{{own}}" wx:key="clip_id">
-          <view class="clip-check locked">✓</view>
-          <view class="clip-body">
-            <view class="clip-text">{{item.text}}</view>
-            <view class="clip-meta">
-              <text>{{item.time_label}}</text>
-              <text wx:if="{{item.ref_author_name}}" class="quote-from">这段来自{{item.ref_author_name}}的讲述</text>
+        <block wx:else>
+          <view class="clip-card locked"
+                wx:for="{{own}}" wx:key="clip_id">
+            <view class="clip-check locked">✓</view>
+            <view class="clip-body">
+              <view class="clip-text">{{item.text}}</view>
+              <view class="clip-meta">
+                <text>{{item.time_label}}</text>
+                <text wx:if="{{item.ref_author_name}}" class="quote-from">这段来自{{item.ref_author_name}}的讲述</text>
+              </view>
             </view>
           </view>
-        </view>
+        </block>
         <view class="basket-note">自己的内容会自动装进书里</view>
       </view>
 
