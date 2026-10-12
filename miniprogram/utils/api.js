@@ -369,6 +369,59 @@ function interviewPref(ownerId, opts) {
   return post(INTERVIEW.PREF, body);
 }
 
+// ============ 成书 线（小鲸鱼 10-11 接口，v3.0 §八，形状已冻结）============
+// 后端：backend/book_api.py（selftest_book_api.py 28/28 全绿）
+// 派单：docs/派单/派单_小龙虾_成书接口_20261011.md
+// 三条铁律（前端必须守）：
+//   1) 两筐分清 —— own（自己，自动装，不可取消）；public（别人公开的，点选才装）
+//   2) 引用段只读 —— entry.is_quote==true → 渲染引用块 + quote_label，不给编辑按钮
+//   3) 谁成书谁是「我」—— 一律以 owner_id 为准；空书明确拒绝（no_stories/empty_book），不静默成功
+const BOOK = {
+  SOURCE: '/api/echoes/book/source',       // 取材：算两筐
+  GENERATE: '/api/echoes/book/generate',   // 生成/刷新电子书
+  EBOOK: '/api/echoes/book/ebook'          // 取我的电子书
+};
+
+/**
+ * 取材：把两筐素材摆出来。
+ * @returns {Promise<{own:[], public:[], own_count, public_count, empty?, hint?}>}
+ *   own    = 筐①自己的（自动装、不可取消勾选）
+ *   public = 筐②别人公开提我的（点选加入、可勾）
+ *   empty=true 时表示一条故事都没有（前端显示引导，不当报错）
+ */
+function bookSource(ownerId, actorId) {
+  return post(BOOK.SOURCE, { owner_id: ownerId || '', actor_id: actorId || ownerId || '' });
+}
+
+/**
+ * 生成 / 刷新电子书。
+ * @param {string} ownerId 书的主人（=点成书的「我」）
+ * @param {object} o {actorId, title, pickedPublicIds, ebookId}
+ *   pickedPublicIds = 从公共筐点选要装的素材 id 列表（[] 表示一件都不装）
+ *   ebookId         = 传上次的 ebook_id → 覆盖刷新（§8.4 活文档）
+ * @returns {Promise<{ebook_id,title,chapters,story_count,clip_count,contributors,generated_at}>}
+ *   chapters[].entries[] 里 is_quote==true 的 = 引用段（渲染引用块，不给编辑按钮）
+ */
+function bookGenerate(ownerId, o) {
+  const d = o || {};
+  return post(BOOK.GENERATE, {
+    owner_id: ownerId || '',
+    actor_id: d.actorId || ownerId || '',
+    title: d.title || '',
+    picked_public_ids: d.pickedPublicIds || [],
+    ebook_id: d.ebookId || ''
+  });
+}
+
+/**
+ * 取这本书（owner）已生成的电子书。
+ * @returns {Promise<{empty:boolean, book:{ebook_id,title,story_count,status,chapters,contributors}|null}>}
+ *   empty=true 表示还没成书（前端显示「还没成书」空态，**不是错误**）
+ */
+function bookEbook(ownerId, viewerId) {
+  return get(BOOK.EBOOK, { owner_id: ownerId, viewer_id: viewerId });
+}
+
 module.exports = {
   request, get, post,
   CLAIM,
@@ -383,5 +436,7 @@ module.exports = {
   timelineGet, timelinePending, timelineSetTime, timelineAutoPlace,
   INTERVIEW,
   interviewStart, interviewNext, interviewBargeIn,
-  interviewAskClassify, interviewClassifyAnswer, interviewPref
+  interviewAskClassify, interviewClassifyAnswer, interviewPref,
+  BOOK,
+  bookSource, bookGenerate, bookEbook
 };
