@@ -1,0 +1,233 @@
+[2026-10-12T10:03:04.122Z] === START Q01_def attempt 1 ===
+[2026-10-12T10:04:25.787Z] Q01_def OK (1151 chars)
+[2026-10-12T10:04:29.828Z] === START Q02_def attempt 1 ===
+[2026-10-12T10:05:46.941Z] Q02_def OK (923 chars)
+[2026-10-12T10:05:51.231Z] === START Q03_def attempt 1 ===
+[2026-10-12T11:20:34.809Z] Q03_def OK (767 chars)
+[2026-10-12T11:21:15.610Z] === START Q04_def attempt 1 ===
+[2026-10-12T11:38:26.258Z] Q04_def ERR attempt1: page.waitForTimeout: Target page, context or browser has been closed
+[2026-10-12T15:27:24.702Z] Q01_def SKIP (already done)
+[2026-10-12T15:27:24.712Z] Q02_def SKIP (already done)
+[2026-10-12T15:27:24.713Z] Q03_def SKIP (already done)
+[2026-10-12T15:27:25.678Z] === START Q04_def attempt 1 ===
+[2026-10-12T15:28:35.006Z] Q04_def OK (689 chars)
+[2026-10-12T15:28:38.390Z] === START Q05_cat attempt 1 ===
+[2026-10-12T15:29:47.637Z] Q05_cat OK (2032 chars)
+[2026-10-12T15:29:50.963Z] === START Q06_cat attempt 1 ===
+[2026-10-12T15:31:00.883Z] Q06_cat OK (2000 chars)
+[2026-10-12T15:31:04.250Z] === START Q07_cat attempt 1 ===
+[2026-10-12T15:32:13.259Z] Q07_cat OK (1124 chars)
+[2026-10-12T15:32:16.625Z] === START Q08_cat attempt 1 ===
+[2026-10-12T15:33:25.915Z] Q08_cat OK (1353 chars)
+[2026-10-12T15:33:29.328Z] === START Q09_dep attempt 1 ===
+[2026-10-12T15:33:53.081Z] Q09_dep LOGIN_WALL after submit
+[2026-10-12T15:33:53.496Z] === START Q09_dep attempt 2 ===
+[2026-10-12T15:34:17.545Z] Q09_dep LOGIN_WALL after submit
+[2026-10-12T15:34:17.958Z] === START Q10_dep attempt 1 ===
+[2026-10-12T15:34:42.620Z] Q10_dep LOGIN_WALL after submit
+[2026-10-12T15:34:43.077Z] === START Q10_dep attempt 2 ===
+[2026-10-12T15:35:07.178Z] Q10_dep LOGIN_WALL after submit
+[2026-10-12T15:35:09.347Z] === START Q11_dep attempt 1 ===
+[2026-10-12T15:35:42.959Z] Q11_dep LOGIN_WALL after submit
+[2026-10-12T15:35:44.074Z] === START Q11_dep attempt 2 ===
+[2026-10-12T15:36:11.723Z] Q11_dep LOGIN_WALL after submit
+[2026-10-12T15:36:13.905Z] === START Q12_dep attempt 1 ===
+[2026-10-12T15:36:52.346Z] Q12_dep LOGIN_WALL after submit
+[2026-10-12T15:36:52.894Z] === START Q12_dep attempt 2 ===
+[2026-10-12T15:37:16.920Z] Q12_dep LOGIN_WALL after submit
+[2026-10-12T15:37:19.062Z] === START Q13_dep attempt 1 ===
+[2026-10-12T15:37:57.779Z] Q13_dep LOGIN_WALL after submit
+[2026-10-12T15:37:58.684Z] === START Q13_dep attempt 2 ===
+[2026-10-12T15:38:25.516Z] Q13_dep LOGIN_WALL after submit
+[2026-10-12T15:38:26.784Z] === START Q14_dep attempt 1 ===
+[2026-10-12T15:38:55.175Z] Q14_dep LOGIN_WALL after submit
+[2026-10-12T15:38:56.134Z] === START Q14_dep attempt 2 ===
+[2026-10-12T15:39:22.816Z] Q14_dep LOGIN_WALL after submit
+[2026-10-12T15:39:23.638Z] === START Q15_dep attempt 1 ===
+[2026-10-12T15:39:50.583Z] Q15_dep LOGIN_WALL after submit
+[2026-10-12T15:39:51.431Z] === START Q15_dep attempt 2 ===
+[2026-10-12T15:40:17.486Z] Q15_dep LOGIN_WALL after submit
+[2026-10-12T15:40:18.291Z] === START Q16_dep attempt 1 ===
+[2026-10-12T15:40:44.552Z] Q16_dep LOGIN_WALL after submit
+[2026-10-12T15:40:45.595Z] === START Q16_dep attempt 2 ===
+[2026-10-12T15:41:12.142Z] Q16_dep LOGIN_WALL after submit
+[2026-10-12T15:41:13.001Z] === START Q17_role attempt 1 ===
+[2026-10-12T15:41:39.295Z] Q17_role LOGIN_WALL after submit
+[2026-10-12T15:41:40.084Z] === START Q17_role attempt 2 ===
+[2026-10-12T15:42:05.485Z] Q17_role LOGIN_WALL after submit
+[2026-10-12T15:42:06.247Z] === START Q18_role attempt 1 ===
+[2026-10-12T15:42:31.043Z] Q18_role LOGIN_WALL after submit
+[2026-10-12T15:42:31.737Z] === START Q18_role attempt 2 ===
+[2026-10-12T15:42:56.538Z] Q18_role LOGIN_WALL after submit
+[2026-10-12T15:42:57.206Z] === START Q19_role attempt 1 ===
+[2026-10-12T15:43:23.361Z] Q19_role LOGIN_WALL after submit
+[2026-10-12T15:43:24.059Z] === START Q19_role attempt 2 ===
+[2026-10-12T15:43:48.961Z] Q19_role LOGIN_WALL after submit
+[2026-10-12T15:43:49.657Z] === START Q20_role attempt 1 ===
+[2026-10-12T15:44:14.316Z] Q20_role LOGIN_WALL after submit
+[2026-10-12T15:44:15.033Z] === START Q20_role attempt 2 ===
+[2026-10-12T15:44:39.912Z] Q20_role LOGIN_WALL after submit
+[2026-10-12T15:44:40.595Z] === START Q21_cmp attempt 1 ===
+[2026-10-12T15:45:05.035Z] Q21_cmp LOGIN_WALL after submit
+[2026-10-12T15:45:05.689Z] === START Q21_cmp attempt 2 ===
+[2026-10-12T15:45:31.610Z] Q21_cmp LOGIN_WALL after submit
+[2026-10-12T15:45:32.348Z] === START Q22_cmp attempt 1 ===
+[2026-10-12T15:45:57.000Z] Q22_cmp LOGIN_WALL after submit
+[2026-10-12T15:45:57.717Z] === START Q22_cmp attempt 2 ===
+[2026-10-12T15:46:23.049Z] Q22_cmp LOGIN_WALL after submit
+[2026-10-12T15:46:23.757Z] === START Q23_cmp attempt 1 ===
+[2026-10-12T15:46:49.396Z] Q23_cmp LOGIN_WALL after submit
+[2026-10-12T15:46:50.161Z] === START Q23_cmp attempt 2 ===
+[2026-10-12T15:47:17.598Z] Q23_cmp LOGIN_WALL after submit
+[2026-10-12T15:47:18.417Z] === START Q24_cmp attempt 1 ===
+[2026-10-12T15:47:43.911Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-12T15:47:44.756Z] === START Q24_cmp attempt 2 ===
+[2026-10-12T15:48:10.651Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-12T15:48:11.362Z] ALL DONE
+[2026-10-12T17:27:01.729Z] Q01_def SKIP (already done)
+[2026-10-12T17:27:01.777Z] Q02_def SKIP (already done)
+[2026-10-12T17:27:01.778Z] Q03_def SKIP (already done)
+[2026-10-12T17:27:01.778Z] Q04_def SKIP (already done)
+[2026-10-12T17:27:01.778Z] Q05_cat SKIP (already done)
+[2026-10-12T17:27:01.779Z] Q06_cat SKIP (already done)
+[2026-10-12T17:27:01.779Z] Q07_cat SKIP (already done)
+[2026-10-12T17:27:01.779Z] Q08_cat SKIP (already done)
+[2026-10-12T17:27:02.427Z] === START Q09_dep attempt 1 ===
+[2026-10-12T17:28:13.504Z] Q09_dep OK (1231 chars)
+[2026-10-12T17:28:17.182Z] === START Q10_dep attempt 1 ===
+[2026-10-12T17:29:28.088Z] Q10_dep OK (1824 chars)
+[2026-10-12T17:29:31.797Z] === START Q11_dep attempt 1 ===
+[2026-10-12T17:30:43.715Z] Q11_dep OK (1891 chars)
+[2026-10-12T17:30:47.410Z] === START Q12_dep attempt 1 ===
+[2026-10-12T17:31:59.553Z] Q12_dep OK (2390 chars)
+[2026-10-12T17:32:03.301Z] === START Q13_dep attempt 1 ===
+[2026-10-12T17:33:17.103Z] Q13_dep OK (1711 chars)
+[2026-10-12T17:33:20.814Z] === START Q14_dep attempt 1 ===
+[2026-10-12T17:34:32.358Z] Q14_dep OK (988 chars)
+[2026-10-12T17:34:36.089Z] === START Q15_dep attempt 1 ===
+[2026-10-12T17:35:48.179Z] Q15_dep OK (1337 chars)
+[2026-10-12T17:35:51.944Z] === START Q16_dep attempt 1 ===
+[2026-10-12T17:37:04.129Z] Q16_dep OK (811 chars)
+[2026-10-12T17:37:07.895Z] === START Q17_role attempt 1 ===
+[2026-10-12T17:38:20.573Z] Q17_role OK (2105 chars)
+[2026-10-12T17:38:24.429Z] === START Q18_role attempt 1 ===
+[2026-10-12T17:38:51.978Z] Q18_role LOGIN_WALL after submit
+[2026-10-12T17:38:52.940Z] === START Q18_role attempt 2 ===
+[2026-10-12T17:39:22.085Z] Q18_role LOGIN_WALL after submit
+[2026-10-12T17:39:23.143Z] === START Q19_role attempt 1 ===
+[2026-10-12T17:39:51.984Z] Q19_role LOGIN_WALL after submit
+[2026-10-12T17:39:52.948Z] === START Q19_role attempt 2 ===
+[2026-10-12T17:40:22.430Z] Q19_role LOGIN_WALL after submit
+[2026-10-12T17:40:23.443Z] === START Q20_role attempt 1 ===
+[2026-10-12T17:40:52.628Z] Q20_role LOGIN_WALL after submit
+[2026-10-12T17:40:53.590Z] === START Q20_role attempt 2 ===
+[2026-10-12T17:41:22.035Z] Q20_role LOGIN_WALL after submit
+[2026-10-12T17:41:23.291Z] === START Q21_cmp attempt 1 ===
+[2026-10-12T17:41:52.639Z] Q21_cmp LOGIN_WALL after submit
+[2026-10-12T17:41:53.679Z] === START Q21_cmp attempt 2 ===
+[2026-10-12T17:42:22.744Z] Q21_cmp LOGIN_WALL after submit
+[2026-10-12T17:42:23.829Z] === START Q22_cmp attempt 1 ===
+[2026-10-12T17:42:52.590Z] Q22_cmp LOGIN_WALL after submit
+[2026-10-12T17:42:53.629Z] === START Q22_cmp attempt 2 ===
+[2026-10-12T17:43:23.133Z] Q22_cmp LOGIN_WALL after submit
+[2026-10-12T17:43:24.330Z] === START Q23_cmp attempt 1 ===
+[2026-10-12T17:43:52.638Z] Q23_cmp LOGIN_WALL after submit
+[2026-10-12T17:43:53.746Z] === START Q23_cmp attempt 2 ===
+[2026-10-12T17:44:23.053Z] Q23_cmp LOGIN_WALL after submit
+[2026-10-12T17:44:24.133Z] === START Q24_cmp attempt 1 ===
+[2026-10-12T17:44:53.586Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-12T17:44:54.643Z] === START Q24_cmp attempt 2 ===
+[2026-10-12T17:45:23.371Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-12T17:45:23.979Z] ALL DONE
+[2026-10-12T18:27:11.979Z] Q01_def SKIP (already done)
+[2026-10-12T18:27:12.015Z] Q02_def SKIP (already done)
+[2026-10-12T18:27:12.015Z] Q03_def SKIP (already done)
+[2026-10-12T18:27:12.016Z] Q04_def SKIP (already done)
+[2026-10-12T18:27:12.016Z] Q05_cat SKIP (already done)
+[2026-10-12T18:27:12.017Z] Q06_cat SKIP (already done)
+[2026-10-12T18:27:12.017Z] Q07_cat SKIP (already done)
+[2026-10-12T18:27:12.017Z] Q08_cat SKIP (already done)
+[2026-10-12T18:27:12.017Z] Q09_dep SKIP (already done)
+[2026-10-12T18:27:12.018Z] Q10_dep SKIP (already done)
+[2026-10-12T18:27:12.018Z] Q11_dep SKIP (already done)
+[2026-10-12T18:27:12.018Z] Q12_dep SKIP (already done)
+[2026-10-12T18:27:12.018Z] Q13_dep SKIP (already done)
+[2026-10-12T18:27:12.019Z] Q14_dep SKIP (already done)
+[2026-10-12T18:27:12.019Z] Q15_dep SKIP (already done)
+[2026-10-12T18:27:12.019Z] Q16_dep SKIP (already done)
+[2026-10-12T18:27:12.020Z] Q17_role SKIP (already done)
+[2026-10-12T18:27:13.126Z] === START Q18_role attempt 1 ===
+[2026-10-12T18:27:44.772Z] Q18_role LOGIN_WALL after submit
+[2026-10-12T18:27:45.929Z] === START Q18_role attempt 2 ===
+[2026-10-12T18:28:14.725Z] Q18_role LOGIN_WALL after submit
+[2026-10-12T18:28:15.770Z] === START Q19_role attempt 1 ===
+[2026-10-12T18:28:44.677Z] Q19_role LOGIN_WALL after submit
+[2026-10-12T18:28:45.769Z] === START Q19_role attempt 2 ===
+[2026-10-12T18:29:14.012Z] Q19_role LOGIN_WALL after submit
+[2026-10-12T18:29:15.169Z] === START Q20_role attempt 1 ===
+[2026-10-12T18:29:43.778Z] Q20_role LOGIN_WALL after submit
+[2026-10-12T18:29:44.770Z] === START Q20_role attempt 2 ===
+[2026-10-12T18:30:12.964Z] Q20_role LOGIN_WALL after submit
+[2026-10-12T18:30:13.971Z] === START Q21_cmp attempt 1 ===
+[2026-10-12T18:30:42.759Z] Q21_cmp LOGIN_WALL after submit
+[2026-10-12T18:30:43.864Z] === START Q21_cmp attempt 2 ===
+[2026-10-12T18:31:12.011Z] Q21_cmp LOGIN_WALL after submit
+[2026-10-12T18:31:13.107Z] === START Q22_cmp attempt 1 ===
+[2026-10-12T18:31:41.318Z] Q22_cmp LOGIN_WALL after submit
+[2026-10-12T18:31:42.326Z] === START Q22_cmp attempt 2 ===
+[2026-10-12T18:32:10.655Z] Q22_cmp LOGIN_WALL after submit
+[2026-10-12T18:32:11.776Z] === START Q23_cmp attempt 1 ===
+[2026-10-12T18:32:39.969Z] Q23_cmp LOGIN_WALL after submit
+[2026-10-12T18:32:40.904Z] === START Q23_cmp attempt 2 ===
+[2026-10-12T18:33:09.062Z] Q23_cmp LOGIN_WALL after submit
+[2026-10-12T18:33:10.020Z] === START Q24_cmp attempt 1 ===
+[2026-10-12T18:33:38.515Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-12T18:33:39.421Z] === START Q24_cmp attempt 2 ===
+[2026-10-12T18:34:08.362Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-12T18:34:08.920Z] ALL DONE
+[2026-10-12T23:26:59.550Z] Q01_def SKIP (already done)
+[2026-10-12T23:26:59.599Z] Q02_def SKIP (already done)
+[2026-10-12T23:26:59.600Z] Q03_def SKIP (already done)
+[2026-10-12T23:26:59.602Z] Q04_def SKIP (already done)
+[2026-10-12T23:26:59.603Z] Q05_cat SKIP (already done)
+[2026-10-12T23:26:59.603Z] Q06_cat SKIP (already done)
+[2026-10-12T23:26:59.606Z] Q07_cat SKIP (already done)
+[2026-10-12T23:26:59.607Z] Q08_cat SKIP (already done)
+[2026-10-12T23:26:59.607Z] Q09_dep SKIP (already done)
+[2026-10-12T23:26:59.607Z] Q10_dep SKIP (already done)
+[2026-10-12T23:26:59.608Z] Q11_dep SKIP (already done)
+[2026-10-12T23:26:59.608Z] Q12_dep SKIP (already done)
+[2026-10-12T23:26:59.609Z] Q13_dep SKIP (already done)
+[2026-10-12T23:26:59.609Z] Q14_dep SKIP (already done)
+[2026-10-12T23:26:59.609Z] Q15_dep SKIP (already done)
+[2026-10-12T23:26:59.609Z] Q16_dep SKIP (already done)
+[2026-10-12T23:26:59.610Z] Q17_role SKIP (already done)
+[2026-10-12T23:27:01.091Z] === START Q18_role attempt 1 ===
+[2026-10-12T23:27:37.191Z] Q18_role LOGIN_WALL after submit
+[2026-10-12T23:27:38.397Z] === START Q18_role attempt 2 ===
+[2026-10-12T23:28:07.258Z] Q18_role LOGIN_WALL after submit
+[2026-10-12T23:28:08.308Z] === START Q19_role attempt 1 ===
+[2026-10-12T23:28:37.303Z] Q19_role LOGIN_WALL after submit
+[2026-10-12T23:28:38.387Z] === START Q19_role attempt 2 ===
+[2026-10-12T23:29:06.239Z] Q19_role LOGIN_WALL after submit
+[2026-10-12T23:29:07.156Z] === START Q20_role attempt 1 ===
+[2026-10-12T23:29:34.941Z] Q20_role LOGIN_WALL after submit
+[2026-10-12T23:29:35.903Z] === START Q20_role attempt 2 ===
+[2026-10-12T23:30:04.203Z] Q20_role LOGIN_WALL after submit
+[2026-10-12T23:30:05.249Z] === START Q21_cmp attempt 1 ===
+[2026-10-12T23:30:34.298Z] Q21_cmp LOGIN_WALL after submit
+[2026-10-12T23:30:35.261Z] === START Q21_cmp attempt 2 ===
+[2026-10-12T23:31:03.151Z] Q21_cmp LOGIN_WALL after submit
+[2026-10-12T23:31:04.158Z] === START Q22_cmp attempt 1 ===
+[2026-10-12T23:31:32.309Z] Q22_cmp LOGIN_WALL after submit
+[2026-10-12T23:31:33.405Z] === START Q22_cmp attempt 2 ===
+[2026-10-12T23:32:01.539Z] Q22_cmp LOGIN_WALL after submit
+[2026-10-12T23:32:02.555Z] === START Q23_cmp attempt 1 ===
+[2026-10-12T23:32:30.658Z] Q23_cmp LOGIN_WALL after submit
+[2026-10-12T23:32:31.648Z] === START Q23_cmp attempt 2 ===
+[2026-10-12T23:33:00.398Z] Q23_cmp LOGIN_WALL after submit
+[2026-10-12T23:33:01.361Z] === START Q24_cmp attempt 1 ===
+[2026-10-12T23:33:29.957Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-12T23:33:30.952Z] === START Q24_cmp attempt 2 ===
+[2026-10-12T23:33:35.495Z] Q24_cmp ERR attempt2: page.waitForTimeout: Target page, context or browser has been closed
+[2026-10-12T23:33:38.838Z] ALL DONE

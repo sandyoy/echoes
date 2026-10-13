@@ -1,0 +1,49 @@
+[2026-10-11T00:51:22.033Z] === START B1_r5 ===
+[2026-10-11T01:07:07.018Z] B1_r5 ERROR attempt 1: locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('textarea, input[type="text"]').first()
+    - locator resolved to <textarea autofocus="" autocomplete="off" placeholder="请输入，Enter键发送，Shift+Enter键换行，“/”打开自定义技能" data-testid="MetaTextArea.textarea.请输入Enter键发送ShiftEnte" class="search-consult-textarea search-consult-textarea_search-consult-textarea__kjgyz"></textarea>
+  - attempting click action
+    - waiting for element to be visible, enabled and stable
+
+[2026-10-11T01:08:15.383Z] B1_r5 ERROR attempt 2: page.goto: Timeout 60000ms exceeded.
+Call log:
+  - navigating to "https://metaso.cn/", waiting until "domcontentloaded"
+
+[2026-10-11T01:08:21.389Z] B1_r5 FINAL BLOCKED
+[2026-10-11T01:24:06.796Z] === START B2_r5 ===
+[2026-10-11T01:25:30.187Z] B2_r5 submitted (attempt 1)
+[2026-10-11T01:27:14.946Z] B2_r5 DONE len=1744
+[2026-10-11T01:51:59.717Z] === START C2_r5 ===
+[2026-10-11T01:53:22.434Z] C2_r5 ERROR attempt 1: locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('textarea, input[type="text"]').first()
+
+[2026-10-11T01:54:11.392Z] C2_r5 submitted (attempt 2)
+[2026-10-11T01:54:13.447Z] C2_r5 LOGIN_WALL mid-way
+[2026-10-11T01:54:13.449Z] C2_r5 FINAL BLOCKED
+[2026-10-11T01:54:24.950Z] === START A2_r5 ===
+[2026-10-11T01:54:32.285Z] A2_r5 submitted (attempt 1)
+[2026-10-11T02:05:10.507Z] A2_r5 LOGIN_WALL mid-way
+[2026-10-11T02:06:14.839Z] A2_r5 submitted (attempt 2)
+[2026-10-11T02:06:17.484Z] A2_r5 LOGIN_WALL mid-way
+[2026-10-11T02:06:17.486Z] A2_r5 FINAL BLOCKED
+[2026-10-11T02:06:29.733Z] === START A3_r5 ===
+[2026-10-11T02:06:44.177Z] A3_r5 submitted (attempt 1)
+[2026-10-11T02:06:47.293Z] A3_r5 LOGIN_WALL mid-way
+[2026-10-11T02:06:56.128Z] A3_r5 submitted (attempt 2)
+[2026-10-11T02:06:58.183Z] A3_r5 LOGIN_WALL mid-way
+[2026-10-11T02:06:58.186Z] A3_r5 FINAL BLOCKED
+[2026-10-11T02:07:08.610Z] === START A1_r5 ===
+[2026-10-11T02:07:16.217Z] A1_r5 submitted (attempt 1)
+[2026-10-11T02:07:18.443Z] A1_r5 LOGIN_WALL mid-way
+[2026-10-11T02:07:27.160Z] A1_r5 submitted (attempt 2)
+[2026-10-11T02:07:29.173Z] A1_r5 LOGIN_WALL mid-way
+[2026-10-11T02:07:29.174Z] A1_r5 FINAL BLOCKED
+[2026-10-11T02:07:39.643Z] === START C1_r5 ===
+[2026-10-11T02:07:49.270Z] C1_r5 submitted (attempt 1)
+[2026-10-11T02:07:51.382Z] C1_r5 LOGIN_WALL mid-way
+[2026-10-11T02:07:58.762Z] C1_r5 submitted (attempt 2)
+[2026-10-11T02:08:00.980Z] C1_r5 LOGIN_WALL mid-way
+[2026-10-11T02:08:00.981Z] C1_r5 FINAL BLOCKED
+[2026-10-11T02:08:11.787Z] ALL DONE
