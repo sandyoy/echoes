@@ -41,6 +41,7 @@ import story_api
 import book_api
 import timeline_api
 import interview_api
+import interview_recap
 import share_api
 import payment_api
 
@@ -638,6 +639,33 @@ def interview_pref(req: InterviewPrefReq, db=Depends(get_db)):
     return interview_api.api_set_interview_pref(
         db, owner_id=req.owner_id, muted_ask=req.muted_ask,
         sensitivity=req.sensitivity,
+    )
+
+
+# ============================================================
+# 采访成品·理顺自述体 + 复述确认（v3.0 §7.4/§7.5/§7.6）—— 2026-10-13 落地 v1.0
+# ============================================================
+
+class RecapConfirmReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    story_id: str = ""
+    qa_pairs: list = None            # [{"q":..,"a":..}] 一问一答；本层剥掉问句(§7.4)
+    polished_text: str = ""          # 也可直接给成品文本
+    answer_key: str = ""             # 空=只出复述脚本 / accept / reject / timeout
+    answer_text: str = ""            # 老人说的话（含糊/不对/没听清）
+    retry_used: int = 0
+    apply: bool = False              # accepted 且 True → 写回 Story.polished_content
+
+
+@app.post("/api/echoes/interview/recap_confirm")
+def interview_recap_confirm(req: RecapConfirmReq, db=Depends(get_db)):
+    """★§7.6 复述确认（C 方案）：复述 + 归属一次问完；含糊/超时→安全默认，绝不卡住老人。"""
+    return interview_recap.api_recap_confirm(
+        db, owner_id=req.owner_id, viewer_id=req.viewer_id or req.owner_id,
+        story_id=req.story_id, qa_pairs=req.qa_pairs,
+        polished_text=req.polished_text, answer_key=req.answer_key,
+        answer_text=req.answer_text, retry_used=req.retry_used, apply=req.apply,
     )
 
 
