@@ -39,6 +39,7 @@ import claim_api
 import login_api
 import story_api
 import book_api
+import book_view_api
 import timeline_api
 import interview_api
 import interview_recap
@@ -453,6 +454,33 @@ def book_generate(req: GenerateEbookReq, db=Depends(get_db)):
 @app.get("/api/echoes/book/ebook")
 def my_ebook(owner_id: str, db=Depends(get_db)):
     return book_api.api_my_ebook(db, owner_id=owner_id)
+
+
+# handler: book_view_api.py（§8.6 三种形态 + §8.4 续添；本机无 fastapi 未实测，形状已冻结）
+class BookViewReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    form: str = "scroll"          # paged 翻页 | scroll 手机端阅读 | photobook 翻相册式
+    book_spec: str = "A5"
+
+
+class BookAppendReq(BaseModel):
+    owner_id: str
+    actor_id: str = ""
+    story_ids: list = []          # 空 = 自动补进尚无的故事
+
+
+@app.get("/api/echoes/book/view")
+def book_view(owner_id: str, form: str = "scroll", book_spec: str = "A5",
+              viewer_id: str = "", db=Depends(get_db)):
+    return book_view_api.api_book_view(
+        db, owner_id=owner_id, viewer_id=viewer_id, form=form, book_spec=book_spec)
+
+
+@app.post("/api/echoes/book/append")
+def book_append(req: BookAppendReq, db=Depends(get_db)):
+    return book_view_api.api_append_to_ebook(
+        db, owner_id=req.owner_id, actor_id=req.actor_id, story_ids=req.story_ids)
 
 
 @app.post("/api/echoes/story/create")
