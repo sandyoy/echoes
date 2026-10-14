@@ -82,12 +82,14 @@ KIND_IMAGE = "image"
 KIND_AUDIO = "audio"
 KIND_VIDEO = "video"
 KIND_ORIGINAL = "original"      # 原声：只存声音不转写（§6.2.2 铁律）
-VALID_KINDS = {KIND_IMAGE, KIND_AUDIO, KIND_VIDEO, KIND_ORIGINAL}
+KIND_TTS = "tts"                # 合成音：AI 主持人问句/§7.6 复述（tts_api 产出）
+VALID_KINDS = {KIND_IMAGE, KIND_AUDIO, KIND_VIDEO, KIND_ORIGINAL, KIND_TTS}
 
 KIND_MAX_BYTES = {
     KIND_IMAGE: 20 * 1024 * 1024,
     KIND_AUDIO: 20 * 1024 * 1024,
     KIND_ORIGINAL: 20 * 1024 * 1024,
+    KIND_TTS: 10 * 1024 * 1024,
     KIND_VIDEO: 200 * 1024 * 1024,
 }
 
@@ -96,6 +98,7 @@ KIND_ALLOWED_EXT = {
     KIND_IMAGE: {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif", ".gif", ".bmp"},
     KIND_AUDIO: {".mp3", ".wav", ".m4a", ".aac", ".amr", ".silk", ".pcm", ".ogg", ".webm"},
     KIND_ORIGINAL: {".mp3", ".wav", ".m4a", ".aac", ".amr", ".silk", ".pcm", ".ogg", ".webm"},
+    KIND_TTS: {".mp3", ".wav", ".ogg"},
     KIND_VIDEO: {".mp4", ".mov", ".m4v", ".3gp", ".webm", ".avi", ".mkv"},
 }
 

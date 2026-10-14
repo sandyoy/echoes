@@ -46,6 +46,7 @@ import interview_recap
 import share_api
 import payment_api
 import storage_api
+import tts_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -908,3 +909,53 @@ async def storage_put(request: Request, key: str):
     return {"ok": True, "data": r, "message": "字节已落盘"} if r.get("stored") else \
            {"ok": False, "code": "store_failed", "error": "落盘失败", "data": {}}
 
+
+
+# ============================================================
+# 语音合成 TTS 通道（v3.0 §3.5/§6.2.2/§7.6）—— 2026-10-14 落地 v1.0
+# ============================================================
+# 为什么：采访（§七）是「AI 当主持人」，问句 / §7.6 复述确认必须是
+#        **老人耳朵听得见的声音**，此前全项目无 TTS → 采访链路到"AI 开口"就断。
+# 小龙虾 2026-10-13 回执明等这条通道（前端 §四 TTS 播报 + 大字按钮）。
+#
+# 引擎现状（实测，非臆测）：
+#   - edge-tts：本 CVM 被墙，WSS 一律 403（IP 级，非 token）。不作主通道。
+#   - 腾讯云 TTS：签名链路已通，只差子账号 CAM 授权（加 QcloudTTSFullAccess 即通）。
+#   两引擎都不可用时，本接口**明确返回 tts_not_authorized / tts_unavailable**，
+#   **绝不返回假 URL**（铁律 A）。
+
+class SpeakReq(BaseModel):
+    actor_id: str                   # 谁在听（语音也由本人入库 §6.2.1）
+    text: str = ""                  # 要念的话（interview_api 问句 / recap_speech 复述）
+    scene: str = ""                 # interview_host / recap / tip（选音色）
+    voice: str = ""                 # 可选，edge 音色覆盖 scene
+    engine: str = ""                # 可选，强指定 tencent / edge
+    story_id: str = ""              # 可选，关联故事（仅记录口径）
+
+
+@app.post("/api/echoes/tts/speak")
+def tts_speak(req: SpeakReq):
+    """
+    采访/复述出声音的**唯一入口**（小龙虾等的那条通道）。
+
+    给一段文字 → 还一段老人听得见的 mp3（落在统一存储 clips/{actor}/tts/）。
+
+    成功：{ok:true, data:{media_url, key, engine, voice, text_spoken, bytes, scene}}
+    失败（明确错误码，绝无假 URL）：
+      missing_actor / empty_text / tts_not_authorized / tts_unavailable /
+      tts_store_failed / storage_not_configured
+    """
+    return tts_api.api_speak(
+        actor_id=req.actor_id, text=req.text, scene=req.scene,
+        voice=req.voice, engine=req.engine, story_id=req.story_id,
+    )
+
+
+@app.get("/api/echoes/tts/status")
+def tts_status():
+    """
+    TTS 通道体检：能不能出声、用哪个引擎、为什么不能。
+
+    前端/小龙虾可据此决定"出声音"还是"只出字"（降级不假死）。
+    """
+    return {"ok": True, "data": tts_api.tts_status(probe_tencent=True), "message": ""}
