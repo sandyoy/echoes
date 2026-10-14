@@ -148,10 +148,15 @@ def main():
     r = api.api_list_clips(db, story_id="s_2", owner_id=OWNER, viewer_id=STRANGER)
     check("D7 陌生人取不了", not r["ok"], r.get("code", ""))
 
-    print("=== E. 上传通道（未接对象存储，必须明说）===")
+    print("=== E. 上传通道（2026-10-14 起：已接对象存储，须带 actor_id）===")
+    # v3.0 §6.2.1：上传必须知道"是谁"（素材只由本人入库）→ 缺 actor 明确拒
     r = api.api_upload_url(file_name="a.jpg", file_size=1000, mime="image/jpeg")
-    check("E1 未接对象存储时明确返回未接（不假装成功）",
-          not r["ok"] and r.get("code") == "upload_not_configured", r.get("code", ""))
+    check("E1 缺 actor_id 时明确拒（提示改调 storage/upload_url）",
+          not r["ok"] and r.get("code") == "missing_actor", r.get("code", ""))
+    # 带 actor_id → 真拿到上传地址（本地后端可用）
+    r = api.api_upload_url(actor_id=OWNER, file_name="a.jpg", file_size=1000, mime="image/jpeg")
+    check("E1b 带 actor_id 时真拿到上传地址（对象存储已落地）",
+          r["ok"] and bool(r["data"].get("upload_url")), r.get("code", ""))
     r = api.api_upload_url(file_name="a.txt", file_size=1000)
     check("E2 上传前仍先校验图片格式", not r["ok"] and r.get("code") == "invalid_image", r.get("code", ""))
 

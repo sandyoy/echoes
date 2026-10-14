@@ -317,24 +317,37 @@ def api_set_clip_visibility(
 # 六、上传通道（占位：定义清楚，小龙虾照着接）
 # ============================================================
 
-def api_upload_url(*, file_name: str, file_size: int, mime: str = "") -> dict:
+def api_upload_url(*, actor_id: str = "", kind: str = "image", file_name: str,
+                   file_size: int, mime: str = "") -> dict:
     """
-    取一个上传地址。**本机未接对象存储，返回明确未接**（不许假装成功）。
+    取一个上传地址。
 
-    前端约定（v1）：
-      1. 调本接口拿 upload_url
-      2. PUT 字节上去
-      3. 拿到的 file_url 再调 api_add_photo_clip 登记
+    **2026-10-14 起**：本函数委托给 `storage_api.api_upload_url()`（对象存储通道
+    已落地，见 `backend/storage_api.py`）。此处的保留只为兼容旧调用方/旧自测。
 
-    等 sandy 定对象存储（腾讯云COS / 自建）后，本函数替换为真实签名URL，
-    前端**不用改**（接口形状不变）。
+    前端约定：
+      1. 调本接口拿 upload_url + key
+      2. 按 method/headers 把字节传上去
+      3. 调 `/api/echoes/storage/confirm` 登记（含公开/私有）
+
+    actor_id 缺失 → 明确提示改调新路由（v3.0 §6.2.1 素材只由本人入库）。
     """
+    # 细校验仍走本地校验（保持旧自测口径：非法文件在这里就被拒）
     passed, why = validate_image(file_name=file_name, file_size=file_size, mime=mime)
     if not passed:
         return fail(why, "invalid_image")
-    return fail(
-        "上传通道未接对象存储（待 sandy 定 COS/自建）——当前先用 media_url 直传登记",
-        "upload_not_configured",
+
+    if not str(actor_id or "").strip():
+        return fail(
+            "上传必须带 actor_id（素材只由本人入库，v3.0 §6.2.1）——"
+            "请改调 /api/echoes/storage/upload_url",
+            "missing_actor",
+        )
+
+    import storage_api
+    return storage_api.api_upload_url(
+        actor_id=actor_id, kind=kind, file_name=file_name,
+        file_size=file_size, mime=mime,
     )
 
 

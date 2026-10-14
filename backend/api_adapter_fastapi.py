@@ -24,7 +24,7 @@ HTTP 实测已复现：陌生 openid 取到了别人的全部 5 件素材。
 """
 
 try:
-    from fastapi import FastAPI, Depends
+    from fastapi import FastAPI, Depends, Request
     from pydantic import BaseModel
 except ImportError as e:  # pragma: no cover
     raise ImportError(
@@ -45,6 +45,7 @@ import interview_api
 import interview_recap
 import share_api
 import payment_api
+import storage_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -108,6 +109,28 @@ class UploadUrlReq(BaseModel):
     file_name: str
     file_size: int
     mime: str = ""
+
+
+# --- 对象存储上传通道（2026-10-14，第53~55条路由）---
+class StorageUploadUrlReq(BaseModel):
+    actor_id: str
+    kind: str = "image"          # image / audio / video / original
+    file_name: str
+    file_size: int = 0
+    mime: str = ""
+
+
+class StorageConfirmReq(BaseModel):
+    actor_id: str
+    key: str
+    owner_id: str = ""
+    kind: str = "image"
+    story_id: str = ""
+    file_name: str = ""
+    file_size: int = 0
+    mime: str = ""
+    visibility: str = "private"
+    duration: float = 0.0
 
 
 # --- 语音 / 原声 / 视频（2026-09-28，B 线后半，提前完成 09-29 任务）---
@@ -217,7 +240,24 @@ def set_clip_visibility(req: SetClipVisibilityReq, db=Depends(get_db)):
 
 @app.post("/api/echoes/upload/url")
 def upload_url(req: UploadUrlReq):
-    return api.api_upload_url(
+    """
+    【兼容旧路径 · 2026-10-14 起委托给 storage_api】
+
+    旧调用（只给 file_name/file_size/mime，没有 actor_id）——v3.0 §6.2.1 起
+    上传必须知道**是谁**（素材只由本人入库），故本路由降级为兼容入口：
+    actor_id 缺失时明确提示改调新路由 `/storage/upload_url`。
+    新前端请直接用 `/api/echoes/storage/upload_url`（带 actor_id + kind）。
+    """
+    if not getattr(req, "actor_id", ""):
+        return {
+            "ok": False,
+            "code": "missing_actor",
+            "error": "上传必须带 actor_id（素材只由本人入库，v3.0 §6.2.1）——"
+                     "请改调 /api/echoes/storage/upload_url",
+            "data": {},
+        }
+    return storage_api.api_upload_url(
+        actor_id=req.actor_id, kind=getattr(req, "kind", "image"),
         file_name=req.file_name, file_size=req.file_size, mime=req.mime,
     )
 
@@ -799,4 +839,72 @@ def pay_callback(order_id: str, transaction_id: str = "", db=Depends(get_db)):
     return payment_api.api_pay_callback(
         db, order_id=order_id, transaction_id=transaction_id,
     )
+
+
+# ============================================================
+# 对象存储上传通道（2026-10-14，第53~55条路由）
+# 清掉"对象存储未定"这条全项目寿命最长的卡点（自 09-26 挂了 18 天）
+# ============================================================
+
+@app.post("/api/echoes/storage/upload_url")
+def storage_upload_url(req: StorageUploadUrlReq):
+    """
+    §6.2 取上传地址（**带 actor_id**，素材只由本人入库）。
+
+    前端流程：本接口拿 upload_url+key → 按 method/headers 把字节传上去
+              → 调 /storage/confirm 登记（含公开/私有）。
+    """
+    return storage_api.api_upload_url(
+        actor_id=req.actor_id, kind=req.kind, file_name=req.file_name,
+        file_size=req.file_size, mime=req.mime,
+    )
+
+
+@app.post("/api/echoes/storage/confirm")
+def storage_confirm(req: StorageConfirmReq, db=Depends(get_db)):
+    """
+    ★入库那一刻由本人定公开/私有（§6.2.1 + §1.2）——对象必须真的在，否则拒。
+    """
+    return storage_api.api_confirm_upload(
+        db, actor_id=req.actor_id, owner_id=req.owner_id, key=req.key,
+        kind=req.kind, story_id=req.story_id, file_name=req.file_name,
+        file_size=req.file_size, mime=req.mime, visibility=req.visibility,
+        duration=req.duration,
+    )
+
+
+@app.get("/api/echoes/storage/media_url")
+def storage_media_url(key: str):
+    """§6.2.3 回放/看图：给可读地址（本地=静态路径，COS=签名 GET）。"""
+    return storage_api.api_media_url(key=key)
+
+
+@app.get("/api/echoes/storage/status")
+def storage_status():
+    """存储体检：现在用哪个后端、能不能写（不假装）。"""
+    return storage_api.api_storage_status()
+
+
+@app.put("/api/echoes/storage/put")
+async def storage_put(request: Request, key: str):
+    """
+    本地后端字节落盘的接收端（对应 LocalStorage.upload_url 给的地址）。
+
+    前端 `wx.uploadFile` 不支持自定义 PUT，故真机实际走：
+      ① /storage/upload_url 拿 key → ② wx.uploadFile 传后端兜底端点（POST form）
+      或 ③ 直传本 PUT（有 PUT 能力的客户端）。
+    本端点只服务本地后端；切 COS 后前端直传 COS 签名地址，本端点闲置。
+    """
+    body = await request.body()
+    try:
+        st = storage_api.get_storage()
+    except RuntimeError as e:
+        return {"ok": False, "code": "storage_not_configured", "error": str(e), "data": {}}
+    # 防越权：key 必须含 actor 前缀？——此处无 actor，仅校验 key 合法性（防穿越）
+    try:
+        r = st.put_bytes(key=key, data=body)
+    except ValueError as e:
+        return {"ok": False, "code": "bad_key", "error": str(e), "data": {}}
+    return {"ok": True, "data": r, "message": "字节已落盘"} if r.get("stored") else \
+           {"ok": False, "code": "store_failed", "error": "落盘失败", "data": {}}
 

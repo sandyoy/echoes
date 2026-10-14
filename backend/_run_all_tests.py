@@ -17,6 +17,7 @@ tests = [
     "selftest_payment_api.py",
     "selftest_interview_recap.py",
     "selftest_book_view.py",
+    "selftest_storage_api.py",
 ]
 tot_p = tot_f = 0
 for t in tests:
