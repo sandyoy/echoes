@@ -41,3 +41,23 @@
 [2026-10-13T05:29:30.120Z] === START Q20_role attempt 2 ===
 [2026-10-13T05:29:54.103Z] Q20_role LOGIN_WALL after submit
 [2026-10-13T05:29:54.542Z] ALL DONE
+[2026-10-13T14:26:45.252Z] Q21_cmp SKIP (already done)
+[2026-10-13T14:26:45.261Z] Q22_cmp SKIP (already done)
+[2026-10-13T14:26:45.262Z] Q23_cmp SKIP (already done)
+[2026-10-13T14:26:47.388Z] === START Q24_cmp attempt 1 ===
+[2026-10-13T14:27:13.318Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-13T14:27:14.546Z] === START Q24_cmp attempt 2 ===
+[2026-10-13T14:27:38.919Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-13T14:27:39.378Z] === START Q18_role attempt 1 ===
+[2026-10-13T14:28:04.058Z] Q18_role LOGIN_WALL after submit
+[2026-10-13T14:28:04.510Z] === START Q18_role attempt 2 ===
+[2026-10-13T14:28:28.710Z] Q18_role LOGIN_WALL after submit
+[2026-10-13T14:28:29.125Z] === START Q19_role attempt 1 ===
+[2026-10-13T14:28:53.831Z] Q19_role LOGIN_WALL after submit
+[2026-10-13T14:28:54.375Z] === START Q19_role attempt 2 ===
+[2026-10-13T14:29:18.472Z] Q19_role LOGIN_WALL after submit
+[2026-10-13T14:29:18.950Z] === START Q20_role attempt 1 ===
+[2026-10-13T14:29:43.005Z] Q20_role LOGIN_WALL after submit
+[2026-10-13T14:29:43.399Z] === START Q20_role attempt 2 ===
+[2026-10-13T14:30:07.547Z] Q20_role LOGIN_WALL after submit
+[2026-10-13T14:30:07.905Z] ALL DONE

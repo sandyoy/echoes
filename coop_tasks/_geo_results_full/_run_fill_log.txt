@@ -1,0 +1,26 @@
+[2026-10-13T15:26:49.517Z] === START Q18_role attempt 1 ===
+[2026-10-13T15:27:14.019Z] Q18_role LOGIN_WALL after submit
+[2026-10-13T15:27:14.571Z] === START Q18_role attempt 2 ===
+[2026-10-13T15:27:39.384Z] Q18_role LOGIN_WALL after submit
+[2026-10-13T15:27:39.813Z] === START Q19_role attempt 1 ===
+[2026-10-13T15:28:04.728Z] Q19_role LOGIN_WALL after submit
+[2026-10-13T15:28:05.212Z] === START Q19_role attempt 2 ===
+[2026-10-13T15:28:30.240Z] Q19_role LOGIN_WALL after submit
+[2026-10-13T15:28:30.863Z] === START Q20_role attempt 1 ===
+[2026-10-13T15:28:55.202Z] Q20_role LOGIN_WALL after submit
+[2026-10-13T15:28:55.850Z] === START Q20_role attempt 2 ===
+[2026-10-13T15:29:21.558Z] Q20_role LOGIN_WALL after submit
+[2026-10-13T15:29:22.285Z] === START Q24_cmp attempt 1 ===
+[2026-10-13T15:29:47.202Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-13T15:29:47.901Z] === START Q24_cmp attempt 2 ===
+[2026-10-13T15:30:13.947Z] Q24_cmp LOGIN_WALL after submit
+[2026-10-13T15:30:14.434Z] ALL DONE
+[2026-10-13T16:26:51.370Z] === START Q18_role attempt 1 ===
+[2026-10-13T16:28:09.288Z] Q18_role OK (1762 chars)
+[2026-10-13T16:28:13.233Z] === START Q19_role attempt 1 ===
+[2026-10-13T16:29:26.578Z] Q19_role OK (1011 chars)
+[2026-10-13T16:29:30.393Z] === START Q20_role attempt 1 ===
+[2026-10-13T16:30:44.033Z] Q20_role OK (1827 chars)
+[2026-10-13T16:30:47.790Z] === START Q24_cmp attempt 1 ===
+[2026-10-13T16:32:02.033Z] Q24_cmp OK (1461 chars)
+[2026-10-13T16:32:05.479Z] ALL DONE
