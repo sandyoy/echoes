@@ -44,6 +44,7 @@ import timeline_api
 import interview_api
 import interview_recap
 import share_api
+import join_api
 import payment_api
 import storage_api
 import tts_api
@@ -771,6 +772,40 @@ def share_view(t: str, db=Depends(get_db)):
 def share_card(kind: str, target_id: str, db=Depends(get_db)):
     """卡片图数据（§8之二.3.1 方式 B）。"""
     return share_api.api_share_card(db, kind=kind, target_id=target_id)
+
+
+# ============================================================
+# 「我也加进来」加入链路（v3.0 §8之二.5 / §8之二.8 —— 2026-10-15 新增）
+# 补 share/view 返回 can_join=True 之后**没人接**的那一节：
+# 看完 → 点【我也加进来】→（已登录）→ 默认加入"这一篇"（只这一篇，不开全本）。
+# ============================================================
+
+class JoinReq(BaseModel):
+    share_token: str
+    user_id: str = ""
+    display_name: str = ""
+    phone: str = ""
+
+
+@app.get("/api/echoes/join/target")
+def join_target(share_token: str, user_id: str = "", db=Depends(get_db)):
+    """篇末那一块（§8之二.5）：这是<owner>的故事，里面提到了你 + 能不能加。"""
+    return join_api.api_join_target(db, share_token=share_token, user_id=user_id)
+
+
+@app.post("/api/echoes/join/story")
+def join_story(req: JoinReq, db=Depends(get_db)):
+    """★点【我也加进来】→ 默认加入这一篇（登录态才调；幂等；只这一篇）。"""
+    return join_api.api_join_by_share(
+        db, share_token=req.share_token, user_id=req.user_id,
+        display_name=req.display_name, phone=req.phone,
+    )
+
+
+@app.get("/api/echoes/join/mine")
+def join_mine(user_id: str, db=Depends(get_db)):
+    """我加入了哪些书/哪些篇（首页要能看见，否则加完就丢）。"""
+    return join_api.api_my_memberships(db, user_id=user_id)
 
 
 # ============================================================
