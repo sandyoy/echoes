@@ -25,7 +25,7 @@ App({
     //   后端适配器可在本地真跑（自测全过 + /docs 200 + 接口信封实测），
     //   本地联调：cd backend && python3 -m uvicorn api_adapter_fastapi:app --port 8012
     //   微信开发者工具需在「详情→本地设置」勾「不校验合法域名」才能连 127.0.0.1。
-    apiBase: 'http://127.0.0.1:8012'
+    apiBase: 'http://192.168.1.86:8012'
   },
 
   onLaunch() {
