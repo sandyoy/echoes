@@ -21,11 +21,15 @@ App({
     isNewUser: false,
     sessionFrom: '',        // 'stub' | 'wechat' —— 后端不静默假装，前端可据此提示
     loginReady: false,
-    // 后端基址。小龙虾 09-26 实测：本机已装 fastapi/uvicorn/sqlalchemy，
-    //   后端适配器可在本地真跑（自测全过 + /docs 200 + 接口信封实测），
-    //   本地联调：cd backend && python3 -m uvicorn api_adapter_fastapi:app --port 8012
-    //   微信开发者工具需在「详情→本地设置」勾「不校验合法域名」才能连 127.0.0.1。
-    apiBase: 'http://192.168.1.86:8012'
+    // 后端基址（公网正式环境）。
+    //   2026-10-15 修正：真机 request 强制 HTTPS + 已备案域名，本机/局域网地址一律连不上
+    //   （原 127.0.0.1:8012 / 192.168.1.86:8012 均废弃）。经小鲸鱼 10-15 回执确认并实测：
+    //   https://yuanaikang.cn 为已备案域名 + HTTPS（Let's Encrypt，Nginx 反代后端 127.0.0.1:3000），
+    //   /api/health、/api/stories/timeline、/api/memorial-book 公网均 200。
+    //   ⚠️ 前置：sandy 需在微信公众平台「开发管理→开发设置→服务器域名→request 合法域名」加入
+    //   https://yuanaikang.cn ，否则真机仍被微信拦截（仅 sandy 微信可操作）。
+    //   本地联调（可选）：开发者工具「详情→本地设置」勾「不校验合法域名」后临时改回本机地址。
+    apiBase: 'https://yuanaikang.cn'
   },
 
   onLaunch() {
