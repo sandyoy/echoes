@@ -422,6 +422,53 @@ function bookEbook(ownerId, viewerId) {
   return get(BOOK.EBOOK, { owner_id: ownerId, viewer_id: viewerId });
 }
 
+// ============ 加入链路「我也加进来」 线（小鲸鱼 10-15 接口 v1，路由 61~63，形状已冻结）============
+// 后端：backend/join_api.py（selftest_join_api.py 32/32；小龙虾本机 uvicorn 实测 23/24，1 项为口径 note）
+// 需求书 v3.0 §8之二.5：看完 → 篇末「这是<owner>的故事，里面提到了你 [我也加进来]」→ 登录 → 默认加入"这一篇"
+// 三条安全闸门（前端必须守，任务单 §三条）：
+//   1) 只加这一篇 —— 加入后 granted_via=story、只看这一篇，同书别的私有篇照样看不到
+//   2) 必须先有可见关系才能加 —— 非被提及者且无既有关系 → not_mentioned（不许凭 token 塞进私有篇）
+//   3) 登录态才调 —— 无 user_id → login_required（不许无登录偷偷加人）
+const JOIN = {
+  TARGET: '/api/echoes/join/target',   // GET  篇末那一块（未登录也返文案）
+  STORY: '/api/echoes/join/story',     // POST ★点「我也加进来」→ 默认加入这一篇
+  MINE: '/api/echoes/join/mine'        // GET  我加入了哪些书/哪些篇
+};
+
+/**
+ * 篇末那一块要显示什么（看完分享篇后调）。
+ * @param {string} shareToken 分享令牌（无登录读用的同一把钥匙）
+ * @param {string} [userId]   登录后传 → 才能知道"我加没加过"；未登录传空
+ * @returns {Promise<{story_id,title,owner_display_name,headline,need_login,already_joined,can_join,join_granularity,reason?,reason_code?}>}
+ */
+function joinTarget(shareToken, userId) {
+  return get(JOIN.TARGET, { share_token: shareToken, user_id: userId || '' });
+}
+
+/**
+ * ★点【我也加进来】→ 默认加入"这一篇"（幂等；重复点 already_joined=true，Member 不翻倍）。
+ * @param {string} shareToken  分享令牌
+ * @param {string} userId      必填（登录态才调；调用方应先确保已登录）
+ * @param {object} [opts] {displayName, phone}
+ * @returns {Promise<{story_id,owner_id,owner_display_name,member_id,granted_via,granted_scope,visible_story_ids,visible_count,already_joined}>}
+ */
+function joinByShare(shareToken, userId, opts) {
+  const o = opts || {};
+  const body = { share_token: shareToken, user_id: userId || '' };
+  if (o.displayName) body.display_name = o.displayName;
+  if (o.phone) body.phone = o.phone;
+  return post(JOIN.STORY, body);
+}
+
+/**
+ * 我加入了哪些书（families 看整本）/ 哪些篇（story_memberships 只看这几篇）。
+ * @param {string} userId 必填
+ * @returns {Promise<{families,story_memberships,family_count,story_count}>}
+ */
+function joinMine(userId) {
+  return get(JOIN.MINE, { user_id: userId });
+}
+
 module.exports = {
   request, get, post,
   CLAIM,
@@ -438,5 +485,7 @@ module.exports = {
   interviewStart, interviewNext, interviewBargeIn,
   interviewAskClassify, interviewClassifyAnswer, interviewPref,
   BOOK,
-  bookSource, bookGenerate, bookEbook
+  bookSource, bookGenerate, bookEbook,
+  JOIN,
+  joinTarget, joinByShare, joinMine
 };

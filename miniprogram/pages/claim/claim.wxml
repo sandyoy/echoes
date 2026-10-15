@@ -1,18 +1,49 @@
-<!-- 待认领页：①提到了我 ②按名字找候选（候选须登记人确认才生效） -->
+<!-- 待认领页：①提到了我 ②找人 ③我加入的 + 篇末「我也加进来」 -->
 <view class="container">
+
+  <!-- ★ 篇末「我也加进来」块（从分享卡片进来 / 点开某篇时出现） -->
+  <view wx:if="{{joinBlock.ready}}" class="join-block">
+    <view class="join-headline">{{joinBlock.headline}}</view>
+    <view wx:if="{{joinBlock.title}}" class="join-title">{{joinBlock.title}}</view>
+    <view wx:if="{{joinBlock.alreadyJoined}}" class="join-done">你已经加进来了</view>
+    <block wx:else>
+      <view wx:if="{{joinBlock.canJoin || joinBlock.needLogin}}" class="join-btn" bindtap="onJoinTap">
+        {{joinBlock.needLogin ? '我也加进来（登录后即可）' : '我也加进来'}}
+      </view>
+      <view wx:else class="join-reason">{{joinBlock.reason || '这篇先不用加，你本来就能看'}}</view>
+    </block>
+  </view>
 
   <view class="tabs">
     <view class="tab {{mode === 'mentioned' ? 'on' : ''}}" data-mode="mentioned" bindtap="onSwitchMode">提到了我</view>
     <view class="tab {{mode === 'search' ? 'on' : ''}}" data-mode="search" bindtap="onSwitchMode">找人</view>
+    <view class="tab {{mode === 'joined' ? 'on' : ''}}" data-mode="joined" bindtap="onSwitchMode">我加入的</view>
   </view>
 
   <!-- ① 有 N 篇故事提到了你 -->
   <block wx:if="{{mode === 'mentioned'}}">
     <view class="count-line">有 {{mentioned.count}} 篇故事提到了你</view>
     <view wx:if="{{mentioned.stories.length === 0}}" class="empty">还没有人写到你</view>
-    <view wx:for="{{mentioned.stories}}" wx:key="story_id" class="item" bindtap="onOpenStory">
+    <view wx:for="{{mentioned.stories}}" wx:key="story_id" class="item"
+          data-story-id="{{item.story_id}}" data-share-token="{{item.share_token}}" bindtap="onOpenStory">
       <view class="item-title">{{item.title}}</view>
       <view class="item-sub">{{item.time_label}}</view>
+    </view>
+  </block>
+
+  <!-- ③ 我加入的（加入链路落点：加完在这里能看见，否则加完就丢） -->
+  <block wx:elif="{{mode === 'joined'}}">
+    <view class="count-line">我加入了 {{joined.family_count}} 本书、{{joined.story_count}} 篇故事</view>
+    <view wx:if="{{joined.family_count === 0 && joined.story_count === 0}}" class="empty">
+      还没加过。看到有你的故事，点「我也加进来」就出现在这里
+    </view>
+    <view wx:for="{{joined.families}}" wx:key="member_id" class="item">
+      <view class="item-title">{{item.owner_display_name}}</view>
+      <view class="item-sub">整本都能看</view>
+    </view>
+    <view wx:for="{{joined.story_memberships}}" wx:key="member_id" class="item">
+      <view class="item-title">{{item.story_title}}</view>
+      <view class="item-sub">{{item.owner_display_name}}的故事</view>
     </view>
   </block>
 
