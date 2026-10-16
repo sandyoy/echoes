@@ -20,6 +20,7 @@ tests = [
     "selftest_storage_api.py",
     "selftest_tts_api.py",
     "selftest_join_api.py",
+    "selftest_family_api.py",
 ]
 tot_p = tot_f = 0
 for t in tests:

@@ -45,6 +45,7 @@ import interview_api
 import interview_recap
 import share_api
 import join_api
+import family_api
 import payment_api
 import storage_api
 import tts_api
@@ -806,6 +807,55 @@ def join_story(req: JoinReq, db=Depends(get_db)):
 def join_mine(user_id: str, db=Depends(get_db)):
     """我加入了哪些书/哪些篇（首页要能看见，否则加完就丢）。"""
     return join_api.api_my_memberships(db, user_id=user_id)
+
+
+# ============================================================
+# 加家人（v3.0 §2.2 / §2.3「登录旁的加号」—— 2026-10-16 新增）
+# 这是 §2.2 两个加号里的另一个：登录旁的加号 = 加家人 = **看整本书**。
+# 与 join_api（故事里的加号 = 只看这一篇）粒度不同、互不替代。
+# ★ 没有 scope 参数——从这里进来永远是 FAMILY（§2.2 不设权限勾选框）。
+# ============================================================
+
+class FamilyAddReq(BaseModel):
+    owner_id: str                   # 书主人（登录态）
+    user_id: str = ""               # 对方已在小程序（走「选名字」路）
+    phone: str = ""                 # 或：对方还没上过（走「手机号录入」路，待认领）
+    display_name: str = ""
+    relation: str = ""              # 女儿/儿子/朋友
+
+
+class FamilyRemoveReq(BaseModel):
+    owner_id: str
+    member_id: str
+
+
+@app.get("/api/echoes/family/search")
+def family_search(owner_id: str, name: str, db=Depends(get_db)):
+    """§2.3「对方已在小程序可直接选名字加入」——按名字搜人（不返手机号）。"""
+    return family_api.api_search_user_by_name(db, owner_id=owner_id, name=name)
+
+
+@app.post("/api/echoes/family/add")
+def family_add(req: FamilyAddReq, db=Depends(get_db)):
+    """★§2.2 登录旁的加号 → 加家人 → 看整本书（幂等；必登录态；不许加自己）。"""
+    return family_api.api_add_family(
+        db, owner_id=req.owner_id, user_id=req.user_id,
+        phone=req.phone, display_name=req.display_name, relation=req.relation,
+    )
+
+
+@app.get("/api/echoes/family/list")
+def family_list(owner_id: str, db=Depends(get_db)):
+    """我的家庭通讯录（已认领/待认领两栏；手机号脱敏）。"""
+    return family_api.api_family_list(db, owner_id=owner_id)
+
+
+@app.post("/api/echoes/family/remove")
+def family_remove(req: FamilyRemoveReq, db=Depends(get_db)):
+    """从名单移出一个家人 → 不再能看整本（只本人能删自己名单；不动单篇关系）。"""
+    return family_api.api_remove_family(
+        db, owner_id=req.owner_id, member_id=req.member_id,
+    )
 
 
 # ============================================================
