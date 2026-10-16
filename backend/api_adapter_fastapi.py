@@ -46,6 +46,7 @@ import interview_recap
 import share_api
 import join_api
 import family_api
+import group_api
 import payment_api
 import storage_api
 import tts_api
@@ -856,6 +857,84 @@ def family_remove(req: FamilyRemoveReq, db=Depends(get_db)):
     return family_api.api_remove_family(
         db, owner_id=req.owner_id, member_id=req.member_id,
     )
+
+
+# ============================================================
+# 归类与切分（v3.0 §五之二.3/4/5 —— 2026-10-16 晚新增）
+# 「一段话含多个时间点」切成多条 + 「同一件事」只给候选由人确认。
+# 铁律 A：**禁止全自动合并**，没有 user_confirmed 一律拒绝。
+# ============================================================
+
+class SegmentPreviewReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    story_id: str
+
+
+class ApplySegmentsReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    story_id: str
+    user_confirmed: bool = False       # ★必须 True 才真切（防误切）
+
+
+class GroupCandidatesReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    story_id: str
+
+
+class MergeStoriesReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    story_ids: list[str]
+    target_id: str = ""
+    user_confirmed: bool = False       # ★必须 True 才真合（铁律 A）
+
+
+class UngroupReq(BaseModel):
+    owner_id: str
+    viewer_id: str = ""
+    story_id: str
+
+
+@app.post("/api/echoes/group/segment_preview")
+def group_segment_preview(req: SegmentPreviewReq, db=Depends(get_db)):
+    """§五之二.3：先给用户看「这段话会切成几段」，**不落库**。"""
+    return group_api.api_segment_preview(
+        db, owner_id=req.owner_id, viewer_id=req.viewer_id, story_id=req.story_id)
+
+
+@app.post("/api/echoes/group/apply_segments")
+def group_apply_segments(req: ApplySegmentsReq, db=Depends(get_db)):
+    """§五之二.3/4：用户点头后才真切。宁分不合（拿不准就切开，事后可合）。"""
+    return group_api.api_apply_segments(
+        db, owner_id=req.owner_id, viewer_id=req.viewer_id,
+        story_id=req.story_id, user_confirmed=req.user_confirmed)
+
+
+@app.post("/api/echoes/group/candidates")
+def group_candidates(req: GroupCandidatesReq, db=Depends(get_db)):
+    """§五之二.5：给「这几条像同一件事」的候选清单 + 相似度，**由人点**。"""
+    return group_api.api_group_candidates(
+        db, owner_id=req.owner_id, viewer_id=req.viewer_id, story_id=req.story_id)
+
+
+@app.post("/api/echoes/group/merge")
+def group_merge(req: MergeStoriesReq, db=Depends(get_db)):
+    """§五之二.5 收口：人确认后才合并（铁律 A，全自动合并是禁区）。"""
+    return group_api.api_merge_stories(
+        db, owner_id=req.owner_id, viewer_id=req.viewer_id,
+        story_ids=req.story_ids, target_id=req.target_id,
+        user_confirmed=req.user_confirmed)
+
+
+@app.post("/api/echoes/group/ungroup")
+def group_ungroup(req: UngroupReq, db=Depends(get_db)):
+    """§五之二.4「分错可修」：拆掉分组，给用户退路。"""
+    return group_api.api_ungroup_story(
+        db, owner_id=req.owner_id, viewer_id=req.viewer_id, story_id=req.story_id)
+
 
 
 # ============================================================
