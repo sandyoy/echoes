@@ -51,6 +51,7 @@ import payment_api
 import entitlement
 import storage_api
 import tts_api
+import print_api
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -541,6 +542,55 @@ def pay_entitlement(user_id: str, db=Depends(get_db)):
 def book_append(req: BookAppendReq, db=Depends(get_db)):
     return book_view_api.api_append_to_ebook(
         db, owner_id=req.owner_id, actor_id=req.actor_id, story_ids=req.story_ids)
+
+
+# handler: print_api.py（§8.1 实体书后置 + §8.5 印刷厂通道；本机无 fastapi 未实测，形状已冻结）
+class PrintQuoteReq(BaseModel):
+    owner_id: str
+    actor_id: str = ""
+    book_spec: str = "A5"
+    copies: int = 1
+    vendor: str = ""              # 印刷厂名：sandy 比价后填，本端不设白名单
+    unit_price: float = None      # 印刷厂报价单价；不填 → status=pending，本端不臆造价
+
+
+class PrintStatusReq(BaseModel):
+    print_order_id: str
+    actor_id: str = ""
+    status: str = ""
+    vendor: str = ""
+
+
+@app.get("/api/echoes/print/catalog")
+def print_catalog(owner_id: str, book_spec: str = "A5", db=Depends(get_db)):
+    """★§8.1 进「去印实体书」页先调它：能不能印 / 几页 / 什么开本 / 上次印单到哪了。"""
+    return print_api.api_print_catalog(db, owner_id=owner_id, book_spec=book_spec)
+
+
+@app.post("/api/echoes/print/quote")
+def print_quote(req: PrintQuoteReq, db=Depends(get_db)):
+    """★§8.5 落一张印单（印刷厂报价单来了就录进来）。不带价 = 待报价，不假装有价。"""
+    return print_api.api_print_quote(
+        db, owner_id=req.owner_id, actor_id=req.actor_id, book_spec=req.book_spec,
+        copies=req.copies, vendor=req.vendor, unit_price=req.unit_price)
+
+
+@app.get("/api/echoes/print/order")
+def print_order(print_order_id: str, actor_id: str = "", db=Depends(get_db)):
+    return print_api.api_print_order(db, print_order_id=print_order_id, actor_id=actor_id)
+
+
+@app.get("/api/echoes/print/my_orders")
+def print_my_orders(owner_id: str, db=Depends(get_db)):
+    return print_api.api_print_my_orders(db, owner_id=owner_id)
+
+
+@app.post("/api/echoes/print/status")
+def print_set_status(req: PrintStatusReq, db=Depends(get_db)):
+    """印刷厂回执（已确认/印刷中/已寄出/已完成）——只许往前推，印完不许回写。"""
+    return print_api.api_print_set_status(
+        db, print_order_id=req.print_order_id, actor_id=req.actor_id,
+        status=req.status, vendor=req.vendor)
 
 
 @app.post("/api/echoes/story/create")

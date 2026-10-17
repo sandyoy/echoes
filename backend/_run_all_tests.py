@@ -23,6 +23,7 @@ tests = [
     "selftest_family_api.py",
     "selftest_group_api.py",
     "selftest_entitlement.py",
+    "selftest_print_api.py",
 ]
 tot_p = tot_f = 0
 for t in tests:
