@@ -53,6 +53,9 @@ A5_W_MM, A5_H_MM = 148, 210
 # 屏幕阅读页宽（手机竖屏逻辑像素近似），用于"线上看=印着看"的同构排版
 SCREEN_W_PX = 750
 
+# §九 未付费时可预览的章数（锁的是"全部/印刷件"，不是把书彻底关死）
+PREVIEW_CHAPTERS = 1
+
 
 # ============================================================
 # 一、统一信封（与 book_api / collect_api / story_api 同形）
@@ -309,6 +312,13 @@ def api_book_view(db, *, owner_id: str, viewer_id: str = "",
     """
     GET /api/echoes/book/view —— 取我的书某一种形态（§8.6 三种）。
     只有书主人能取（私有形态不外流；对外分享走 share_api，只回公开素材）。
+
+    §九 收费闸门（2026-10-17 补）：本接口是**唯一"完整版渲染"出口**
+    （§8.6 三种形态 / A5 印刷件都从这里出），故付费卡点只设在这里。
+      - 后台没开价      → 照旧全通（免费，§9.3 开关一关全站免费）
+      - 后台开价且未买  → 返 `locked=true` + 报价 + 预览页数，**不返完整 view**
+      - 已买/有效期内    → 照旧返回完整 view（§8.4 续添不再收钱）
+    **老人自己的素材不在这里卡**（素材走 collect/story 接口，与收费无关）——锁的只是排版成品。
     """
     if not owner_id:
         return fail("缺少 owner_id", "missing_owner_id")
@@ -322,9 +332,31 @@ def api_book_view(db, *, owner_id: str, viewer_id: str = "",
     if not content.get("chapters"):
         return ok({"empty": True, "book": None})
 
+    # §九 收费闸门：只卡完整渲染
+    import entitlement as E
+    gate = E.book_lock_state(db, owner_id=owner_id)
+    g = gate.get("data") or {}
+    if g.get("locked"):
+        chapters = content.get("chapters") or []
+        return ok({
+            "empty": False,
+            "locked": True,
+            "ebook_id": eb.id,
+            "title": eb.title,
+            "story_count": eb.story_count,
+            "entitlement": g,
+            "preview": {
+                "chapters_visible": min(PREVIEW_CHAPTERS, len(chapters)),
+                "chapters_total": len(chapters),
+                "notice": g.get("notice", ""),
+            },
+            "view": None,
+        }, warning=E.NEED_PAY, code=E.NEED_PAY)
+
     view = render_book(content, form=form, book_spec=book_spec)
     return ok({
         "empty": False,
+        "locked": False,
         "ebook_id": eb.id,
         "title": eb.title,
         "story_count": eb.story_count,

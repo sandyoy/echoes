@@ -48,6 +48,7 @@ import join_api
 import family_api
 import group_api
 import payment_api
+import entitlement
 import storage_api
 import tts_api
 
@@ -519,6 +520,21 @@ def book_view(owner_id: str, form: str = "scroll", book_spec: str = "A5",
               viewer_id: str = "", db=Depends(get_db)):
     return book_view_api.api_book_view(
         db, owner_id=owner_id, viewer_id=viewer_id, form=form, book_spec=book_spec)
+
+
+@app.get("/api/echoes/book/lock_state")
+def book_lock_state(owner_id: str, db=Depends(get_db)):
+    """
+    ★§九 收费闸门（2026-10-17）：这本书现在锁不锁、锁了要买哪个/多少钱。
+    前端进「我的书」页先调它 —— locked=true 就显示预览+解锁按钮，别直接请求 view 撞锁。
+    """
+    return entitlement.book_lock_state(db, owner_id=owner_id)
+
+
+@app.get("/api/echoes/pay/entitlement")
+def pay_entitlement(user_id: str, db=Depends(get_db)):
+    """★§九 我到底买过什么（我的→会员页用）：免费/买断/年费有效→过期，一次说清。"""
+    return entitlement.is_entitled(db, user_id=user_id)
 
 
 @app.post("/api/echoes/book/append")
