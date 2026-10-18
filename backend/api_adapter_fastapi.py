@@ -52,6 +52,7 @@ import entitlement
 import storage_api
 import tts_api
 import print_api
+import card_render
 
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
@@ -1189,3 +1190,78 @@ def tts_status():
     前端/小龙虾可据此决定"出声音"还是"只出字"（降级不假死）。
     """
     return {"ok": True, "data": tts_api.tts_status(probe_tencent=True), "message": ""}
+
+
+# ============================================================
+# 「做成一张图」卡片出图（v3.0 §3.3.1 方式 B / §8之二.3.1）—— 2026-10-18 落地 v1.0
+# ============================================================
+# 为什么：§3.3.1 把「做成一张图」写成明案（老人可直接发出去，像小年糕那种），
+#        但此前全项目**一个像素都画不出来**：`share_api.make_card_data()` 只产数据，
+#        谁来画没人管。今日补 `card_render.py`，这里挂两条 HTTP。
+#
+# 两条路由的分工（为什么是两条，不是一条）：
+#   1) GET /card/render    → **直接回 PNG 二进制**（Content-Type: image/png）。
+#      老人点「做成一张图」要的就是这张图本身；回 base64 塞 JSON 会让手机端多一层解码、
+#      也多 33% 体积。前端拿到直接 wx.saveImageToPhotosAlbum / 转发。
+#   2) POST /card/preview  → 回**元信息**（宽高/字节/是否越界/底部留白），
+#      给前端先排版、给自测做"不信 ok=True、量像素"的自证。
+#
+# 铁律：只画公开素材（render_story_card 内部过 can_share_story 单一真相源）；
+#      全私有 → 404 not_shareable，**不出一张含私有内容的图**。
+
+@app.get("/api/echoes/card/render")
+def card_render_png(kind: str, target_id: str = "", actor_id: str = "",
+                    db=Depends(get_db)):
+    """
+    出卡片图（PNG 二进制）。
+      kind=story & target_id=<故事id>（须至少一条公开素材）
+      kind=book  & target_id=<owner_id>（缺省 actor_id=本人）
+    """
+    from fastapi import Response
+    bad = _require_owner(actor_id)
+    if bad:
+        return bad
+
+    try:
+        if kind == "story":
+            png = card_render.render_story_card(db, story_id=target_id)
+        elif kind == "book":
+            png = card_render.render_book_card(db, owner_id=target_id or actor)
+        else:
+            return {"ok": False, "code": "bad_kind", "error": f"不认识的卡片类型：{kind}", "data": {}}
+    except PermissionError as e:
+        return {"ok": False, "code": "not_shareable", "error": str(e), "data": {}}
+    except ValueError as e:
+        return {"ok": False, "code": "not_found", "error": str(e), "data": {}}
+    except RuntimeError as e:
+        return {"ok": False, "code": "render_unavailable", "error": str(e), "data": {}}
+    return Response(content=png, media_type="image/png",
+                    headers={"Cache-Control": "no-store"})
+
+
+class CardPreviewReq(BaseModel):
+    actor_id: str
+    kind: str
+    target_id: str = ""
+
+
+@app.post("/api/echoes/card/preview")
+def card_preview(req: CardPreviewReq, db=Depends(get_db)):
+    """
+    卡片图体检（不出图，只量）：宽高 / 字节 / 是否越界 / 底部留白 px。
+    前端可先调它决定排版；自测靠它做"不信 ok=True"的自证。
+    """
+    actor = _require_owner(req.actor_id)
+    out = card_render.api_render_card(db, actor_id=actor, kind=req.kind,
+                                      target_id=req.target_id)
+    if not out.get("ok"):
+        return out
+    try:
+        if req.kind == "story":
+            png = card_render.render_story_card(db, story_id=req.target_id)
+        else:
+            png = card_render.render_book_card(db, owner_id=req.target_id or actor)
+        chk = card_render.api_card_check(png=png)
+    except (PermissionError, ValueError, RuntimeError) as e:
+        return {"ok": False, "code": "render_unavailable", "error": str(e), "data": {}}
+    return chk

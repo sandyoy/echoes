@@ -24,6 +24,7 @@ tests = [
     "selftest_group_api.py",
     "selftest_entitlement.py",
     "selftest_print_api.py",
+    "selftest_card_render.py",
 ]
 tot_p = tot_f = 0
 for t in tests:
