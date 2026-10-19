@@ -328,5 +328,15 @@ Page({
       return;
     }
     wx.showToast({ title: '已保存', icon: 'success' });
+  },
+
+  /** ★ 把这一篇做成一张图（kind=story，target_id=storyId） */
+  onOpenCard() {
+    const sid = this.data.storyId;
+    if (!sid) { wx.showToast({ title: '还没有故事', icon: 'none' }); return; }
+    wx.navigateTo({
+      url: `/pages/card/card?kind=story&target_id=${encodeURIComponent(sid)}`,
+      fail: () => { /* 卡片页未就绪时静默 */ }
+    });
   }
 });

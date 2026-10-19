@@ -41,4 +41,7 @@
   <view wx:for="{{clips}}" wx:key="clip_id" class="clip-item">{{item.clip_type}}</view>
 
   <view class="big-btn" bindtap="onSave">保存</view>
+
+  <!-- ★ 做成一张图（10-18 卡片出图通道）：有故事就能做，只放公开素材 -->
+  <view wx:if="{{storyId}}" class="sb-btn" bindtap="onOpenCard">把这件事做成一张图</view>
 </view>

@@ -136,6 +136,9 @@
         </block>
       </view>
 
+      <!-- ★ 做成一张图（10-18 卡片出图通道）：只画公开素材，私有内容不上图 -->
+      <view class="big-btn ghost" bindtap="onOpenCard">做成一张图</view>
+
       <!-- 活文档：再点生成可把新素材续进去 -->
       <view class="big-btn ghost" bindtap="onTabSource">去挑素材，把新的续进去</view>
     </block>

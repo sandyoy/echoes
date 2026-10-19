@@ -35,7 +35,7 @@ function request(path, method, data) {
 }
 
 /** 便捷方法 */
-function get(path, params) {
+function _qs(params) {
   let qs = '';
   if (params) {
     const parts = [];
@@ -46,7 +46,17 @@ function get(path, params) {
     });
     if (parts.length) qs = '?' + parts.join('&');
   }
-  return request(path + qs, 'GET');
+  return qs;
+}
+
+/** 拼完整 URL（给 wx.downloadFile / 需要拿到地址的接口用） */
+function buildUrl(path, params) {
+  const base = (app && app.globalData && app.globalData.apiBase) || '';
+  return base + path + _qs(params);
+}
+
+function get(path, params) {
+  return request(path + _qs(params), 'GET');
 }
 function post(path, data) { return request(path, 'POST', data); }
 
@@ -469,8 +479,105 @@ function joinMine(userId) {
   return get(JOIN.MINE, { user_id: userId });
 }
 
+// ============================================================
+// ★ 加家人（小鲸鱼 10-16，路由 4 条；需求书 §2.2/§2.3）
+//   家人 = 看整本（granted_scope=book），与「我也加进来」的单篇关系并存不互斥。
+// 铁律：owner_id 必传（权限判定的根，缺了后端直接拒，绝不退化放行）；
+//      手机号一律脱敏回显（phone_masked），前端不拿手机号做匹配。
+// ============================================================
+const FAMILY = {
+  SEARCH: '/api/echoes/family/search',   // GET  按名字找人（只回 user_id/显示名，不返手机号）
+  ADD: '/api/echoes/family/add',         // POST 加家人 → 看整本（幂等，不许加自己）
+  LIST: '/api/echoes/family/list',       // GET  我的家人（已认领 family / 待认领 pending）
+  REMOVE: '/api/echoes/family/remove'    // POST 移出名单 → 不再能看整本（不动单篇关系）
+};
+
+/**
+ * 按名字找家人（§2.3 对方已在小程序，直接选名字加入）。
+ * @param {string} ownerId 书的主人（必传）
+ * @param {string} name    要找的名字
+ * @returns {Promise<{candidates:[{user_id,display_name,already_family,relation}],count}>}
+ */
+function familySearch(ownerId, name) {
+  return get(FAMILY.SEARCH, { owner_id: ownerId, name: name });
+}
+
+/**
+ * 加一个家人 → 他能看整本书。
+ * @param {string} ownerId  书的主人（必传）
+ * @param {object} o        {userId, phone, displayName, relation}
+ *                          userId（对方已在小程序）与 phone（还没上过）二选一
+ * @returns {Promise<{member_id,owner_id,user_id,display_name,relation,phone_masked,
+ *                    granted_via,granted_scope,claimed,book_story_count,already_family}>}
+ */
+function familyAdd(ownerId, o) {
+  const opt = o || {};
+  const body = { owner_id: ownerId || '' };
+  if (opt.userId) body.user_id = opt.userId;
+  if (opt.phone) body.phone = opt.phone;
+  if (opt.displayName) body.display_name = opt.displayName;
+  if (opt.relation) body.relation = opt.relation;
+  return post(FAMILY.ADD, body);
+}
+
+/**
+ * 我的家人名单（两栏：已认领 / 待认领；手机号脱敏）。
+ * @param {string} ownerId 必传
+ * @returns {Promise<{family, pending, family_count, pending_count}>}
+ */
+function familyList(ownerId) {
+  return get(FAMILY.LIST, { owner_id: ownerId });
+}
+
+/**
+ * 把一位家人移出名单 → 不再能看整本。只动家人名单，不动单篇关系。
+ * @param {string} ownerId  必传
+ * @param {string} memberId 名单里那条记录的 id（不是 user_id）
+ * @returns {Promise<{removed:boolean,member_id}>}
+ */
+function familyRemove(ownerId, memberId) {
+  return post(FAMILY.REMOVE, { owner_id: ownerId || '', member_id: memberId || '' });
+}
+
+// ============================================================
+// ★ 做成一张图（小鲸鱼 10-18，路由 2 条；卡片出图通道）
+//   只画公开素材：整篇全私有 → not_shareable，不出含私有内容的图。
+// 两条路：
+//   ① cardRender → 直接拿 PNG 二进制（wx.downloadFile / wx.request responseType=arraybuffer）
+//   ② cardPreview → 只回元信息（宽高/字节/底部留白/越界），给前端先排版 + 自测自证
+// ============================================================
+const CARD = {
+  RENDER: '/api/echoes/card/render',     // GET  PNG 二进制（kind=story|book）
+  PREVIEW: '/api/echoes/card/preview'    // POST 只量不出图（宽高/字节/留白）
+};
+
+/**
+ * 出卡片图的下载地址（给 wx.downloadFile 用）。
+ * @param {string} kind     'story' | 'book'
+ * @param {string} targetId story_id（kind=story）或 owner_id（kind=book）
+ * @param {string} actorId  当前登录人（必传，缺了后端拒）
+ * @returns {string} 完整 URL
+ */
+function cardRenderUrl(kind, targetId, actorId) {
+  return buildUrl(CARD.RENDER, { kind: kind, target_id: targetId || '', actor_id: actorId || '' });
+}
+
+/**
+ * 卡片图体检（不出图，只量）。前端先调它决定排版；自测靠它自证。
+ * @param {object} o {actorId, kind, targetId}
+ * @returns {Promise<{width,height,ink_bottom_gap_px,overflow,line_found}>}
+ */
+function cardPreview(o) {
+  const opt = o || {};
+  return post(CARD.PREVIEW, {
+    actor_id: opt.actorId || '',
+    kind: opt.kind || 'story',
+    target_id: opt.targetId || ''
+  });
+}
+
 module.exports = {
-  request, get, post,
+  request, get, post, buildUrl,
   CLAIM,
   claimLogin, claimRegister, claimSearch, claimMentioned,
   claimConfirm, claimReject, claimPending,
@@ -487,5 +594,9 @@ module.exports = {
   BOOK,
   bookSource, bookGenerate, bookEbook,
   JOIN,
-  joinTarget, joinByShare, joinMine
+  joinTarget, joinByShare, joinMine,
+  FAMILY,
+  familySearch, familyAdd, familyList, familyRemove,
+  CARD,
+  cardRenderUrl, cardPreview
 };

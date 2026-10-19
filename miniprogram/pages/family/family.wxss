@@ -1,0 +1,71 @@
+/* pages/family/family.wxss —— 加家人（字号/间距走 app.wxss 的 CSS 变量） */
+.page-title { font-size: var(--font-title); font-weight: 600; }
+.page-sub { color: #666; margin: calc(var(--space) / 3) 0 var(--space); }
+
+.hint { color: #666; padding: var(--space) 0; }
+.hint.error { color: #c0392b; }
+
+.basket {
+  background: #fff;
+  border-radius: 20rpx;
+  padding: var(--space);
+  margin-bottom: var(--space);
+}
+.basket-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: calc(var(--space) / 2);
+}
+.basket-title { font-size: var(--font-base); font-weight: 600; }
+.basket-sub { color: #999; }
+.basket-empty { color: #999; padding: calc(var(--space) / 2) 0; }
+.basket-note { color: #999; font-size: 0.85em; margin-top: calc(var(--space) / 2); }
+
+/* 一位家人 */
+.person {
+  display: flex;
+  align-items: center;
+  padding: calc(var(--space) / 2) 0;
+  border-bottom: 1rpx solid #f0ebe3;
+}
+.person:last-child { border-bottom: none; }
+.person-main { flex: 1; min-width: 0; }
+.person-name { font-size: var(--font-base); font-weight: 600; }
+.person-relation { font-weight: 400; color: #666; font-size: 0.85em; margin-left: 8rpx; }
+.person-sub { color: #999; font-size: 0.85em; margin-top: 4rpx; }
+.person-scope { margin-left: 12rpx; color: var(--color-accent); }
+
+.person-remove {
+  padding: 8rpx 20rpx;
+  color: #c0392b;
+  border: 1rpx solid #e8c4be;
+  border-radius: 10rpx;
+  font-size: 0.85em;
+}
+.person-remove.busy { color: #999; border-color: #ddd; }
+
+.person.pick { border-radius: 12rpx; }
+.person.pick:active { background: #faf6f0; }
+.person-add {
+  padding: 8rpx 24rpx;
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: 10rpx;
+  font-size: 0.85em;
+}
+
+/* 输入 */
+.field { margin-bottom: calc(var(--space) / 2); }
+.field-label { color: #666; font-size: 0.85em; margin-bottom: 6rpx; }
+.field-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: calc(var(--space) / 2);
+  background: #faf6f0;
+  border-radius: 12rpx;
+  font-size: var(--font-base);
+}
+
+.big-btn.small { padding: calc(var(--space) / 2); font-size: var(--font-base); }
+.big-btn.hold { opacity: 0.6; }

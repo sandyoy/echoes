@@ -1,0 +1,50 @@
+<!--
+  pages/card/card.wxml —— 做成一张图
+  流程：体检（能不能做/画布多大）→ 做出来 → 存到相册。
+  铁律：做不了就明说原因（后端中文 error），不假装成功。
+-->
+<view class="container ui-{{uiMode}}">
+
+  <view class="page-title">做成一张图</view>
+  <view wx:if="{{title}}" class="page-sub">{{title}}</view>
+
+  <!-- 这一篇 / 整本书 -->
+  <view class="tabs">
+    <view class="tab {{kind === 'story' ? 'on' : ''}}" data-kind="story" bindtap="onSwitchKind">这一篇</view>
+    <view class="tab {{kind === 'book' ? 'on' : ''}}" data-kind="book" bindtap="onSwitchKind">整本书</view>
+  </view>
+
+  <!-- 做不了的原因（中文人话） -->
+  <view wx:if="{{checkError}}" class="note error">{{checkError}}</view>
+
+  <!-- 体检中 -->
+  <view wx:elif="{{checking}}" class="note">正在看看能不能做…</view>
+
+  <block wx:else>
+
+    <!-- 体检结果 -->
+    <view wx:if="{{checked}}" class="note">
+      <view class="note-line">能做，这张图 {{width}} × {{height}}</view>
+      <view wx:if="{{overflow}}" class="note-line warn">有一行字挨到边了，可能被切掉一点</view>
+      <view wx:else class="note-line">排版收得住</view>
+    </view>
+
+    <!-- 出图结果 -->
+    <block wx:if="{{imgPath}}">
+      <image class="preview" src="{{imgPath}}" mode="widthFix" bindtap="onSave" />
+      <view class="big-btn" bindtap="onSave">{{saved ? '再存一次' : '存到相册'}}</view>
+      <view class="sb-btn" bindtap="onMake">再做一张</view>
+    </block>
+
+    <!-- 还没出图 -->
+    <block wx:else>
+      <view class="big-btn {{making ? 'hold' : ''}}" bindtap="onMake">
+        {{making ? '正在做…' : '做出来'}}
+      </view>
+      <view class="sb-note">图上只放能给人看的内容；自己收着的故事不会出现在上面</view>
+    </block>
+
+    <view class="sb-btn" bindtap="onBack">先不做，回去</view>
+  </block>
+
+</view>

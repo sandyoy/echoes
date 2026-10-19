@@ -1,0 +1,126 @@
+<!--
+  pages/family/family.wxml —— 加家人（v3.0 §2.2/§2.3）
+  一页四块：名单（已认领/待认领）→ 按名字找人 → 按手机号直接加。
+  铁律：手机号只回显 ___****____（后端脱敏）；本页不出现「设置/权限/分享」字样。
+-->
+<view class="container ui-{{uiMode}}">
+
+  <view class="page-title">家里人</view>
+  <view class="page-sub">加进来的家里人，能看你这本书的全部内容</view>
+
+  <!-- 未登录 / 错误（中文人话） -->
+  <view wx:if="{{error}}" class="hint error">{{error}}</view>
+
+  <!-- 加载中 -->
+  <view wx:elif="{{loading}}" class="hint">正在取名单…</view>
+
+  <block wx:else>
+
+    <!-- ===================== ① 名单 ===================== -->
+    <view class="basket">
+      <view class="basket-head">
+        <text class="basket-title">已经在的</text>
+        <text class="basket-sub">{{familyCount}} 位</text>
+      </view>
+      <view wx:if="{{familyCount === 0}}" class="basket-empty">还没有家人，下面加一个吧</view>
+      <view wx:for="{{family}}" wx:key="member_id" class="person">
+        <view class="person-main">
+          <view class="person-name">
+            {{item.display_name}}
+            <text wx:if="{{item.relation}}" class="person-relation">{{item.relation}}</text>
+          </view>
+          <view class="person-sub">
+            <text wx:if="{{item.phone_masked}}">{{item.phone_masked}}</text>
+            <text class="person-scope">能看整本</text>
+          </view>
+        </view>
+        <view class="person-remove {{removing === item.member_id ? 'busy' : ''}}"
+              data-item="{{item}}" bindtap="onRemove">
+          {{removing === item.member_id ? '移出中' : '移出'}}
+        </view>
+      </view>
+    </view>
+
+    <!-- 待认领：给手机号加的，等他上过小程序才挂上 -->
+    <view wx:if="{{pendingCount > 0}}" class="basket">
+      <view class="basket-head">
+        <text class="basket-title">等他上来</text>
+        <text class="basket-sub">{{pendingCount}} 位</text>
+      </view>
+      <view wx:for="{{pending}}" wx:key="member_id" class="person">
+        <view class="person-main">
+          <view class="person-name">{{item.display_name}}</view>
+          <view class="person-sub">
+            <text wx:if="{{item.phone_masked}}">{{item.phone_masked}}</text>
+            <text class="person-scope">他上过小程序就能看</text>
+          </view>
+        </view>
+        <view class="person-remove {{removing === item.member_id ? 'busy' : ''}}"
+              data-item="{{item}}" bindtap="onRemove">
+          {{removing === item.member_id ? '移出中' : '移出'}}
+        </view>
+      </view>
+    </view>
+
+    <!-- ===================== ② 按名字找人（对方已在小程序） ===================== -->
+    <view class="basket">
+      <view class="basket-head">
+        <text class="basket-title">他也在用</text>
+        <text class="basket-sub">输名字找一找</text>
+      </view>
+      <input class="field-input" placeholder="他的微信名/名字" value="{{searchName}}"
+             bindinput="onSearchInput" />
+      <view class="big-btn small {{searching ? 'hold' : ''}}" bindtap="onSearch">
+        {{searching ? '正在找…' : '找一下'}}
+      </view>
+
+      <block wx:if="{{searched}}">
+        <view wx:if="{{candidateCount === 0}}" class="basket-empty">
+          没找到这个人。他还没用过的话，用下面的手机号加
+        </view>
+        <view wx:for="{{candidates}}" wx:key="user_id" class="person pick"
+              data-item="{{item}}" bindtap="onPickCandidate">
+          <view class="person-main">
+            <view class="person-name">{{item.display_name}}</view>
+            <view class="person-sub">
+              <text wx:if="{{item.already_family}}" class="person-scope">已经是家人了</text>
+              <text wx:else class="person-scope">点一下加进来</text>
+            </view>
+          </view>
+          <view class="person-add">{{item.already_family ? '已加' : '加'}}</view>
+        </view>
+      </block>
+    </view>
+
+    <!-- ===================== ③ 按手机号直接加（他还没用过） ===================== -->
+    <view class="basket">
+      <view class="basket-head">
+        <text class="basket-title">他还没用过</text>
+        <text class="basket-sub">留个手机号，等他上来</text>
+      </view>
+
+      <view class="field">
+        <view class="field-label">怎么称呼他</view>
+        <input class="field-input" placeholder="比如：大儿子、老伴" value="{{addName}}"
+               bindinput="onAddNameInput" />
+      </view>
+      <view class="field">
+        <view class="field-label">他的手机号</view>
+        <input class="field-input" type="number" maxlength="11" placeholder="11 位手机号"
+               value="{{addPhone}}" bindinput="onAddPhoneInput" />
+      </view>
+      <view class="field">
+        <view class="field-label">他是你的（可不填）</view>
+        <input class="field-input" placeholder="比如：儿子、女儿" value="{{addRelation}}"
+               bindinput="onAddRelationInput" />
+      </view>
+
+      <view class="big-btn {{adding ? 'hold' : ''}}" bindtap="onAddByPhone">
+        {{adding ? '正在加…' : '加进来'}}
+      </view>
+      <view class="basket-note">手机号只用来认人，页面上只显示中间几位</view>
+    </view>
+
+  </block>
+
+</view>

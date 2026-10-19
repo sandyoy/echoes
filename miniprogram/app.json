@@ -5,7 +5,9 @@
     "pages/timeline/timeline",
     "pages/interview/interview",
     "pages/book/book",
-    "pages/claim/claim"
+    "pages/claim/claim",
+    "pages/family/family",
+    "pages/card/card"
   ],
   "window": {
     "navigationBarBackgroundColor": "#faf6f0",

@@ -44,6 +44,9 @@
 
     <view class="big-btn" bindtap="onOpenBook">我要成书</view>
 
+    <!-- ★ 加家人（10-16 4 路由）：标准版露出；大字版不显示（大字版只有「按住说话」+「更多」） -->
+    <view class="switch" bindtap="onOpenFamily">家里人</view>
+
     <!-- 故事列表占位（数据主体=故事，v2.4 §2.1） -->
     <view class="list-title">我的故事</view>
     <view wx:if="{{stories.length === 0}}" class="empty">还没有故事，先录一段吧</view>

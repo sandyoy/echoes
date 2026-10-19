@@ -233,5 +233,20 @@ Page({
       url: '/pages/timeline/timeline',
       fail: () => { /* 时间轴页未就绪时静默 */ }
     });
+  },
+
+  /** ★ 做成一张图：把整本书画成一张卡（kind=book，target_id=owner_id） */
+  onOpenCard() {
+    const d = this.data;
+    const target = d.ownerId || d.actorId;
+    if (!target) {
+      wx.showToast({ title: '还没登录呢', icon: 'none' });
+      return;
+    }
+    const t = encodeURIComponent(d.bookTitle || '我的书');
+    wx.navigateTo({
+      url: `/pages/card/card?kind=book&target_id=${encodeURIComponent(target)}&title=${t}`,
+      fail: () => { /* 卡片页未就绪时静默 */ }
+    });
   }
 });

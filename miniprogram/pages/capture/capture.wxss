@@ -51,3 +51,12 @@
   border-radius: 12rpx;
   font-size: var(--font-base);
 }
+
+/* ★ 做成一张图（次要入口，不抢「保存」的主位） */
+.sb-btn {
+  margin-top: calc(var(--space) / 2);
+  text-align: center;
+  padding: var(--space);
+  color: var(--color-accent);
+  font-size: var(--font-base);
+}

@@ -109,5 +109,13 @@ Page({
   /** 进入成书页 */
   onOpenBook() {
     wx.navigateTo({ url: '/pages/book/book' });
+  },
+
+  /** ★ 加家人页（v3.0 §2.2/§2.3）：标准版入口；大字版不露出（只留「按住说话」+「更多」） */
+  onOpenFamily() {
+    wx.navigateTo({
+      url: '/pages/family/family',
+      fail: () => { /* 家人页未就绪时静默 */ }
+    });
   }
 });
