@@ -1226,7 +1226,7 @@ def card_render_png(kind: str, target_id: str = "", actor_id: str = "",
         if kind == "story":
             png = card_render.render_story_card(db, story_id=target_id)
         elif kind == "book":
-            png = card_render.render_book_card(db, owner_id=target_id or actor)
+            png = card_render.render_book_card(db, owner_id=target_id or actor_id)
         else:
             return {"ok": False, "code": "bad_kind", "error": f"不认识的卡片类型：{kind}", "data": {}}
     except PermissionError as e:
