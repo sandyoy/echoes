@@ -245,8 +245,17 @@ function clipTranscribe(clipId, actorId) {
   return post(CLIP.TRANSCRIBE, { clip_id: clipId, actor_id: actorId });
 }
 /** 取素材筐（已按 sort_order 排好，直接渲染） */
-function clipList(storyId, viewerId) {
-  return get(CLIP.LIST, { story_id: storyId, viewer_id: viewerId });
+/**
+ * 这条故事下的素材列表。
+ * owner_id 必须带：后端拿它做权限判定的根，缺了会判成「看不到」返回空。
+ * viewer_id 缺省 = owner 自己。
+ */
+function clipList(storyId, viewerId, ownerId) {
+  return get(CLIP.LIST, {
+    story_id: storyId,
+    viewer_id: viewerId || ownerId || '',
+    owner_id: ownerId || viewerId || ''
+  });
 }
 /** 取上传地址（对象存储未定前会返 upload_not_configured，属预期） */
 function uploadUrl(fileName, fileSize, mime) {
@@ -576,6 +585,180 @@ function cardPreview(o) {
   });
 }
 
+// ============================================================
+// ★ P0-2（小鲸鱼 10-22 活地图）：后端已就绪、前端原先未接的 4 组接口
+//   一律「后端有、前端原无」，本次按活地图顺序 A→B→C→D 补接。
+//   明确不接：pay/* 支付、print/* 印刷、share/* 分享、storage/media_url、tts/*、group/*
+// ============================================================
+
+// —— A 成书的读：我的书列表 / 读某一本 / 锁状态 / 续添 ——
+const BOOK_EXTRA = {
+  MY: '/api/echoes/book/my',               // GET  user_id      → 我有哪些书
+  VIEW: '/api/echoes/book/view',           // GET  owner_id      → 读某一本（scroll/paged/photobook）
+  LOCK_STATE: '/api/echoes/book/lock_state', // GET owner_id    → 锁没锁、锁了买哪个（§九 收费闸门）
+  APPEND: '/api/echoes/book/append'        // POST owner_id      → 往书里续添故事
+};
+
+/**
+ * 我有哪些书。
+ * @param {string} userId 必填
+ * @returns {Promise<{books:[]}>}
+ */
+function bookMy(userId) {
+  return get(BOOK_EXTRA.MY, { user_id: userId });
+}
+
+/**
+ * 读某一本书（§8.6 三种形态）。
+ * @param {string} ownerId  书的主人（必填）
+ * @param {object} [o] {viewerId, form:'scroll'|'paged'|'photobook', bookSpec:'A5'}
+ * @returns {Promise<{book:{...}}>}
+ */
+function bookView(ownerId, o) {
+  const opt = o || {};
+  return get(BOOK_EXTRA.VIEW, {
+    owner_id: ownerId || '',
+    viewer_id: opt.viewerId || '',
+    form: opt.form || 'scroll',
+    book_spec: opt.bookSpec || 'A5'
+  });
+}
+
+/**
+ * 这本书锁不锁（进「我的书」页先调它；locked=true 显示预览+解锁按钮，别直接请求 view 撞锁）。
+ * @param {string} ownerId 必填
+ * @returns {Promise<{locked,price?,product?,hint?}>}
+ */
+function bookLockState(ownerId) {
+  return get(BOOK_EXTRA.LOCK_STATE, { owner_id: ownerId || '' });
+}
+
+/**
+ * 往书里续添故事（空数组 = 自动补进尚无的故事）。
+ * @param {string} ownerId 必填
+ * @param {object} [o] {actorId, storyIds:[]}
+ * @returns {Promise<{ebook_id,added_count,story_count}>}
+ */
+function bookAppend(ownerId, o) {
+  const opt = o || {};
+  return post(BOOK_EXTRA.APPEND, {
+    owner_id: ownerId || '',
+    actor_id: opt.actorId || ownerId || '',
+    story_ids: opt.storyIds || []
+  });
+}
+
+// —— B 故事详情 / 列表 / 新建 / 删除 ——
+const STORY = {
+  DETAIL: '/api/echoes/story/detail',      // GET  story_id, owner_id, viewer_id
+  LIST: '/api/echoes/story/list',          // GET  owner_id, viewer_id, limit, offset
+  CREATE: '/api/echoes/story/create',      // POST owner_id, actor_id, title, raw_content...
+  DELETE: '/api/echoes/story/delete'       // POST story_id, owner_id, actor_id
+};
+
+/**
+ * 一条故事的详情。
+ * @param {string} storyId 必填
+ * @param {string} ownerId 书的主人（权限的根）
+ * @param {string} [viewerId] 看的人；空 = 主人本人
+ */
+function storyDetail(storyId, ownerId, viewerId) {
+  return get(STORY.DETAIL, {
+    story_id: storyId || '',
+    owner_id: ownerId || '',
+    viewer_id: viewerId || ''
+  });
+}
+
+/**
+ * 一个人的故事列表。
+ * @param {string} ownerId 必填
+ * @param {object} [o] {viewerId, limit:200, offset:0}
+ * @returns {Promise<{stories:[],total}>}
+ */
+function storyList(ownerId, o) {
+  const opt = o || {};
+  return get(STORY.LIST, {
+    owner_id: ownerId || '',
+    viewer_id: opt.viewerId || '',
+    limit: opt.limit || 200,
+    offset: opt.offset || 0
+  });
+}
+
+/**
+ * 新建一条故事。
+ * @param {object} o {ownerId, actorId, title, rawContent, summary, timeRaw, peopleMentioned, storyId}
+ *   storyId 传了则幂等返回（弱网重试防重建）
+ */
+function storyCreate(o) {
+  const d = o || {};
+  return post(STORY.CREATE, {
+    owner_id: d.ownerId || '',
+    actor_id: d.actorId || d.ownerId || '',
+    title: d.title || '',
+    raw_content: d.rawContent || '',
+    summary: d.summary || '',
+    time_raw: d.timeRaw || '',
+    people_mentioned: d.peopleMentioned || [],
+    story_id: d.storyId || ''
+  });
+}
+
+/**
+ * 删一条故事（软删，真删在后端；前端只传 id）。
+ * @param {string} storyId 必填
+ * @param {string} ownerId 必填
+ * @param {string} [actorId]
+ */
+function storyDelete(storyId, ownerId, actorId) {
+  return post(STORY.DELETE + '?story_id=' + encodeURIComponent(storyId || ''), {
+    story_id: storyId || '',
+    owner_id: ownerId || '',
+    actor_id: actorId || ownerId || ''
+  });
+}
+
+// —— C 素材可见性（§1.2：默认私有，提供人主动公开；权限模型的核心） ——
+const CLIP_VISIBILITY = '/api/echoes/clip/visibility';
+
+/**
+ * 把一条素材设为公开/私有。
+ * @param {string} clipId   必填
+ * @param {string} actorId  操作人（必须是提供人/书主人）
+ * @param {string} visibility 'public' | 'private'
+ */
+function clipSetVisibility(clipId, actorId, visibility) {
+  return post(CLIP_VISIBILITY, {
+    clip_id: clipId || '',
+    actor_id: actorId || '',
+    visibility: visibility || 'private'
+  });
+}
+
+// —— D 采访收尾：复述确认（§7.4/§7.5/§7.6 C 方案） ——
+const RECAP_CONFIRM = '/api/echoes/interview/recap_confirm';
+
+/**
+ * 采访收尾「确认这段记下来」。answer_key 空 = 只出复述脚本；
+ * accept + apply=true → 写回 Story.polished_content。
+ * @param {object} o {ownerId, viewerId, storyId, qaPairs, polishedText, answerKey, answerText, retryUsed, apply}
+ */
+function interviewRecapConfirm(o) {
+  const d = o || {};
+  return post(RECAP_CONFIRM, {
+    owner_id: d.ownerId || '',
+    viewer_id: d.viewerId || '',
+    story_id: d.storyId || '',
+    qa_pairs: d.qaPairs || null,
+    polished_text: d.polishedText || '',
+    answer_key: d.answerKey || '',
+    answer_text: d.answerText || '',
+    retry_used: d.retryUsed || 0,
+    apply: !!d.apply
+  });
+}
+
 module.exports = {
   request, get, post, buildUrl,
   CLAIM,
@@ -598,5 +781,12 @@ module.exports = {
   FAMILY,
   familySearch, familyAdd, familyList, familyRemove,
   CARD,
-  cardRenderUrl, cardPreview
+  cardRenderUrl, cardPreview,
+  // P0-2（10-22）：A 成书读 / B 故事 / C 素材可见性 / D 采访收尾
+  BOOK_EXTRA,
+  bookMy, bookView, bookLockState, bookAppend,
+  STORY,
+  storyDetail, storyList, storyCreate, storyDelete,
+  clipSetVisibility,
+  interviewRecapConfirm
 };

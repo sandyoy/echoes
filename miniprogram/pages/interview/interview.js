@@ -40,6 +40,15 @@ Page({
     interruptCount: 0,
     bargeTip: '',           // 「您说，我听着」提示语
 
+    // ★ 收尾确认（P0-2 · D 组 recap_confirm，§7.6 C 方案）
+    qaPairs: [],            // [{"q":..,"a":..}] 本轮一问一答，收尾时交给后端理顺
+    storyId: '',            // 收尾写回哪条故事（空 = 后端按 qa 新建）
+    recapAsk: false,        // 收尾弹层（「我这样记，对不对？」）
+    recapText: '',          // 后端给的复述稿（老人只读）
+    recapBusy: false,
+    finished: false,        // 采访已收尾
+    recapRetry: 0,          // 复述被否的次数（透传给后端 retry_used）
+
     // 归类弹层
     classifyAsk: false,     // ask_classify 返回是否要问
     classifyQ: null,        // {text, buttons[], fallback_buttons_after_ms, safe_default}
@@ -152,16 +161,149 @@ Page({
   onFinishAnswer() {
     const answer = this.data.lastAnswer || '';
     const interruptedQ = this.data.interrupted ? this.data.currentQuestionText : '';
+    const q = this.data.currentQuestionText || '';
     this.setData({ listening: false, submitting: true });
     return api.interviewNext(this.data.ownerId, this.data.viewerId, answer,
                              interruptedQ, this.data.interruptCount)
       .then((data) => {
-        this.setData({ submitting: false, lastAnswer: '', interruptCount: 0 });
+        // ★ 把这一组问答存下来，收尾时一并交给 recap_confirm 理顺成一段话
+        const pairs = this.data.qaPairs.slice();
+        if (q || answer) pairs.push({ q: q, a: answer });
+        this.setData({ submitting: false, lastAnswer: '', interruptCount: 0, qaPairs: pairs });
         this.showQuestion(data);            // state=resumed 时会原样接回刚才那问
       })
       .catch((err) => {
         this.setData({ submitting: false, error: (err && err.message) || '刚才没接上，请再说一次' });
       });
+  },
+
+  // ============ 收尾确认（P0-2 · D 组：/interview/recap_confirm） ============
+  //  §7.6 C 方案：复述 + 归属一次问完；含糊/超时 → 安全默认，绝不卡住老人。
+  //  前端只负责「把 qa 交给后端、把后端给的复述稿读给老人、把答话回传」，不自己写复述、不自己判归属。
+
+  /** 点「聊完了」→ 第一次调用只出复述稿（answer_key 空），让老人确认 */
+  onFinishInterview() {
+    if (this.data.recapBusy) return;
+    this.stopTts();
+    if (!this.data.qaPairs.length) {
+      wx.showToast({ title: '还没聊呢，先说两句', icon: 'none' });
+      return;
+    }
+    this.setData({ recapBusy: true, error: '' });
+    api.interviewRecapConfirm({
+      ownerId: this.data.ownerId,
+      viewerId: this.data.viewerId,
+      storyId: this.data.storyId,
+      qaPairs: this.data.qaPairs
+    }).then((d) => {
+      const dd = d || {};
+      // 屏幕显示：复述稿原文（polished_text）；老人口头听：recap_speech（复述+归属问句）
+      const text = dd.polished_text
+        || ((dd.recap_points || []).length ? (dd.recap_points || []).join('。') + '。' : '');
+      this.setData({
+        recapBusy: false,
+        recapAsk: true,
+        recapText: text,
+        storyId: dd.story_id || this.data.storyId
+      });
+      if (dd.recap_speech) this.speak(dd.recap_speech);
+    }).catch((err) => {
+      this.setData({ recapBusy: false, error: (err && err.message) || '刚才没整理好，请稍后再试' });
+    });
+  },
+
+  /** 老人说「对」→ accept + apply=true，写回故事 */
+  onRecapAccept() {
+    this.submitRecap({ answerKey: 'accept', apply: true });
+  },
+
+  /**
+   * 老人说「不对」→ reject（不落库）。
+   * 后端返回 decision=rejected / need_revise=true → 收回复述，让他重说，
+   * 不写半成品、不硬记（✅ §7.6「宁可重来，不留错账」）。
+   */
+  onRecapReject() {
+    const retry = (this.data.recapRetry || 0) + 1;
+    this.setData({ recapRetry: retry });
+    this.submitRecap({ answerKey: 'reject', retryUsed: retry, apply: false });
+  },
+
+  /** 老人含糊/又补了内容 → 语音原话回传，后端并进自述体并判定 */
+  onRecapSpoken(e) {
+    const text = ((e.detail && e.detail.value) || '').trim();
+    if (!text) return;
+    this.submitRecap({ answerText: text, apply: false });
+  },
+
+  /** 超时不答 → timeout（后端安全默认接受，绝不卡住老人） */
+  onRecapTimeout() {
+    this.submitRecap({ answerKey: 'timeout', apply: false });
+  },
+
+  /**
+   * 统一提交复述确认。
+   * 后端判定字段：decision = accepted / rejected（空 = 还在复述阶段）
+   * apply=true 时才写回；写回失败后端给 applied=false + apply_error，不回滚成假成功。
+   */
+  submitRecap(o) {
+    const opt = o || {};
+    if (this.data.recapBusy) return;
+    this.setData({ recapBusy: true });
+    api.interviewRecapConfirm({
+      ownerId: this.data.ownerId,
+      viewerId: this.data.viewerId,
+      storyId: this.data.storyId,
+      qaPairs: this.data.qaPairs,
+      polishedText: this.data.recapText,
+      answerKey: opt.answerKey || '',
+      answerText: opt.answerText || '',
+      retryUsed: opt.retryUsed || 0,
+      apply: !!opt.apply
+    }).then((d) => {
+      const dd = d || {};
+      const decision = (dd.decision || '').trim();
+      const text = dd.polished_text || this.data.recapText;
+
+      // ① 老人说要改 → 收回复述稿，回到说话状态，重说一遍（不留半成品）
+      if (decision === 'rejected') {
+        this.setData({ recapBusy: false, recapAsk: false, recapText: '', storyId: dd.story_id || this.data.storyId });
+        wx.showToast({ title: '好，您再说一遍', icon: 'none' });
+        this.startListening();
+        return;
+      }
+
+      // ② 还在复述阶段（没听懂/重报）→ 后端给了新 script，继续读
+      if (!decision) {
+        const say = dd.recap_speech || text;
+        this.setData({
+          recapBusy: false,
+          recapRetry: dd.retry_used || this.data.recapRetry,
+          recapText: dd.polished_text || this.data.recapText
+        });
+        if (say) this.speak(say);
+        return;
+      }
+
+      // ③ accepted → 收尾
+      this.setData({ recapBusy: false, recapAsk: false, finished: true });
+      if (dd.applied === false) {
+        // 话听完了但没写进故事：诚实告知，不假装成功
+        wx.showToast({ title: dd.apply_error || '话记好了，但没存进故事', icon: 'none' });
+      } else {
+        wx.showToast({ title: '记下来了', icon: 'none' });
+      }
+    }).catch((err) => {
+      this.setData({ recapBusy: false });
+      wx.showToast({ title: (err && err.message) || '没记上，稍后再试', icon: 'none' });
+    });
+  },
+
+  /** 收尾后回首页 */
+  onBackHome() {
+    wx.switchTab({
+      url: '/pages/index/index',
+      fail: () => wx.reLaunch({ url: '/pages/index/index' })
+    });
   },
 
   /** 模拟输入一句回答（本机联调；真机由语音识别填入） */
@@ -248,6 +390,9 @@ Page({
     this.clearClassifyTimer();
     this.setData({ classifyAsk: false, classifyQ: null, classifyButtonsShown: false });
   },
+
+  /** 弹层遮罩吞掉点击（防止点穿到底下的按钮） */
+  noop() {},
 
   // ============ 「别问了」开关 ============
 

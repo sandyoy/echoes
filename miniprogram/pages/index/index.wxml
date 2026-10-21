@@ -1,4 +1,6 @@
-<!-- 首页：标准版 / 大字版 同一模板，靠 uiMode 分支 -->
+<!-- 首页：标准版 / 大字版 同一模板，靠 uiMode 分支
+     标准版结构依据：docs/事卷/原型图/首页定稿_候选A_柔和版.png（sandy 已拍板候选A，小鲸鱼 10-22 03:0x 入库 commit af961e71）
+     铁律（sandy 原话）：三块平级同大同形，靠颜色分；禁止把功能按钮竖着罗列当首页。 -->
 <view class="container">
 
   <!-- ===== 大字版：就一个大按钮「按住说话」 ===== -->
@@ -12,48 +14,58 @@
     <view class="more" bindtap="onToggleMode">更多</view>
   </block>
 
-  <!-- ===== 标准版：两门（我自己说 / 让人问我）+ 故事列表 + 成书 ===== -->
+  <!-- ===== 标准版：候选A 柔和版三块卡 ===== -->
   <block wx:else>
-    <view class="title">往事可追忆</view>
 
-    <!-- 「有 N 篇故事提到了你」——登录后由后端算（claim/login 返回 mentioned_count）
-         N>0 才显示；整块可点，进待认领页（被提到的人看那篇永远不需要授权） -->
+    <!-- 顶部：标题 + 副标 + 右上角头像 -->
+    <view class="hero">
+      <view class="hero-text">
+        <view class="title">往事可追忆</view>
+        <view class="subtitle">说说您这一辈子，家里人也能听着</view>
+      </view>
+      <view class="avatar" bindtap="onOpenAvatar">{{avatarText}}</view>
+    </view>
+
+    <!-- 「有 N 篇故事提到了你」——N>0 才显示；整块可点，进待认领页 -->
     <view wx:if="{{mentionedCount > 0}}" class="notice" bindtap="onOpenMentioned">
       有 {{mentionedCount}} 篇故事提到了你
     </view>
 
-    <!-- ★ 首页两门（v3.0 §6.0）：上层是「两种写故事的姿态」，进门即模式，不给老人做选择题 -->
-    <!-- 门1：我自己说 = 自述 → 走四种录法（下层） -->
-    <view class="door">
-      <view class="door-title">我自己说</view>
-      <view class="door-sub">想到啥说啥，都记下来</view>
-      <view class="big-btn" data-type="voice" bindtap="onCapture">说话</view>
-      <view class="row">
-        <view class="big-btn small" data-type="text"  bindtap="onCapture">写文字</view>
-        <view class="big-btn small" data-type="photo" bindtap="onCapture">拍照片</view>
-        <view class="big-btn small" data-type="video" bindtap="onCapture">拍视频</view>
+    <!-- 主区三块：橙卡「自己说」/ 青卡「有人问我」/ 第三块拆「时间轴」+「我的书」两小卡
+         三块视觉平级（同大同形），颜色只用来区分，不用大小区分主次 -->
+    <view class="cards">
+      <!-- 卡1 · 橙 · 自己说 -->
+      <view class="card card-orange" bindtap="onCaptureVoice">
+        <view class="card-title">自己说</view>
+        <view class="card-sub">想到啥说啥，按住就说</view>
+        <view class="card-btn">现在就说</view>
+      </view>
+
+      <!-- 卡2 · 青 · 有人问我 -->
+      <view class="card card-teal" bindtap="onOpenInterview">
+        <view class="card-title">有人问我</view>
+        <view class="card-sub">我一问，您就想起来了</view>
+        <view class="card-btn">开始聊</view>
+      </view>
+
+      <!-- 卡3 · 同一个格子里并排两张小卡 -->
+      <view class="card card-pair">
+        <view class="mini mini-warm" bindtap="onOpenTimeline">
+          <view class="mini-title">时间轴</view>
+          <view class="mini-sub">看看故事排在哪</view>
+        </view>
+        <view class="mini mini-soft" bindtap="onOpenBook">
+          <view class="mini-title">我的书</view>
+          <view class="mini-sub">这一辈子，成一本书</view>
+        </view>
       </view>
     </view>
 
-    <!-- 门2：让人问我 = 采访 → 直接进对话框（AI 问-老人答，只有语音，v3.0 §7.1） -->
-    <view class="door">
-      <view class="door-title">让人问我</view>
-      <view class="door-sub">有人一问一答，想起来的更多</view>
-      <view class="big-btn" bindtap="onOpenInterview">开始采访</view>
-    </view>
-
-    <view class="big-btn" bindtap="onOpenBook">我要成书</view>
-
-    <!-- ★ 加家人（10-16 4 路由）：标准版露出；大字版不显示（大字版只有「按住说话」+「更多」） -->
-    <view class="switch" bindtap="onOpenFamily">家里人</view>
-
-    <!-- 故事列表占位（数据主体=故事，v2.4 §2.1） -->
+    <!-- 我的故事（数据主体=故事，v2.4 §2.1）；详情页 pages/story -->
     <view class="list-title">我的故事</view>
     <view wx:if="{{stories.length === 0}}" class="empty">还没有故事，先录一段吧</view>
     <view wx:for="{{stories}}" wx:key="id" class="story-item" data-story-id="{{item.id}}" bindtap="onTapStory">{{item.title}}</view>
 
-    <!-- 时间轴（灵魂功能，v3.0 §五）：目录，看故事排在哪 -->
-    <view class="switch" bindtap="onOpenTimeline">看时间轴</view>
     <view class="switch" bindtap="onToggleMode">切换大字版</view>
   </block>
 

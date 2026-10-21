@@ -50,6 +50,7 @@
       <view class="barge-row">
         <view class="ghost-btn" bindtap="onBargeIn" data-energy="-10">我要插话</view>
         <view class="ghost-btn" bindtap="onMuteAsk">别问了</view>
+        <view class="ghost-btn" bindtap="onFinishInterview">聊完了</view>
       </view>
     </block>
   </block>
@@ -70,6 +71,27 @@
       <view class="sheet-btn ghost" bindtap="onClassifyTimeout">想不起来 / 是新的一件事</view>
       <view class="sheet-cancel" bindtap="onCloseClassify">（先不管）</view>
     </block>
+  </view>
+
+  <!-- ===== 收尾确认弹层（P0-2 D 组：我这样记，对不对？） ===== -->
+  <view wx:if="{{recapAsk}}" class="mask" catchtap="noop"></view>
+  <view wx:if="{{recapAsk}}" class="sheet" catchtap="noop">
+    <view class="sheet-read">我这样记，对不对？</view>
+    <view class="recap-text">{{recapText}}</view>
+    <view wx:if="{{recapBusy}}" class="hint">正在记…</view>
+    <block wx:else>
+      <view class="sheet-btn" bindtap="onRecapAccept">对，就是这样</view>
+      <view class="sheet-btn ghost" bindtap="onRecapReject">不太对，再改改</view>
+      <view class="sheet-cancel" bindtap="onRecapTimeout">（说不上来，先这样）</view>
+    </block>
+  </view>
+
+  <!-- ===== 收尾完成 ===== -->
+  <view wx:if="{{finished}}" class="mask" catchtap="noop"></view>
+  <view wx:if="{{finished}}" class="sheet" catchtap="noop">
+    <view class="sheet-read">记下来了</view>
+    <view class="sheet-ask">您讲的这段，我给您存好了。</view>
+    <view class="sheet-btn" bindtap="onBackHome">回首页</view>
   </view>
 
 </view>

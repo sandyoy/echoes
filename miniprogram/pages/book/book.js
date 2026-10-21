@@ -47,6 +47,8 @@ Page({
     title: '',
 
     // —— 成书态 ——
+    locked: false,        // §九 收费闸门：这本书锁着（进页先查 lock_state）
+    lockInfo: null,       // {product?,price?,hint?} —— 锁着时显示预览+解锁引导
     ebookEmpty: true,     // 还没成书（**不是错误**）
     ebookId: '',          // 上次成书的 id（活文档：刷新时回传）
     bookTitle: '',
@@ -184,19 +186,33 @@ Page({
 
   // ===================== 我的书 =====================
 
-  /** 取我的电子书（进「我的书」时读） */
+  /** 取我的电子书（进「我的书」时读）
+   *  P0-2 · A 组：先调 /book/lock_state（§九 收费闸门），locked=true 就停在这里显示预览+解锁，
+   *  不直接请求 ebook 撞锁（后端提示原文写在 book_lock_state 的 docstring 里）。 */
   loadEbook() {
     const d = this.data;
     if (!d.ownerId) return Promise.resolve();
     this.setData({ loading: true, error: '' });
-    return api.bookEbook(d.ownerId, d.actorId)
-      .then((data) => {
-        const dd = data || {};
-        if (dd.empty || !dd.book) {
-          this.setData({ loading: false, ebookEmpty: true });
-          return;
+    return api.bookLockState(d.ownerId)
+      .then((ls) => {
+        const state = ls || {};
+        this.setData({
+          locked: !!state.locked,
+          lockInfo: state.locked ? state : null
+        });
+        if (state.locked) {
+          this.setData({ loading: false, ebookEmpty: false });
+          return null;
         }
-        this.applyBook(dd.book, (dd.book && dd.book.clip_count));
+        return api.bookEbook(d.ownerId, d.actorId)
+          .then((data) => {
+            const dd = data || {};
+            if (dd.empty || !dd.book) {
+              this.setData({ loading: false, ebookEmpty: true });
+              return;
+            }
+            this.applyBook(dd.book, (dd.book && dd.book.clip_count));
+          });
       })
       .catch((err) => {
         this.setData({ loading: false, error: (err && err.message) || '没取到书，请稍后再试' });

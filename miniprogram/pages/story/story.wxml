@@ -1,0 +1,42 @@
+<!-- 故事详情页（P0-2 · B 组）：一条故事 = 标题 + 时间（原样） + 正文 + 素材（可设可见性） -->
+<view class="container">
+
+  <view wx:if="{{loading}}" class="hint">正在打开…</view>
+
+  <block wx:elif="{{error}}">
+    <view class="err">{{error}}</view>
+    <view class="btn" bindtap="load">再试一次</view>
+    <view class="btn ghost" bindtap="onBack">返回</view>
+  </block>
+
+  <block wx:else>
+    <view class="s-title">{{story.title || '没起名字的一段'}}</view>
+
+    <!-- 时间：只显示 time_raw 原样老人说法，不加工（接口定义 §三-2） -->
+    <view wx:if="{{story.time_raw}}" class="s-time">{{story.time_raw}}</view>
+
+    <!-- 正文：优先显示采访理顺后的成品 -->
+    <view wx:if="{{story.polished_content}}" class="s-body">{{story.polished_content}}</view>
+    <view wx:elif="{{story.raw_content}}" class="s-body">{{story.raw_content}}</view>
+    <view wx:else class="empty">这段还没成文字，只有录音/图片</view>
+
+    <!-- 素材：谁能看由后端判，前端只给主人露开关 -->
+    <view wx:if="{{clips.length > 0}}" class="sec-title">这段里的素材</view>
+    <view wx:for="{{clips}}" wx:key="clip_id" class="clip">
+      <view class="clip-main">
+        <view class="clip-type">{{item.type || item.kind || '素材'}}</view>
+        <view class="clip-state">{{item.visibility === 'public' ? '家里人能看' : '只自己看'}}</view>
+      </view>
+      <view wx:if="{{canEdit}}"
+            class="clip-btn"
+            data-clip-id="{{item.clip_id}}"
+            data-visibility="{{item.visibility || 'private'}}"
+            bindtap="onToggleVisibility">{{item.visibility === 'public' ? '收回' : '给家里人看'}}</view>
+    </view>
+
+    <!-- 主人才能删（真正的权限判定在后端） -->
+    <view wx:if="{{canEdit}}" class="btn danger" bindtap="onDelete">删掉这条故事</view>
+    <view class="btn ghost" bindtap="onBack">返回</view>
+  </block>
+
+</view>

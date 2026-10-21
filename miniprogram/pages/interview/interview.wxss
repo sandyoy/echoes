@@ -123,3 +123,17 @@
   border: 1rpx solid var(--color-accent);
 }
 .sheet-cancel { text-align: center; color: #999; padding: 12rpx 0; }
+
+/* 收尾复述稿：老人只读，字大、行距松，不窄于两行 */
+.recap-text {
+  font-size: var(--font-base);
+  line-height: 1.8;
+  color: #3b332b;
+  background: #FDF8F0;
+  border-radius: 16rpx;
+  padding: calc(var(--space) * 1.2);
+  margin-bottom: calc(var(--space) * 1.2);
+  max-height: 45vh;
+  overflow-y: auto;
+}
+.ui-large .recap-text { font-size: 44rpx; }
