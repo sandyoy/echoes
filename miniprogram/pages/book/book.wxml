@@ -96,7 +96,15 @@
   <!-- ===================== 我的书（成书态） ===================== -->
   <block wx:else>
 
-    <view wx:if="{{ebookEmpty}}" class="empty">
+    <!-- §九 收费闸门（P0-2 · A 组 /book/lock_state）：锁着就只给预览 + 解锁引导，
+         不直接放全文，也不自己编价格 —— 价格/产品一律用后端回的字段 -->
+    <view wx:if="{{locked}}" class="empty">
+      <view class="empty-text">{{lockInfo.notice || '这本书还没解锁，先看看样子'}}</view>
+      <view wx:if="{{lockInfo.price}}" class="empty-text">{{lockInfo.plan_name || '解锁'}}：{{lockInfo.price}} 元</view>
+      <view class="big-btn" bindtap="onTabSource">先去看看素材</view>
+    </view>
+
+    <view wx:elif="{{ebookEmpty}}" class="empty">
       <view class="empty-text">这本书还没做呢，先去挑素材吧</view>
       <view class="big-btn" bindtap="onTabSource">去挑素材</view>
     </view>

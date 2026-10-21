@@ -1,6 +1,32 @@
-/* 首页样式（字号/间距由 app.wxss 的 CSS 变量驱动，切 ui-mode 即变） */
-.row { display: flex; gap: var(--space); }
-.big-btn.small { font-size: var(--font-base); }
+/* 首页样式（字号/间距由 app.wxss 的 CSS 变量驱动，切 ui-mode 即变）
+   结构依据：docs/事卷/原型图/首页定稿_候选A_柔和版.png（候选A 柔和版）
+   配色取自定稿图：底色暖米白 #FDF8F0，橙卡 #E6914E，青卡 #6FB0AA */
+
+/* —— 顶部：标题 + 副标 + 头像 —— */
+.hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space);
+}
+.hero .title { margin-bottom: 8rpx; }
+.subtitle {
+  font-size: var(--font-base);
+  color: #9a8f83;
+}
+.avatar {
+  flex: none;
+  width: 88rpx;
+  height: 88rpx;
+  line-height: 88rpx;
+  text-align: center;
+  border-radius: 50%;
+  background: #fff;
+  color: #c4956a;
+  font-size: var(--font-base);
+  font-weight: 600;
+  border: 2rpx solid #efe4d6;
+}
 
 /* 「有 N 篇故事提到了你」提示块（标准版；大字版首页不显示此块） */
 .notice {
@@ -12,6 +38,74 @@
   text-align: center;
 }
 
+/* —— 主区三块卡：三块同大同形，靠颜色分，不许一大两小 —— */
+.cards { margin-bottom: var(--space); }
+
+.card {
+  position: relative;
+  min-height: 300rpx;
+  border-radius: 28rpx;
+  padding: var(--space) calc(var(--space) * 1.2);
+  margin-bottom: var(--space);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.card-orange { background: #e6914e; color: #fff; }
+.card-teal   { background: #6fb0aa; color: #fff; }
+
+.card-title {
+  font-size: var(--font-title);
+  font-weight: 600;
+}
+.card-sub {
+  font-size: var(--font-base);
+  opacity: 0.92;
+  margin-top: 8rpx;
+}
+.card-btn {
+  align-self: flex-start;
+  margin-top: var(--space);
+  padding: 12rpx 40rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.94);
+  color: #4a3b2c;
+  font-size: var(--font-base);
+  font-weight: 600;
+}
+
+/* 第三块：与前两块同高度同圆角，内部两张小卡并排 */
+.card-pair {
+  flex-direction: row;
+  align-items: stretch;
+  padding: 0;
+  background: transparent;
+  gap: var(--space);
+}
+.mini {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 28rpx;
+  padding: var(--space);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.mini-warm { background: #f6e3cd; color: #8a5a2b; }   /* 暖沙：时间轴 */
+.mini-soft { background: #dfeeec; color: #2f615c; }   /* 浅青：我的书 */
+.mini-title {
+  font-size: var(--font-title);
+  font-weight: 600;
+}
+.mini-sub {
+  font-size: var(--font-base);
+  opacity: 0.85;
+  margin-top: 8rpx;
+}
+
+/* —— 我的故事列表 —— */
 .list-title {
   font-size: var(--font-base);
   font-weight: 600;
@@ -25,22 +119,9 @@
   margin-bottom: calc(var(--space) / 2);
 }
 
-/* 首页两门（v3.0 §6.0）：【我自己说】= 自述 ｜ 【让人问我】= 采访，平级 */
-.door {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: var(--space);
-  margin-bottom: var(--space);
-}
-.door-title {
-  font-size: var(--font-title);
-  font-weight: 600;
-}
-.door-sub {
-  color: #999;
-  font-size: var(--font-base);
-  margin: calc(var(--space) / 3) 0 var(--space);
-}
+/* —— 其它 —— */
+.row { display: flex; gap: var(--space); }
+.big-btn.small { font-size: var(--font-base); }
 .switch {
   margin-top: var(--space);
   text-align: center;

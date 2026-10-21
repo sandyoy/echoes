@@ -1,6 +1,7 @@
 /**
  * pages/index/index.js — 首页（双界面）
- * 标准版：故事列表 + 成书 + 全部功能（v2.4 §3.3）
+ * 标准版：定稿图「首页定稿_候选A_柔和版.png」形态 —— 顶部标题+副标+头像，主区三块平级卡
+ *         （橙「自己说」/ 青「有人问我」/ 时间轴+我的书两小卡），下面「我的故事」列表
  * 大字版：就一个大按钮「按住说话」，其余收起（v2.4 §3.3）
  *
  * 登录态（小鲸鱼 09-29《接口定义_登录态v1》）：进小程序第一件事
@@ -18,10 +19,11 @@ const api = require('../../utils/api.js');
 Page({
   data: {
     uiMode: 'standard',
-    stories: [],            // TODO(接口): 故事列表接口，等小鲸鱼后续交定义；当前为本地占位
+    stories: [],            // 故事列表（当前本地占位；P0-2 接 /story/list 后换真数据）
     mentionedCount: 0,      // 有 N 篇故事提到了你（后端算，前端只显示）
     loginReady: false,      // 登录是否已成功（真登录态）
     isNewUser: false,       // 首次进来（按此决定引导，v2.4）
+    avatarText: '我',       // 右上角头像里的字（有昵称取首字）
     busy: false
   },
 
@@ -56,6 +58,14 @@ Page({
     wx.navigateTo({ url: '/pages/claim/claim' });
   },
 
+  /** 右上角头像：暂进「家里人」页（个人资料页尚未设计，不新造空页） */
+  onOpenAvatar() {
+    wx.navigateTo({
+      url: '/pages/family/family',
+      fail: () => { /* 家人页未就绪时静默，不打断 */ }
+    });
+  },
+
   /** 切换标准版 / 大字版（v2.4 §3.2：随时可切） */
   onToggleMode() {
     const next = app.getUiMode() === 'large' ? 'standard' : 'large';
@@ -74,13 +84,18 @@ Page({
     // 按住结束占位；真实录音 stop 由 ASR 接口接入后实现
   },
 
+  /** 卡1「现在就说」→ 进采集页（语音）。进门默认语音，其余录法在采集页里选 */
+  onCaptureVoice() {
+    wx.navigateTo({ url: '/pages/capture/capture?type=voice' });
+  },
+
   /** 标准版：进入采集页（文字/语音/照片/视频 四类） */
   onCapture(e) {
     const type = (e && e.currentTarget && e.currentTarget.dataset.type) || 'text';
     wx.navigateTo({ url: `/pages/capture/capture?type=${type}` });
   },
 
-  /** ★ 门2「让人问我」= 采访（v3.0 §6.0/§7.1：独立入口、与自述平级，直接进对话框） */
+  /** 卡2「开始聊」= 采访（v3.0 §6.0/§7.1：独立入口、与自述平级，直接进对话框） */
   onOpenInterview() {
     wx.navigateTo({
       url: '/pages/interview/interview',
@@ -88,7 +103,7 @@ Page({
     });
   },
 
-  /** ★ 看时间轴（灵魂功能，v3.0 §五：时间轴是目录、故事是章节） */
+  /** 卡3「时间轴」（灵魂功能，v3.0 §五：时间轴是目录、故事是章节） */
   onOpenTimeline() {
     wx.navigateTo({
       url: '/pages/timeline/timeline',
@@ -96,22 +111,22 @@ Page({
     });
   },
 
-  /** 点故事卡 → 展开看故事（§1.3-4：点是"看故事"，走采集页详情） */
+  /** 点故事卡 → 看故事详情（P0-2 新建 pages/story） */
   onTapStory(e) {
     const sid = (e && e.currentTarget && e.currentTarget.dataset.storyId) || '';
     if (!sid) return;
     wx.navigateTo({
-      url: '/pages/capture/capture?story_id=' + encodeURIComponent(sid),
-      fail: () => { /* 采集页未就绪时静默 */ }
+      url: '/pages/story/story?story_id=' + encodeURIComponent(sid),
+      fail: () => { /* 详情页未就绪时静默 */ }
     });
   },
 
-  /** 进入成书页 */
+  /** 卡3「我的书」→ 成书页 */
   onOpenBook() {
     wx.navigateTo({ url: '/pages/book/book' });
   },
 
-  /** ★ 加家人页（v3.0 §2.2/§2.3）：标准版入口；大字版不露出（只留「按住说话」+「更多」） */
+  /** 家人页（v3.0 §2.2/§2.3）：现由底部 tabBar「家里人」承担，此方法保留给头像入口 */
   onOpenFamily() {
     wx.navigateTo({
       url: '/pages/family/family',

@@ -7,8 +7,21 @@
     "pages/book/book",
     "pages/claim/claim",
     "pages/family/family",
-    "pages/card/card"
+    "pages/card/card",
+    "pages/story/story"
   ],
+  "tabBar": {
+    "color": "#9a8f83",
+    "selectedColor": "#c4956a",
+    "backgroundColor": "#fffaf4",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/book/book", "text": "我的故事" },
+      { "pagePath": "pages/timeline/timeline", "text": "时间轴" },
+      { "pagePath": "pages/family/family", "text": "家里人" }
+    ]
+  },
   "window": {
     "navigationBarBackgroundColor": "#faf6f0",
     "navigationBarTitleText": "往事可追忆",
