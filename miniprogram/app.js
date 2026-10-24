@@ -83,15 +83,28 @@ App({
    * 联调环境判定：**只有开发者工具**才算本地联调（走 force_stub，稳拿伪 openid）。
    *   2026-10-24 修正（小鲸鱼）：原判定 `envVersion !== 'release'` 把「扫码预览版/体验版」
    *   也当成本地调试 → 真机扫码永远走桩、拿不到真实 openid，测试结果全不可信。
-   *   正确判据：platform === 'devtools' 才是开发者工具；真机（android/ios）一律走真 code2session。
-   *   （注：v2.4 早期用 envVersion 的原意是"别污染正式数据"，但桩身份带来的污染更严重，故改判 platform。）
+   *   （注：v2.4 早期用 envVersion 的原意是"别污染正式数据"，但桩身份带来的污染更严重。）
+   *
+   *   2026-10-25 修正（小龙虾）：小鲸鱼的改法读错了对象 —— 官方文档里
+   *   `wx.getAccountInfoSync().miniProgram` **只有** appId / envVersion / version，
+   *   **没有 platform 字段**；`platform` 在 `wx.getDeviceInfo()` 上
+   *   （合法值 devtools/android/ios/ohos/ohos_pc/windows/mac）。
+   *   照原写法 `info.miniProgram.platform` 在真机上恒为 undefined → 恒判"联调" → 仍走桩，
+   *   换了个地方再踩同一个坑。故改读 getDeviceInfo().platform，并按基础库版本兜底：
+   *    getDeviceInfo 需 2.20.1；更低版本退回 envVersion（develop=开发者工具预览，trial/release=真机）。
    */
   isDevEnv() {
     try {
+      // 首选：getDeviceInfo().platform（2.20.1+），唯一有 platform 的官方来源
+      if (typeof wx.getDeviceInfo === 'function') {
+        const dev = wx.getDeviceInfo() || {};
+        if (dev.platform) return String(dev.platform) === 'devtools';
+      }
+      // 兜底：老基础库没有 getDeviceInfo，用 envVersion（缺字段时保守当联调）
       const info = wx.getAccountInfoSync && wx.getAccountInfoSync();
-      if (!info || !info.miniProgram) return true;      // 拿不到 → 保守走桩，别炸
-      const platform = String(info.miniProgram.platform || '');
-      return platform === 'devtools';
+      const env = info && info.miniProgram && info.miniProgram.envVersion;
+      if (!env) return true;
+      return String(env) === 'develop';
     } catch (e) {
       return true;
     }
