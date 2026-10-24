@@ -330,15 +330,19 @@ class LocalStorage(StorageBase):
 
     def upload_url(self, *, key: str, mime: str = "",
                    expire: int = DEFAULT_EXPIRE_SECONDS) -> dict:
-        # 本地后端"上传地址" = 后端自身的一个 PUT 端点（见 storage/put 路由）
+        # 本地后端"上传地址" = 后端自身的一个端点（见 storage/put 路由）
+
+        # 2026-10-24：微信小程序 wx.uploadFile 只认 POST multipart，
+        # 不认自定义 PUT → 统一改给 POST 表单端点（真机唯一能走的路）。
         return {
-            "upload_url": f"{self.public_base.rsplit('/media', 1)[0]}/api/echoes/storage/put",
-            "method": "PUT",
-            "headers": {"Content-Type": mime or "application/octet-stream"},
+            "upload_url": f"{self.public_base.rsplit('/media', 1)[0]}/api/echoes/storage/upload_form?key={key}",
+            "method": "POST",
+            "headers": {},
+            "form_field": "file",
             "key": key,
             "expire": expire,
             "backend": self.name,
-            "note": "本地后端：PUT 到该地址，body 为文件字节，key 放 query。切 COS 后此处变签名直传地址。",
+            "note": "本地后端：wx.uploadFile 用 POST 表单，字段名 file，key 已在 URL 里。切 COS 后变签名直传地址。",
         }
 
     def public_url(self, *, key: str,

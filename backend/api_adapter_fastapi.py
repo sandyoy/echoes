@@ -1098,7 +1098,7 @@ def storage_confirm(req: StorageConfirmReq, db=Depends(get_db)):
     ★入库那一刻由本人定公开/私有（§6.2.1 + §1.2）——对象必须真的在，否则拒。
     """
     return storage_api.api_confirm_upload(
-        db, actor_id=req.actor_id, owner_id=req.owner_id, key=req.key,
+        db=db, actor_id=req.actor_id, owner_id=req.owner_id, key=req.key,
         kind=req.kind, story_id=req.story_id, file_name=req.file_name,
         file_size=req.file_size, mime=req.mime, visibility=req.visibility,
         duration=req.duration,
@@ -1265,3 +1265,57 @@ def card_preview(req: CardPreviewReq, db=Depends(get_db)):
     except (PermissionError, ValueError, RuntimeError) as e:
         return {"ok": False, "code": "render_unavailable", "error": str(e), "data": {}}
     return chk
+
+
+# ============================================================
+# 真机通道兜底：POST multipart（2026-10-24 落地）
+# ============================================================
+# 为什么必须有这条：
+#   微信小程序 wx.uploadFile **只支持 POST + multipart/form-data**，
+#   不支持自定义 PUT（官方硬限制）。而 LocalStorage.upload_url 给的是
+#   /storage/put（PUT + 原始字节）→ 真机上 wx.uploadFile 打不到它，
+#   图片/录音/视频会表现为"点了没反应"。
+#   故补 POST multipart 兜底端点：字段名 file，key 放 query。
+#   切 COS 后前端直传签名地址，本端点闲置。
+
+@app.post("/api/echoes/storage/upload_form")
+async def storage_upload_form(request: Request, key: str):
+    """真机 wx.uploadFile 落点：POST multipart，字段名 file，key 在 query。"""
+    try:
+        st = storage_api.get_storage()
+    except RuntimeError as e:
+        return {"ok": False, "code": "storage_not_configured", "error": str(e), "data": {}}
+
+    try:
+        form = await request.form()
+    except Exception as e:
+        return {
+            "ok": False, "code": "bad_form",
+            "error": f"表单解析失败：{e}（缺 python-multipart？）", "data": {},
+        }
+
+    up = form.get("file")
+    if up is None:
+        return {"ok": False, "code": "no_file",
+                "error": "表单里没找到 file 字段", "data": {}}
+
+    try:
+        data = await up.read() if hasattr(up, "read") else bytes(up)
+    except Exception as e:
+        return {"ok": False, "code": "read_failed",
+                "error": f"读不出上传内容：{e}", "data": {}}
+
+    if not data:
+        return {"ok": False, "code": "empty_file",
+                "error": "文件是空的，没上传成功", "data": {}}
+
+    try:
+        r = st.put_bytes(key=key, data=data)
+    except ValueError as e:
+        return {"ok": False, "code": "bad_key", "error": str(e), "data": {}}
+
+    if not r.get("stored"):
+        return {"ok": False, "code": "store_failed", "error": "落盘失败", "data": {}}
+
+    return {"ok": True, "data": r,
+            "message": "字节已落盘，请调 /api/echoes/storage/confirm 登记"}
