@@ -24,7 +24,7 @@ App({
     // 后端基址（公网正式环境）。
     //   2026-10-15 修正：真机 request 强制 HTTPS + 已备案域名，本机/局域网地址一律连不上
     //   （原 127.0.0.1:8012 / 192.168.1.86:8012 均废弃）。经小鲸鱼 10-15 回执确认并实测：
-    //   https://yuanaikang.cn 为已备案域名 + HTTPS（Let's Encrypt，Nginx 反代后端 127.0.0.1:3000），
+    //   https://yuanaikang.cn 为已备案域名 + HTTPS（Let's Encrypt，Nginx 反代后端 127.0.0.1:8971），
     //   /api/health、/api/stories/timeline、/api/memorial-book 公网均 200。
     //   ⚠️ 前置：sandy 需在微信公众平台「开发管理→开发设置→服务器域名→request 合法域名」加入
     //   https://yuanaikang.cn ，否则真机仍被微信拦截（仅 sandy 微信可操作）。
@@ -79,11 +79,19 @@ App({
     }
   },
 
-  /** 联调环境判定：非正式版即本地联调（走 force_stub，稳拿伪 openid） */
+  /**
+   * 联调环境判定：**只有开发者工具**才算本地联调（走 force_stub，稳拿伪 openid）。
+   *   2026-10-24 修正（小鲸鱼）：原判定 `envVersion !== 'release'` 把「扫码预览版/体验版」
+   *   也当成本地调试 → 真机扫码永远走桩、拿不到真实 openid，测试结果全不可信。
+   *   正确判据：platform === 'devtools' 才是开发者工具；真机（android/ios）一律走真 code2session。
+   *   （注：v2.4 早期用 envVersion 的原意是"别污染正式数据"，但桩身份带来的污染更严重，故改判 platform。）
+   */
   isDevEnv() {
     try {
       const info = wx.getAccountInfoSync && wx.getAccountInfoSync();
-      return !info || !info.miniProgram || info.miniProgram.envVersion !== 'release';
+      if (!info || !info.miniProgram) return true;      // 拿不到 → 保守走桩，别炸
+      const platform = String(info.miniProgram.platform || '');
+      return platform === 'devtools';
     } catch (e) {
       return true;
     }
