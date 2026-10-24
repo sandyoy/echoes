@@ -10,13 +10,14 @@
  *
  * 接口路径（小鲸鱼 09-26 纠偏单 + 09-28《接口定义_采集v1.1》，全部冻结）：
  *   - 文字   POST /api/echoes/clip/text
- *   - 照片   POST /api/echoes/clip/photo      （先取上传址 → 上传 → 再登记）
- *   - 语音   POST /api/echoes/clip/audio       （保留原声 + 尽量转文字）
- *   - 原声   POST /api/echoes/clip/original    （刻意不转写，保方言/语气）
- *   - 视频   POST /api/echoes/clip/video
+ *   - 照片/语音/原声/视频
+ *            POST /api/echoes/storage/upload_url  （必须带 actor_id + kind → 拿 key + 上传地址）
+ *            wx.uploadFile 上传（后端 upload_form，POST 表单，字段名 file，key 在 URL）
+ *            POST /api/echoes/storage/confirm     （登记入库；返回 media_url，**不再重复挂 clip**）
  *   - 补转写 POST /api/echoes/clip/transcribe  （幂等）
- *   - 取筐   GET  /api/echoes/clip/list?story_id=&viewer_id=
- *   - 上传址 POST /api/echoes/upload/url
+ *   - 取筐   GET  /api/echoes/clip/list?story_id=&viewer_id=&owner_id=（owner_id 必带）
+ *   2026-10-24 改（依据小鲸鱼真机回归单 + 后端 ebe9e0a）：旧流程用 /upload/url（缺 actor_id 被拒）
+ *   且上传后没登记，真机上表现为「传了半天失败/传上去没登记」。以上为现行唯一流程。
  *
  * 信封 {ok,data,error,code}；**前端只看 ok**，ok=false 时把 error（中文人话）原样显示。
  * 三个铁律（v2.4 §六）：
@@ -50,6 +51,7 @@ Page({
     recording: false,
     mediaList: [],     // 本地已选/已录素材（仅展示用）
     clips: [],         // 后端素材筐（已排序，直接渲染）
+    ownerId: '',       // 书的主人（权限判定的根）；空＝用 actorId 顶上（自述场景）
     notice: ''         // 上一次操作的软提示（灰/黄，不吓人）
   },
 
@@ -60,7 +62,8 @@ Page({
       uiMode: app.getUiMode(),
       type,
       storyId: query.storyId || g.currentStoryId || null,
-      actorId: g.userId || ''
+      actorId: g.userId || '',
+      ownerId: query.ownerId || g.ownerId || ''   // 书主人；缺省空＝用 actorId 顶上（自述场景）
     });
     // 登录可能还在路上（onLaunch 异步）—— 落定后补上，不打断用户
     if (!this.data.actorId) {
@@ -88,13 +91,16 @@ Page({
     this.setData({ type: e.currentTarget.dataset.type, notice: '' });
   },
 
-  /** 取素材筐（已排序，直接渲染） */
+  /** 取素材筐（已排序，直接渲染）—— list 接口必须带 owner_id（书主人），10-01 起缺则直接拒 */
   refreshClips() {
     const { storyId, actorId } = this.data;
     if (!storyId) return;
+    const owner = (app.globalData && app.globalData.ownerId) || this.data.ownerId || actorId;
+    if (!owner) return;                 // 主人未知时宁可不查，也不用 viewer 冒充
     callApi(
       '/api/echoes/clip/list?story_id=' + encodeURIComponent(storyId) +
-      '&viewer_id=' + encodeURIComponent(actorId),
+      '&viewer_id=' + encodeURIComponent(actorId) +
+      '&owner_id=' + encodeURIComponent(owner),
       'GET'
     )
       .then((data) => this.setData({ clips: data.clips || [] }))
@@ -158,8 +164,7 @@ Page({
       : /\.(amr)$/i.test(name) ? 'audio/amr' : 'audio/mpeg';
 
     wx.showLoading({ title: '保存中' });
-    // 三步：取上传地址 → 上传字节拿 media_url → 调登记接口
-    this._uploadBytes(path, name, size, mime)
+    this._uploadBytes(path, name, size, mime, isOriginal ? 'original' : 'audio')
       .then((mediaUrl) => {
         const media = {
           mediaUrl: mediaUrl, fileName: name, fileSize: size,
@@ -189,22 +194,49 @@ Page({
       });
   },
 
-  /** 取上传地址 → 上传字节 → 返回 media_url（三段式，对象存储接入后前端一行不改） */
-  _uploadBytes(filePath, fileName, fileSize, mime) {
-    return api.uploadUrl(fileName, fileSize, mime).then((up) =>
-      new Promise((resolve, reject) => {
-        wx.uploadFile({
-          url: up.upload_url, filePath: filePath, name: 'file',
-          success: (r) => {
-            let body = r.data;
-            try { body = typeof body === 'string' ? JSON.parse(body) : body; } catch (err) {}
-            const url = (body && (body.file_url || body.media_url)) || up.file_url || '';
-            url ? resolve(url) : reject(new Error('上传没返回地址'));
-          },
-          fail: () => reject(new Error('上传失败，稍后再试'))
+  /**
+   * 取上传地址 → wx.uploadFile 传字节 → /storage/confirm 登记 → 返回媒体地址
+   * 2026-10-24 改（小鲸鱼后端 ebe9e0a）：
+   *   ① 取址必须带 actor_id + kind（旧 /upload/url 缺 actor_id 会被后端拒）
+   *   ② wx.uploadFile 只认 POST 表单，后端已改成 upload_form（字段名 file，key 在 URL）
+   *   ③ 传完必须调 /storage/confirm 登记，否则素材不算入库；
+   *      登记成功直接返回 media_url，**不再重复挂 clip**（避免一条素材记两次）
+   */
+  _uploadBytes(filePath, fileName, fileSize, mime, kind) {
+    const { storyId, actorId } = this.data;
+    const k = kind || 'image';
+    let key = '';
+    return api.uploadUrl(fileName, fileSize, mime, actorId, k)
+      .then((up) => {
+        key = (up && up.key) || '';
+        const url = api.absUrl(up && up.upload_url);
+        if (!url) return Promise.reject(new Error('上传通道还没开'));
+        return new Promise((resolve, reject) => {
+          wx.uploadFile({
+            url: url, filePath: filePath, name: (up && up.form_field) || 'file',
+            success: (r) => {
+              let body = r.data;
+              try { body = typeof body === 'string' ? JSON.parse(body) : body; } catch (err) {}
+              // wx.uploadFile 的 statusCode 4xx/5xx 也走 success，必须自己判
+              if (r.statusCode && (r.statusCode < 200 || r.statusCode >= 300)) {
+                reject(new Error((body && body.error) || '上传失败，稍后再试')); return;
+              }
+              if (body && body.ok === false) {
+                const e = new Error(body.error || '上传失败，稍后再试');
+                e.code = body.code; reject(e); return;
+              }
+              resolve();
+            },
+            fail: () => reject(new Error('上传失败，稍后再试'))
+          });
         });
       })
-    );
+      .then(() => api.storageConfirm({
+        actorId: actorId, key: key, kind: k, storyId: storyId,
+        fileName: fileName, fileSize: fileSize, mime: mime,
+        visibility: 'private'
+      }))
+      .then((d) => api.absUrl((d && d.media_url) || ''));
   },
 
   // ==================== 文字 ====================
@@ -269,52 +301,38 @@ Page({
     });
   },
 
-  /** 照片三步：取上传地址 → 上传字节 → 用 file_url 登记 */
+  /** 照片：_uploadBytes 内已走「取址 → POST 表单上传 → confirm 登记」，此处只刷新素材筐 */
   _uploadPhoto(item) {
-    const { storyId, actorId } = this.data;
+    const { storyId } = this.data;
     if (!storyId) return;
     const name = (item.path || '').split('/').pop() || '';
     const mime = /\.(png)$/i.test(name) ? 'image/png'
       : /\.(heic)$/i.test(name) ? 'image/heic'
       : /\.(webp)$/i.test(name) ? 'image/webp' : 'image/jpeg';
-    this._uploadBytes(item.path, name, item.size || 0, mime)
-      .then((fileUrl) => callApi('/api/echoes/clip/photo', 'POST', {
-        story_id: storyId, actor_id: actorId, media_url: fileUrl,
-        file_name: name, file_size: item.size || 0, mime: mime,
-        cover_url: '', caption: ''
-      }))
+    this._uploadBytes(item.path, name, item.size || 0, mime, 'image')
       .then(() => this.refreshClips())
       .catch((e) => {
-        // upload_not_configured：上传通道还没接对象存储，属预期，不吓用户
-        if (e.code === 'upload_not_configured') return;
-        wx.showModal({ title: '照片没存上', content: e.message, showCancel: false });
+        wx.showModal({ title: '照片没存上', content: e.message || '稍后再试', showCancel: false });
       });
   },
 
-  /** 视频三步：取上传地址 → 上传字节 → 用 file_url 登记（缩略图作 cover） */
+  /** 视频：_uploadBytes 内已走「取址 → POST 表单上传 → confirm 登记（kind=video，缩略图作 cover）」 */
   _uploadVideo(item, file) {
-    const { storyId, actorId } = this.data;
+    const { storyId } = this.data;
     if (!storyId) return;
     const name = (item.path || '').split('/').pop() || '';
     const mime = /\.(mov)$/i.test(name) ? 'video/quicktime'
       : /\.(m4v)$/i.test(name) ? 'video/x-m4v' : 'video/mp4';
     wx.showLoading({ title: '上传中' });
-    this._uploadBytes(item.path, name, item.size || 0, mime)
-      .then((fileUrl) => api.clipVideo(storyId, actorId, {
-        mediaUrl: fileUrl, coverUrl: (file && file.thumbTempFilePath) || '',
-        fileName: name, fileSize: item.size || 0, mime: mime,
-        duration: (file && file.duration) || 0, caption: ''
-      }))
-      .then((data) => {
+    this._uploadBytes(item.path, name, item.size || 0, mime, 'video')
+      .then(() => {
         wx.hideLoading();
-        if (data && data.notice) this.setData({ notice: data.notice });
-        else wx.showToast({ title: '视频存下了', icon: 'success' });
+        wx.showToast({ title: '视频存下了', icon: 'success' });
         this.refreshClips();
       })
       .catch((e) => {
         wx.hideLoading();
-        if (e.code === 'upload_not_configured') { this.setData({ notice: '上传通道还没开' }); return; }
-        wx.showModal({ title: '视频没存上', content: e.message, showCancel: false });
+        wx.showModal({ title: '视频没存上', content: e.message || '稍后再试', showCancel: false });
       });
   },
 

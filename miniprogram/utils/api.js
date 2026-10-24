@@ -257,9 +257,34 @@ function clipList(storyId, viewerId, ownerId) {
     owner_id: ownerId || viewerId || ''
   });
 }
-/** 取上传地址（对象存储未定前会返 upload_not_configured，属预期） */
-function uploadUrl(fileName, fileSize, mime) {
-  return post(CLIP.UPLOAD_URL, { file_name: fileName, file_size: fileSize, mime: mime });
+/** 取上传地址（10-24 改：真机传素材必须带 actor_id + kind，旧 /upload/url 缺 actor_id 会被后端拒） */
+function uploadUrl(fileName, fileSize, mime, actorId, kind) {
+  return post('/api/echoes/storage/upload_url', {
+    actor_id: actorId || '', kind: kind || 'image',
+    file_name: fileName, file_size: fileSize, mime: mime
+  });
+}
+
+/**
+ * 登记（10-24 新增）：字节传完后必须调 /storage/confirm，否则素材不算入库。
+ * 返回 {clip_id, media_url, visibility, kind, key}
+ */
+function storageConfirm(opt) {
+  const o = opt || {};
+  return post('/api/echoes/storage/confirm', {
+    actor_id: o.actorId || '', key: o.key, kind: o.kind || 'image',
+    story_id: o.storyId || '', file_name: o.fileName || '',
+    file_size: o.fileSize || 0, mime: o.mime || '',
+    visibility: o.visibility || 'private', duration: o.duration || 0
+  });
+}
+
+/** 把后端给的对象地址（/media/...）拼成可直接回显/播放的绝对地址 */
+function absUrl(u) {
+  const s = u || '';
+  if (!s || /^https?:\/\//i.test(s) || /^wxfile:\/\//i.test(s)) return s;
+  const base = (app && app.globalData && app.globalData.apiBase) || '';
+  return base + (s.charAt(0) === '/' ? s : '/' + s);
 }
 
 // ============ 时间轴 线（小鲸鱼 10-06 接口 v1，形状已冻结）============
@@ -768,7 +793,8 @@ module.exports = {
   LOGIN,
   login, wxLoginCode, loginProfile, loginSetUiMode,
   CLIP,
-  clipAudio, clipOriginal, clipVideo, clipTranscribe, clipList, uploadUrl,
+  clipAudio, clipOriginal, clipVideo, clipTranscribe, clipList,
+  uploadUrl, storageConfirm, absUrl,
   TIMELINE,
   timelineGet, timelinePending, timelineSetTime, timelineAutoPlace,
   INTERVIEW,
