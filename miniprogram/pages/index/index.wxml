@@ -26,6 +26,19 @@
       <view class="avatar" bindtap="onOpenAvatar">{{avatarText}}</view>
     </view>
 
+    <!-- 登录失败提示条（2026-10-27）：不再让用户点了没反应，直接说原因 + 可点重试 -->
+    <view wx:if="{{loginError}}" class="login-err" bindtap="onRetryLogin">
+      登录没成功：{{loginError}}
+      <text class="login-err-retry">点这里重试</text>
+    </view>
+
+    <!-- 自测面板（2026-10-27）：把登录全过程摊开，自己看哪一步断了，不用连电脑 -->
+    <view class="diag-toggle" bindtap="onToggleDiag">{{showDiag ? '收起自测' : '看自测过程'}}</view>
+    <view wx:if="{{showDiag}}" class="diag-box">
+      <view wx:for="{{diagLines}}" wx:key="index" class="diag-line">{{item}}</view>
+      <view class="diag-copy" bindtap="onCopyDiag">复制全部</view>
+    </view>
+
     <!-- 「有 N 篇故事提到了你」——N>0 才显示；整块可点，进待认领页 -->
     <view wx:if="{{mentionedCount > 0}}" class="notice" bindtap="onOpenMentioned">
       有 {{mentionedCount}} 篇故事提到了你

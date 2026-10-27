@@ -21,6 +21,8 @@ App({
     isNewUser: false,
     sessionFrom: '',        // 'stub' | 'wechat' —— 后端不静默假装，前端可据此提示
     loginReady: false,
+    loginPending: false,    // 正在登录（用于区分"稍等"和"失败"）
+    loginError: '',         // 登录失败的中文原因；空=没失败。页面据此显式提示（2026-10-27）
     // 后端基址（公网正式环境）。
     //   2026-10-15 修正：真机 request 强制 HTTPS + 已备案域名，本机/局域网地址一律连不上
     //   （原 127.0.0.1:8012 / 192.168.1.86:8012 均废弃）。经小鲸鱼 10-15 回执确认并实测：
@@ -38,15 +40,42 @@ App({
     if (saved === 'standard' || saved === 'large') {
       this.globalData.uiMode = saved;
     }
-    // 登录态引导（异步，不阻塞启动；失败静默，各页按「未登录」渲染）
+    // 2026-10-27 自测埋点：把整个登录过程写进数组，页面可一键查看/复制，
+    // 不用连开发者工具也能看到"到底哪一步断了"（sandy 不看模拟器，只看结论）
+    this.diag = [];
+    this._diag('onLaunch 开始', { apiBase: this.globalData.apiBase, isDevEnv: this.isDevEnv() });
+    // 登录态引导（异步，不阻塞启动；失败会写 loginError，页面显式提示）
     this.ensureLogin();
+    this.registerDiagHandle();
+  },
+
+  /** 记一条自测日志 */
+  _diag(step, extra) {
+    if (!this.diag) this.diag = [];
+    const line = { t: new Date().toISOString().slice(11, 23), step: step, extra: extra };
+    this.diag.push(line);
+    console.log('[自测]', step, extra || '');
+    if (this.diag.length > 100) this.diag.shift();
+  },
+
+  /** 把自测日志挂到全局，任何页面都能取 */
+  registerDiagHandle() {
+    // getApp().diag 本身就是句柄，这里只确保字段存在
+    if (!this.diag) this.diag = [];
+    this.getDiagText = () => (this.diag || []).map((l) => l.t + ' ' + l.step + ' ' + JSON.stringify(l.extra || {})).join('\n');
   },
 
   /**
    * 登录（进小程序第一件事）
    * 联调期本机无微信 appid/secret → forceStub:true 走桩；生产环境自动走真 code2session。
    * 返回值 session_from 写明走的是 stub 还是 wechat，**不静默假装**。
-   * @returns {Promise<object|null>} 登录 data；失败返回 null（不抛，老人不被打扰）
+   *
+   * 2026-10-27 修正（小龙虾）—— 原实现三个坑，导致真机「页面点了没反应」：
+   *   ① `.catch(() => null)` 把错误全吞了，页面上看不到任何原因，sandy 只能靠猜；
+   *   ② 登录失败后 globalData.loginFailed 从不置位，页面无法区分"还在登录"和"登录已失败"；
+   *   ③ 微信 code 是一次性的，一次失败后 code 已作废，重试必须重新 wx.login()。
+   *   改法：失败重试（重新取 code，最多 2 次）；失败时记下 lastError 并在页面显式提示。
+   * @returns {Promise<object|null>} 成功返回 data；失败返回 null，但 **会** 把原因写进 globalData.loginError
    */
   ensureLogin() {
     const g = this.globalData;
@@ -56,18 +85,57 @@ App({
         .then((p) => { this.applyProfile(p); return p; })
         .catch(() => null);
     }
+    return this._loginWithRetry(0);
+  },
+
+  /**
+   * 带重试的登录（2026-10-27 新增）
+   * 为什么重试要重新 wx.login()：微信 code 一次性，第一次失败后旧 code 已作废，
+   * 拿旧 code 再请求只会稳定复现 40029 invalid code，重试等于白试。
+   * 三次都失败 → 写入 loginError，页面据此显示"登录没成功，点这里重试"，不再静默。
+   */
+  _loginWithRetry(attempt) {
+    const g = this.globalData;
+    const MAX_ATTEMPT = 3;          // 1 次 + 2 次重试
+    g.loginPending = true;
+    if (attempt === 0) { g.loginError = ''; }
+    this._diag('登录开始', { attempt: attempt + 1, isDevEnv: this.isDevEnv() });
+
     return api.wxLoginCode()
-      .then((code) => api.login({ code: code, forceStub: this.isDevEnv() }))
+      .then((code) => {
+        this._diag('拿到 wx.login code', { len: (code || '').length, head: String(code || '').slice(0, 8) });
+        return api.login({ code: code, forceStub: this.isDevEnv() });
+      })
       .then((data) => {
         g.userId = data.user_id || '';
         g.isNewUser = !!data.is_new_user;
         g.sessionFrom = data.session_from || '';
         g.loginReady = !!g.userId;
+        g.loginPending = false;
+        g.loginError = g.loginReady ? '' : '没拿到用户身份';
         this.applyProfile(data.profile);
+        this._diag('登录成功', {
+          userId: g.userId, sessionFrom: g.sessionFrom, isNew: g.isNewUser,
+          countStories: data.count_stories, mentioned: data.mentioned_count
+        });
         // 后端算好的「有 N 篇提到了你」已由 api.login 存进 mentionedCache
         return data;
       })
-      .catch(() => null);   // 后端未起/网络差 → 静默，各页按未登录渲染
+      .catch((err) => {
+        const msg = (err && err.message) || '登录失败';
+        console.error('[ensureLogin] 第' + (attempt + 1) + '次失败：', msg, err && err.code);
+        this._diag('登录失败', { attempt: attempt + 1, msg: msg, code: (err && err.code) || '' });
+        if (attempt + 1 < MAX_ATTEMPT) {
+          // 稍等再重试：短时间内连打微信接口容易连续失败
+          return new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)))
+            .then(() => this._loginWithRetry(attempt + 1));
+        }
+        g.loginPending = false;
+        g.loginReady = false;
+        g.loginError = msg;        // 页面读它显示，不再用 catch(() => null) 吞掉
+        this._diag('三次都失败，已置 loginError', { msg: msg });
+        return null;
+      });
   },
 
   /** profile.ui_mode 是 User 级持久设置，登录即应用（前端不自己存业务态） */

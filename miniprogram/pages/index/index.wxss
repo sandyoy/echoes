@@ -28,6 +28,57 @@
   border: 2rpx solid #efe4d6;
 }
 
+/* 自测面板（2026-10-27）：临时诊断用，上线前可删 */
+.diag-toggle {
+  margin-bottom: var(--space);
+  text-align: center;
+  font-size: 24rpx;
+  color: #9a9a9a;
+  text-decoration: underline;
+}
+.diag-box {
+  margin-bottom: var(--space);
+  padding: 16rpx;
+  background: #f6f6f6;
+  border: 2rpx solid #e2e2e2;
+  border-radius: 12rpx;
+  max-height: 500rpx;
+  overflow-y: auto;
+}
+.diag-line {
+  font-size: 22rpx;
+  color: #555;
+  line-height: 1.7;
+  word-break: break-all;
+}
+.diag-copy {
+  margin-top: 12rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: var(--color-accent, #b5651d);
+  font-weight: 600;
+}
+
+/* 登录失败提示条（2026-10-27）：暖色低调，不吓人，但必须看得见、点得动 */
+.login-err {
+  padding: var(--space);
+  background: #fff6e5;
+  color: #8a5a12;
+  border: 2rpx solid #f0d9a8;
+  border-radius: 12rpx;
+  margin-bottom: var(--space);
+  text-align: center;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+.login-err-retry {
+  display: block;
+  margin-top: 8rpx;
+  color: #b5651d;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
 /* 「有 N 篇故事提到了你」提示块（标准版；大字版首页不显示此块） */
 .notice {
   padding: var(--space);

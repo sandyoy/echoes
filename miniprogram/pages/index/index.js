@@ -22,6 +22,9 @@ Page({
     stories: [],            // 故事列表（当前本地占位；P0-2 接 /story/list 后换真数据）
     mentionedCount: 0,      // 有 N 篇故事提到了你（后端算，前端只显示）
     loginReady: false,      // 登录是否已成功（真登录态）
+    loginError: '',         // 登录失败原因（2026-10-27：不再静默，显式提示 + 可重试）
+    showDiag: false,        // 自测面板是否展开
+    diagLines: [],          // 自测日志行（app.diag 转成字符串）
     isNewUser: false,       // 首次进来（按此决定引导，v2.4）
     avatarText: '我',       // 右上角头像里的字（有昵称取首字）
     busy: false
@@ -41,15 +44,59 @@ Page({
     this.setData({ mentionedCount: Number(cache.count || 0) });
     app.ensureLogin().then(() => {
       const g = app.globalData;
-      if (!g.loginReady) return;
+      // 2026-10-27：登录失败不再静默 —— 把原因带到页面上，用户能看到"为什么点了没反应"
+      if (!g.loginReady) {
+        this.setData({
+          loginReady: false,
+          loginError: g.loginError || (g.loginPending ? '正在登录，稍等' : '登录没成功')
+        });
+        return;
+      }
       const c = api.getMentionedCache();
       this.setData({
         mentionedCount: Number(c.count || 0),
         loginReady: true,
+        loginError: '',
         isNewUser: !!g.isNewUser,
         uiMode: app.getUiMode()          // 登录会应用 profile.ui_mode
       });
     }).catch(() => null);
+  },
+
+  /** 展开/收起自测面板（2026-10-27） */
+  onToggleDiag() {
+    const next = !this.data.showDiag;
+    const lines = (app.diag || []).map((l) => l.t + ' ' + l.step + ' ' + JSON.stringify(l.extra || {}));
+    this.setData({ showDiag: next, diagLines: lines });
+  },
+
+  /** 复制自测日志（发给技术看，或自己留着对比） */
+  onCopyDiag() {
+    const text = (app.diag || []).map((l) => l.t + ' ' + l.step + ' ' + JSON.stringify(l.extra || {})).join('\n');
+    wx.setClipboardData({
+      data: text || '（还没有自测记录）',
+      success: () => wx.showToast({ title: '已复制', icon: 'success' })
+    });
+  },
+
+  /** 登录失败条点一下 → 重试登录（2026-10-27） */
+  onRetryLogin() {
+    const g = app.globalData;
+    if (g.loginPending) { wx.showToast({ title: '正在登录', icon: 'none' }); return; }
+    g.loginError = '';
+    g.userId = '';
+    g.loginReady = false;
+    this.setData({ loginError: '' });
+    wx.showLoading({ title: '正在登录' });
+    app.ensureLogin().then(() => {
+      wx.hideLoading();
+      if (app.globalData.userId) {
+        this.setData({ loginReady: true, loginError: '' });
+        wx.showToast({ title: '登录好了', icon: 'success' });
+      } else {
+        this.setData({ loginError: app.globalData.loginError || '还是没成功' });
+      }
+    });
   },
 
   /** 点「有 N 篇故事提到了你」→ 进入待认领页（列出提到自己的故事） */

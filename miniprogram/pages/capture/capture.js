@@ -80,11 +80,43 @@ Page({
     if (this.data.actorId) return true;
     const uid = (app.globalData && app.globalData.userId) || '';
     if (uid) { this.setData({ actorId: uid }); return true; }
+    // 2026-10-27：区分「还在登录」和「登录已失败」，失败时把真实原因说出来并给重试入口
+    if (app.globalData.loginError) {
+      this.showLoginFailed(app.globalData.loginError);
+      return false;
+    }
     wx.showToast({ title: '正在准备，稍等一下再试', icon: 'none' });
     app.ensureLogin().then(() => {
       if (app.globalData.userId) this.setData({ actorId: app.globalData.userId });
+      else if (app.globalData.loginError) this.showLoginFailed(app.globalData.loginError);
     });
     return false;
+  },
+
+  /** 登录失败的显式提示：给原因 + 一键重试（不再让用户点了没反应） */
+  showLoginFailed(reason) {
+    wx.showModal({
+      title: '登录没成功',
+      content: (reason || '网络不太好') + '\n\n点「重试」再来一次。',
+      confirmText: '重试',
+      cancelText: '先看看',
+      success: (r) => {
+        if (!r.confirm) return;
+        app.globalData.loginError = '';
+        app.globalData.userId = '';
+        app.globalData.loginReady = false;
+        wx.showLoading({ title: '正在登录' });
+        app.ensureLogin().then(() => {
+          wx.hideLoading();
+          if (app.globalData.userId) {
+            this.setData({ actorId: app.globalData.userId });
+            wx.showToast({ title: '登录好了', icon: 'success' });
+          } else {
+            this.showLoginFailed(app.globalData.loginError || '还是没成功');
+          }
+        });
+      }
+    });
   },
 
   onTypeChange(e) {
