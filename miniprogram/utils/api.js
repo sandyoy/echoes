@@ -7,7 +7,11 @@
  * 铁律：**前端只认 ok 一个字段**；失败必带中文 error，可直接弹给老人看；
  *       code 只用于程序分支，**不显示给用户**。
  */
-const app = getApp();
+// ⚠️ 不能在模块顶层调 getApp()：app.js 里 require('./utils/api.js') 时 App() 还没执行，
+//    此时 getApp() 返回 undefined，const app 被永久钉成 undefined → 所有请求 url 变成 '/api/...' 相对路径
+//    → wx.request 直接 fail('网络不太好，请稍后再试')，且 7ms 内就返回（请求根本没发出）。
+//    改为每次请求时现取。
+function getApp_() { return getApp(); }
 
 /** 简单内存缓存：登录后拿到的「有 N 篇故事提到了你」 */
 let _mentionedCache = { count: 0, stories: [] };
@@ -17,7 +21,7 @@ let _session = { userId: '', phone: '' };
 /** 统一请求：只看 ok，error 直显；code 留给调用方分支 */
 function request(path, method, data) {
   return new Promise((resolve, reject) => {
-    const base = (app && app.globalData && app.globalData.apiBase) || '';
+    const base = (getApp_() && getApp_().globalData && getApp_().globalData.apiBase) || '';
     wx.request({
       url: base + path,
       method: method || 'GET',
@@ -51,7 +55,7 @@ function _qs(params) {
 
 /** 拼完整 URL（给 wx.downloadFile / 需要拿到地址的接口用） */
 function buildUrl(path, params) {
-  const base = (app && app.globalData && app.globalData.apiBase) || '';
+  const base = (getApp_() && getApp_().globalData && getApp_().globalData.apiBase) || '';
   return base + path + _qs(params);
 }
 
@@ -283,7 +287,7 @@ function storageConfirm(opt) {
 function absUrl(u) {
   const s = u || '';
   if (!s || /^https?:\/\//i.test(s) || /^wxfile:\/\//i.test(s)) return s;
-  const base = (app && app.globalData && app.globalData.apiBase) || '';
+  const base = (getApp_() && getApp_().globalData && getApp_().globalData.apiBase) || '';
   return base + (s.charAt(0) === '/' ? s : '/' + s);
 }
 
