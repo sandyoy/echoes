@@ -276,7 +276,8 @@ function uploadUrl(fileName, fileSize, mime, actorId, kind) {
 function storageConfirm(opt) {
   const o = opt || {};
   return post('/api/echoes/storage/confirm', {
-    actor_id: o.actorId || '', key: o.key, kind: o.kind || 'image',
+    actor_id: o.actorId || '', owner_id: o.ownerId || o.actorId || '',
+    key: o.key, kind: o.kind || 'image',
     story_id: o.storyId || '', file_name: o.fileName || '',
     file_size: o.fileSize || 0, mime: o.mime || '',
     visibility: o.visibility || 'private', duration: o.duration || 0

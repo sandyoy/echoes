@@ -163,6 +163,7 @@
   margin: var(--space) 0 calc(var(--space) / 2);
 }
 .empty { color: #999; }
+.story-time { color: #999; font-size: 26rpx; }
 .story-item {
   padding: var(--space);
   background: #fff;

@@ -42,7 +42,7 @@
   <!-- 软提示（灰/黄，不弹红叉：转写稍后 / 建议分段 / 上传通道未开） -->
   <view wx:if="{{notice}}" class="notice">{{notice}}</view>
 
-  <!-- 已采集素材（挂同一件事） -->
+  <!-- 已采集素材（挂同一件事）：有声的当场能听、能看转出来的字 -->
   <view wx:if="{{clips.length > 0}}" class="list-title">这件事已经有 {{clips.length}} 项</view>
   <view wx:for="{{clips}}" wx:key="clip_id" class="clip-item">
 
@@ -60,7 +60,7 @@
 
     <!-- ★ 三链路①：说了什么（转写文字直接上屏，不再只显示类型名） -->
     <view wx:if="{{item.transcript || item.text}}" class="clip-text">{{item.transcript || item.text}}</view>
-    <view wx:elif="{{item.clip_type === 'voice'}}" class="clip-text dim">这段的字还没转好，声音已经留着了</view>
+    <view wx:elif="{{item.clip_type === 'voice' || item.clip_type === 'audio'}}" class="clip-text dim">这段的字还没转好，声音已经留着了</view>
     <view wx:else class="clip-type">{{item.clip_type === 'original' ? '留个声' : item.clip_type}}</view>
   </view>
 

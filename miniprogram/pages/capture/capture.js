@@ -73,6 +73,16 @@ Page({
       app.ensureLogin().then(() => {
         const uid = app.globalData.userId || '';
         if (uid) this.setData({ actorId: uid });
+        this.ensureStory().then(() => {
+          if (this.data.storyId) this.refreshClips();
+          this.drainPendingUploads();
+        });
+      });
+    } else {
+      // ★ 登录已就绪：立刻保证有一个筐，并取回里面的素材
+      this.ensureStory().then(() => {
+        if (this.data.storyId) this.refreshClips();
+        this.drainPendingUploads();
       });
     }
     if (this.data.storyId) this.refreshClips();
@@ -110,7 +120,10 @@ Page({
     try {
       const key = 'pendingUploads';
       const list = wx.getStorageSync(key) || [];
-      list.push({ path: tempFilePath, type: this.data.type, storyId: this.data.storyId, at: Date.now() });
+      list.push({
+        path: tempFilePath, type: this.data.type, storyId: this.data.storyId,
+        duration: this._pendingDuration || 0, at: Date.now()
+      });
       wx.setStorageSync(key, list.slice(-20));
     } catch (e) { /* 存储满了也不阻断录音本身 */ }
   },
@@ -119,15 +132,22 @@ Page({
   drainPendingUploads() {
     const uid = (app.globalData && app.globalData.userId) || this.data.actorId || '';
     if (!uid) return;
+    // 没有故事 → 先补一个（说明故事必填是「保存」的锅，不是录音的锅）
+    if (!this.data.storyId) return;
     let list = [];
     try { list = wx.getStorageSync('pendingUploads') || []; } catch (e) { return; }
     if (!list.length) return;
     try { wx.setStorageSync('pendingUploads', []); } catch (e) {}
     list.forEach((item) => {
       if (!item || !item.path) return;
+      // ★ 用「这条录音当时所在的故事」补传，不是用当前页面的故事（可能已经换了）
+      const sid = item.storyId || this.data.storyId;
+      if (sid) this.setData({ storyId: sid });
       wx.showToast({ title: '正在补传刚才那段', icon: 'none' });
       const name = (item.path.split('/').pop()) || 'voice.mp3';
-      this._uploadBytes(item.path, name, 0, 'audio/mpeg', item.type === 'original' ? 'original' : 'audio')
+      const dur = (item.duration || 0);
+      this._uploadBytes(item.path, name, 0, 'audio/mpeg', item.type === 'original' ? 'original' : 'audio', dur)
+        .then(() => this.refreshClips())
         .catch(() => { this._stashPending(item.path); });
     });
   },
@@ -162,13 +182,45 @@ Page({
     this.setData({ type: e.currentTarget.dataset.type, notice: '' });
   },
 
+  /**
+   * ★ 2026-10-31 P0 真凶：故事（素材筐）从没人建。
+   * 采集页所有动作（录音/照片/文字）都挂在 story_id 上，而 story_id 只在
+   * 首页点某条故事时才带过来；新用户首页列表是空的 → 永远没有 story_id
+   * → 录音存不下、文字存不下、保存弹「还没有故事」。整条动线在第一步就断了。
+   * 现在：进采集页就保证有一个筐 —— 有 storyId 直接用，没有就地建一条。
+   */
+  ensureStory() {
+    if (this.data.storyId) return Promise.resolve(this.data.storyId);
+    if (this._storyPending) return this._storyPending;
+    const uid = this.data.actorId || (app.globalData && app.globalData.userId) || '';
+    if (!uid) return Promise.resolve('');
+    this._storyPending = api.storyCreate({ ownerId: uid, actorId: uid, title: '' })
+      .then((d) => {
+        const sid = (d && (d.story_id || (d.story && d.story.story_id))) || '';
+        if (sid) {
+          this.setData({ storyId: sid });
+          app.globalData.currentStoryId = sid;
+        }
+        this._storyPending = null;
+        return sid;
+      })
+      .catch(() => { this._storyPending = null; return ''; });
+    return this._storyPending;
+  },
+
+  /** 素材类型的中文名（原来直接把 clip_type 的英文 key 甩给用户看） */
+  clipLabel(item) {
+    const map = { audio: '🎙 一段话', original: '🎵 原声', photo: '📷 照片', video: '🎬 视频', text: '✍️ 写下的' };
+    return map[item && item.clip_type] || '素材';
+  },
+
   /** 取素材筐（已排序，直接渲染）—— list 接口必须带 owner_id（书主人），10-01 起缺则直接拒 */
   refreshClips() {
     const { storyId, actorId } = this.data;
     if (!storyId) return;
     const owner = (app.globalData && app.globalData.ownerId) || this.data.ownerId || actorId;
     if (!owner) return;                 // 主人未知时宁可不查，也不用 viewer 冒充
-    callApi(
+    return callApi(
       '/api/echoes/clip/list?story_id=' + encodeURIComponent(storyId) +
       '&viewer_id=' + encodeURIComponent(actorId) +
       '&owner_id=' + encodeURIComponent(owner),
@@ -210,12 +262,14 @@ Page({
       else if (app.globalData && app.globalData.loginError) this.showLoginFailed(app.globalData.loginError);
       else app.ensureLogin().then(() => {
         const id = (app.globalData && app.globalData.userId) || '';
-        if (id) { this.setData({ actorId: id }); this.drainPendingUploads(); }
+        if (id) { this.setData({ actorId: id }); this.ensureStory().then(() => this.drainPendingUploads()); }
       });
     } else {
-      this.drainPendingUploads();
+      // ★ 没有筐就没有 story_id → 松手必失败。按下的瞬间就先保证有筐（异步，不挡录音）
+      this.ensureStory().then(() => this.drainPendingUploads());
     }
     this._recStart = Date.now();
+    this._recStopped = false;   // ★ 2026-10-31 补：松手标志，防 rm.onStop 重复触发把同一段记两遍
     this.setData({ recording: true });
     wx.vibrateShort && wx.vibrateShort();
     const rm = wx.getRecorderManager && wx.getRecorderManager();
@@ -234,6 +288,16 @@ Page({
   onHoldEnd() {
     if (!this.data.recording) return;
     this.setData({ recording: false });
+    // ★ 2026-10-31 补：真机触点太短（<0.5s）时 onStop 的 duration 可能为 0，
+    //   用按住时长兜底判「误碰」，避免把误碰当正常录音上传
+    if (this._recStart && Date.now() - this._recStart < MIN_AUDIO_SEC * 1000) {
+      this._recDiscardNext = true;           // 下一次 onStop 直接丢掉
+      this._recStart = 0;
+      const rm0 = wx.getRecorderManager && wx.getRecorderManager();
+      if (rm0) rm0.stop();
+      wx.showToast({ title: '像误碰了一下，再按住说话', icon: 'none' });
+      return;
+    }
     const rm = wx.getRecorderManager && wx.getRecorderManager();
     if (rm && this._recSupported) rm.stop();
     else wx.showToast({ title: '这台设备不支持录音', icon: 'none' });
@@ -322,6 +386,10 @@ Page({
 
   /** 录音结束 → 本地校验 → 取上传址 → 上传 → 登记 */
   _handleRecordStop(res) {
+    // ★ 2026-10-31 补：误碰丢弃（见 onHoldEnd）优先，其次一次按住只处理一次
+    if (this._recDiscardNext) { this._recDiscardNext = false; return; }
+    if (this._recStopped) return;
+    this._recStopped = true;
     const { type, storyId, actorId } = this.data;
     const isOriginal = type === 'original';
     const path = (res && res.tempFilePath) || '';
@@ -339,11 +407,20 @@ Page({
       return;
     }
     if (!path) { wx.showToast({ title: '没录上，再试一次', icon: 'none' }); return; }
-    if (!storyId) { wx.showToast({ title: '还没有故事', icon: 'none' }); return; }
+
+    // ★ 松手时筐还没建好（弱网首次）→ 先存本地，筐好了自动补传，绝不弹「还没有故事」丢掉这段
+    if (!this.data.storyId) {
+      this._pendingDuration = duration;
+      this._stashPending(path);
+      this.ensureStory().then(() => this.drainPendingUploads());
+      wx.showToast({ title: '声音留下了，正在存', icon: 'none' });
+      return;
+    }
 
     // ★ 2026-10-31 P0：身份没就绪 → 先存本地，别把这段丢掉
     const uidNow = this.data.actorId || (app.globalData && app.globalData.userId) || '';
     if (!uidNow) {
+      this._pendingDuration = duration;
       this._stashPending(path);
       wx.showToast({ title: '已先存手机里，登录好自动上传', icon: 'none' });
       return;
@@ -355,19 +432,13 @@ Page({
       : /\.(amr)$/i.test(name) ? 'audio/amr' : 'audio/mpeg';
 
     wx.showLoading({ title: '保存中' });
-    this._uploadBytes(path, name, size, mime, isOriginal ? 'original' : 'audio')
-      .then((mediaUrl) => {
-        const media = {
-          mediaUrl: mediaUrl, fileName: name, fileSize: size,
-          mime: mime, duration: duration, caption: '', doTranscribe: !isOriginal
-        };
-        return isOriginal
-          ? api.clipOriginal(storyId, actorId, media)
-          : api.clipAudio(storyId, actorId, media);
-      })
+    // ★ 2026-10-31 第二修：上传 + 登记走一条路（_uploadBytes → /storage/confirm）。
+    //   原写法是「_uploadBytes 已 confirm 登记一次」+「再调 clip/audio 挂一次」= 同一条录音记两遍，
+    //   且 clip/audio 不传 owner_id 会被权限判成无主。现在只走 confirm，返回的就是 clip 本体。
+    this._uploadBytes(path, name, size, mime, isOriginal ? 'original' : 'audio', duration)
       .then((data) => {
         wx.hideLoading();
-        // ★ 三链路：后端 data 里已带 clip_id / transcript / media_url，当场落屏 + 画音频条
+        // 三链路：后端 data 里已带 clip_id / transcript / media_url，当场落屏 + 画音频条
         if (data && (data.clip_id || data.media_url || data.transcript)) {
           const one = Object.assign({}, data, {
             clip_type: isOriginal ? 'original' : 'voice',
@@ -376,12 +447,16 @@ Page({
           });
           this._applyClipResult(one);
         }
-        // ★ 语音：如果 transcribed=false 属预期（转写稍后），用灰/黄，不弹红叉
-        if (data && data.transcribed === false && !isOriginal) {
+        if (!isOriginal && data && data.transcribed) {
+          this.setData({ notice: '' });
+          wx.showToast({ title: '记下了，文字也出来了', icon: 'success' });
+        } else if (!isOriginal || (data && data.transcribed === false)) {
+          // 语音：transcribed=false 属预期（转写稍后），用灰/黄，不弹红叉
           this.setData({ notice: '原声已留下，文字稍后补' });
+          wx.showToast({ title: '声音留下了', icon: 'none' });
         } else {
           this.setData({ notice: '' });
-          wx.showToast({ title: isOriginal ? '声音留下了' : '记下了', icon: 'success' });
+          wx.showToast({ title: '声音留下了', icon: 'success' });
         }
         this.refreshClips();
       })
@@ -402,8 +477,8 @@ Page({
    *   ③ 传完必须调 /storage/confirm 登记，否则素材不算入库；
    *      登记成功直接返回 media_url，**不再重复挂 clip**（避免一条素材记两次）
    */
-  _uploadBytes(filePath, fileName, fileSize, mime, kind) {
-    const { storyId, actorId } = this.data;
+  _uploadBytes(filePath, fileName, fileSize, mime, kind, durationSec) {
+    const { storyId, actorId, ownerId } = this.data;
     const k = kind || 'image';
     let key = '';
     return api.uploadUrl(fileName, fileSize, mime, actorId, k)
@@ -433,10 +508,18 @@ Page({
       })
       .then(() => api.storageConfirm({
         actorId: actorId, key: key, kind: k, storyId: storyId,
+        ownerId: ownerId || actorId,        // ★ owner_id 必带：后端拿它做权限根，缺了会被判无主
+        duration: durationSec || 0,         // ★ 真实时长：转写/展示都靠它
         fileName: fileName, fileSize: fileSize, mime: mime,
         visibility: 'private'
       }))
-      .then((d) => api.absUrl((d && d.media_url) || ''));
+      // ★ 返回整包登记结果（含 clip_id / transcribed / transcript），调用方判断用；
+      //   同时把 media_url 转成可直接播的绝对地址挂回去
+      .then((d) => {
+        const out = Object.assign({}, d || {});
+        out.media_url = api.absUrl(out.media_url || '');
+        return out;
+      });
   },
 
   // ==================== 文字 ====================
@@ -447,25 +530,29 @@ Page({
 
   /** 挂文字素材 → POST /api/echoes/clip/text */
   saveText() {
-    const { storyId, actorId, text } = this.data;
+    const { actorId, text } = this.data;
     if (!this.requireLogin()) return;
-    if (!storyId) { wx.showToast({ title: '还没有故事', icon: 'none' }); return; }
     if (!text || !text.trim()) { wx.showToast({ title: '说点什么再存', icon: 'none' }); return; }
-    wx.showLoading({ title: '保存中' });
-    callApi('/api/echoes/clip/text', 'POST', {
-      story_id: storyId, actor_id: actorId, text: text, caption: ''
-    })
-      .then(() => {
-        wx.hideLoading();
-        wx.showToast({ title: '已记下', icon: 'success' });
-        this.setData({ text: '' });
-        this.refreshClips();
+    // ★ 没筐先建筐（原逻辑弹「还没有故事」，等于把用户挡在门外）
+    this.ensureStory().then((sid) => {
+      if (!sid) { wx.showModal({ title: '没存上', content: '还没连接上服务器，稍等一下再存', showCancel: false }); return; }
+      wx.showLoading({ title: '保存中' });
+      callApi('/api/echoes/clip/text', 'POST', {
+        owner_id: this.data.ownerId || actorId,
+        story_id: sid, actor_id: actorId, text: text, caption: ''
       })
-      .catch((e) => {
-        wx.hideLoading();
-        if (e.code === 'empty_text') { wx.showToast({ title: '说点什么再存', icon: 'none' }); return; }
-        wx.showModal({ title: '没存上', content: e.message, showCancel: false });
-      });
+        .then(() => {
+          wx.hideLoading();
+          wx.showToast({ title: '已记下', icon: 'success' });
+          this.setData({ text: '' });
+          this.refreshClips();
+        })
+        .catch((e) => {
+          wx.hideLoading();
+          if (e.code === 'empty_text') { wx.showToast({ title: '说点什么再存', icon: 'none' }); return; }
+          wx.showModal({ title: '没存上', content: e.message, showCancel: false });
+        });
+    });
   },
 
   // ==================== 照片 / 视频 ====================
@@ -542,7 +629,14 @@ Page({
   onSave() {
     if (this.data.type === 'text') { this.saveText(); return; }
     if (this.data.type === 'voice' || this.data.type === 'original') {
-      wx.showToast({ title: '按住说话就存下来了', icon: 'none' });
+      // ★ 不再回「按住说话就存下来了」这种打太极的话：如实说清当前有什么、还差什么
+      const n = (this.data.clips || []).length;
+      if (n > 0) {
+        wx.showToast({ title: '已经存下 ' + n + ' 项了', icon: 'success' });
+      } else {
+        this.setData({ notice: '还没录上：按住那个大按钮说话，松手就存' });
+        wx.showToast({ title: '还没录到声音', icon: 'none' });
+      }
       return;
     }
     wx.showToast({ title: '已保存', icon: 'success' });

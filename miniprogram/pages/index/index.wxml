@@ -77,7 +77,9 @@
     <!-- 我的故事（数据主体=故事，v2.4 §2.1）；详情页 pages/story -->
     <view class="list-title">我的故事</view>
     <view wx:if="{{stories.length === 0}}" class="empty">还没有故事，先录一段吧</view>
-    <view wx:for="{{stories}}" wx:key="id" class="story-item" data-story-id="{{item.id}}" bindtap="onTapStory">{{item.title}}</view>
+    <view wx:for="{{stories}}" wx:key="id" class="story-item" data-story-id="{{item.id}}" bindtap="onTapStory">
+      {{item.title}}<text wx:if="{{item.timeRaw}}" class="story-time">　{{item.timeRaw}}</text>
+    </view>
 
     <view class="switch" bindtap="onToggleMode">切换大字版</view>
   </block>

@@ -33,6 +33,31 @@ Page({
   onShow() {
     this.setData({ uiMode: app.getUiMode() });
     this.refreshMentioned();
+    this.loadStories();
+  },
+
+  /**
+   * ★ 2026-10-31：首页「我的故事」原来恒显示「还没有故事」（stories 从没被赋值过），
+   * 于是用户看不到自己录的东西、也进不去故事详情 —— 表现为「存了也列不出来」。
+   * 现在登录落定后拉 /story/list，把真数据填进来。
+   */
+  loadStories() {
+    app.ensureLogin().then(() => {
+      const g = app.globalData || {};
+      const uid = g.userId || '';
+      if (!uid) return;
+      api.storyList(uid, { viewerId: uid }).then((d) => {
+        const list = (d && d.stories) || [];
+        this.setData({
+          stories: list.map((s) => ({
+            id: s.story_id,
+            title: s.title || '没起名字的一段',
+            timeRaw: s.time_raw || '',
+            updatedAt: s.updated_at || s.created_at || ''
+          }))
+        });
+      }).catch(() => { /* 列表拉不到不打断首页，保留上一次的 */ });
+    }).catch(() => null);
   },
 
   /**
