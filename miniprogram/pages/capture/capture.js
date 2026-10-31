@@ -75,7 +75,10 @@ Page({
     if (this.data.storyId) this.refreshClips();
   },
 
-  /** 统一登录守卫：所有采集动作前必须已有 user_id（否则后端会 no_permission） */
+  /**
+   * 统一登录守卫：只给「必须有 user_id 才可能成功」的动作用（文字提交/刷新等）。
+   * ★ 录音不用它 —— 录音必须乐观放行，见 onHoldStart（2026-10-31 P0）。
+   */
   requireLogin() {
     if (this.data.actorId) return true;
     const uid = (app.globalData && app.globalData.userId) || '';
@@ -85,12 +88,45 @@ Page({
       this.showLoginFailed(app.globalData.loginError);
       return false;
     }
-    wx.showToast({ title: '正在准备，稍等一下再试', icon: 'none' });
+    // 2026-10-31：不再说「正在准备，稍等一下再试」这种没信息量的话
+    const pending = app.globalData.loginPending || app.globalData.loginReady === false;
+    wx.showToast({ title: pending ? '正在登录，1 秒后自动重试' : '还没登录好，点一下重试', icon: 'none' });
     app.ensureLogin().then(() => {
       if (app.globalData.userId) this.setData({ actorId: app.globalData.userId });
       else if (app.globalData.loginError) this.showLoginFailed(app.globalData.loginError);
     });
     return false;
+  },
+
+  /**
+   * ★ 2026-10-31 P0：录音乐观放行
+   * 老人摁一下就该有声音，不能被登录态挡在门外。
+   * 有 userId → 照常立刻上传；没有 → 先存本地 pendingUpload，登录就绪后统一补传。
+   */
+  _stashPending(tempFilePath) {
+    try {
+      const key = 'pendingUploads';
+      const list = wx.getStorageSync(key) || [];
+      list.push({ path: tempFilePath, type: this.data.type, storyId: this.data.storyId, at: Date.now() });
+      wx.setStorageSync(key, list.slice(-20));
+    } catch (e) { /* 存储满了也不阻断录音本身 */ }
+  },
+
+  /** 登录就绪后补传本地暂存的录音（由 onShow / 登录回调触发） */
+  drainPendingUploads() {
+    const uid = (app.globalData && app.globalData.userId) || this.data.actorId || '';
+    if (!uid) return;
+    let list = [];
+    try { list = wx.getStorageSync('pendingUploads') || []; } catch (e) { return; }
+    if (!list.length) return;
+    try { wx.setStorageSync('pendingUploads', []); } catch (e) {}
+    list.forEach((item) => {
+      if (!item || !item.path) return;
+      wx.showToast({ title: '正在补传刚才那段', icon: 'none' });
+      const name = (item.path.split('/').pop()) || 'voice.mp3';
+      this._uploadBytes(item.path, name, 0, 'audio/mpeg', item.type === 'original' ? 'original' : 'audio')
+        .catch(() => { this._stashPending(item.path); });
+    });
   },
 
   /** 登录失败的显式提示：给原因 + 一键重试（不再让用户点了没反应） */
@@ -144,7 +180,19 @@ Page({
   /** 按住说话：开始录音（语音=要转文字；原声=只留声音） */
   onHoldStart() {
     if (this.data.type !== 'voice' && this.data.type !== 'original') return;
-    if (!this.requireLogin()) return;
+    // ★ 2026-10-31 P0：不再 `if (!this.requireLogin()) return;`
+    //   登录未就绪也照样开录；只把「登录在后台推进」这件事做掉，不挡录音。
+    if (!this.data.actorId) {
+      const uid = (app.globalData && app.globalData.userId) || '';
+      if (uid) this.setData({ actorId: uid });
+      else if (app.globalData && app.globalData.loginError) this.showLoginFailed(app.globalData.loginError);
+      else app.ensureLogin().then(() => {
+        const id = (app.globalData && app.globalData.userId) || '';
+        if (id) { this.setData({ actorId: id }); this.drainPendingUploads(); }
+      });
+    } else {
+      this.drainPendingUploads();
+    }
     this._recStart = Date.now();
     this.setData({ recording: true });
     wx.vibrateShort && wx.vibrateShort();
@@ -189,6 +237,14 @@ Page({
     }
     if (!path) { wx.showToast({ title: '没录上，再试一次', icon: 'none' }); return; }
     if (!storyId) { wx.showToast({ title: '还没有故事', icon: 'none' }); return; }
+
+    // ★ 2026-10-31 P0：身份没就绪 → 先存本地，别把这段丢掉
+    const uidNow = this.data.actorId || (app.globalData && app.globalData.userId) || '';
+    if (!uidNow) {
+      this._stashPending(path);
+      wx.showToast({ title: '已先存手机里，登录好自动上传', icon: 'none' });
+      return;
+    }
 
     const name = (path.split('/').pop()) || (isOriginal ? 'voice.m4a' : 'voice.mp3');
     const mime = /\.(m4a)$/i.test(name) ? 'audio/m4a'
