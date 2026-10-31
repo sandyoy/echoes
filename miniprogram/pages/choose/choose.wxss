@@ -1,0 +1,175 @@
+/* choose.wxss — 与全局米色系一致：老年人可读，字号大、对比够 */
+.wrap {
+  min-height: 100vh;
+  background: #faf6f0;
+  padding: 48rpx 40rpx 80rpx;
+  box-sizing: border-box;
+}
+
+.loading {
+  padding-top: 200rpx;
+  text-align: center;
+  color: #9a8f83;
+  font-size: 32rpx;
+}
+
+.card { padding-top: 60rpx; }
+
+.question {
+  display: block;
+  font-size: 56rpx;
+  font-weight: 600;
+  color: #3d342c;
+  line-height: 1.4;
+}
+
+.sub {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: #9a8f83;
+  line-height: 1.6;
+}
+
+.h1 {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #3d342c;
+}
+
+.p {
+  display: block;
+  margin-top: 24rpx;
+  font-size: 32rpx;
+  color: #6b5f53;
+  line-height: 1.75;
+}
+
+/* 两个选项卡：大、圆、整块可点 */
+.opt {
+  margin-top: 40rpx;
+  padding: 44rpx 40rpx;
+  background: #fffdfa;
+  border: 2rpx solid #e8dfd2;
+  border-radius: 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(160, 140, 110, 0.06);
+}
+
+.opt:active { background: #f6efe5; }
+
+.opt-label {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #c4956a;
+}
+
+.opt-hint {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  color: #9a8f83;
+  line-height: 1.65;
+}
+
+.btn-main {
+  margin-top: 56rpx;
+  background: #c4956a;
+  color: #fff;
+  font-size: 36rpx;
+  border-radius: 20rpx;
+  height: 100rpx;
+  line-height: 100rpx;
+}
+
+.btn-ghost {
+  margin-top: 24rpx;
+  background: transparent;
+  color: #c4956a;
+  border: 2rpx solid #e0d2bd;
+  font-size: 32rpx;
+  border-radius: 20rpx;
+  height: 92rpx;
+  line-height: 92rpx;
+}
+
+.link {
+  display: block;
+  margin-top: 36rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: #9a8f83;
+  text-decoration: underline;
+}
+
+/* 弹层 */
+.mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(40, 32, 24, 0.45);
+  display: flex;
+  align-items: flex-end;
+}
+
+.sheet {
+  width: 100%;
+  background: #fffdfa;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 48rpx 40rpx 64rpx;
+  box-sizing: border-box;
+}
+
+.sheet-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 600;
+  color: #3d342c;
+  text-align: center;
+}
+
+.sheet-sub {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 28rpx;
+  color: #9a8f83;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* 卡片预览：让子女先看清"发出去长什么样" */
+.fake-card {
+  margin: 40rpx 0 8rpx;
+  padding: 56rpx 40rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(160deg, #fff8ee 0%, #f6e7d2 100%);
+  border: 2rpx solid #ecdcc4;
+}
+
+.fc-line1 {
+  display: block;
+  font-size: 46rpx;
+  font-weight: 600;
+  color: #8a5d34;
+  text-align: center;
+}
+
+.fc-line2 {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 28rpx;
+  color: #a8886a;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.fc-cta {
+  display: block;
+  margin-top: 40rpx;
+  padding: 22rpx 0;
+  background: #c4956a;
+  color: #fff;
+  font-size: 32rpx;
+  text-align: center;
+  border-radius: 16rpx;
+}

@@ -101,10 +101,13 @@ check("④原样接回刚才那问", r["data"]["question"]["text"] == "您是哪
       r["data"]["question"])
 
 # ② 打断后老人答清了 → 正常出下一问（不 resume）
+# ★10-31：答清了不再走题库顺次，改走 llm_brain「读懂这句再接话」
+#   → state 从 asking 变成 following_answer（仍在正常往下问，不是 resume）
 r = I.api_next_question(db, owner_id=OWNER, viewer_id=OWNER,
                         last_answer="1972年结的婚，那天下了大雨",
                         interrupted_question="您是哪年结的婚呀？")
-check("④答清了→不 resume", r["data"]["state"] == "asking", r["data"])
+check("④答清了→不 resume", r["data"]["state"] in ("asking", "following_answer"), r["data"])
+check("④答清了→一定还给出下一问", bool(r["data"]["question"].get("text")), r["data"])
 
 # --- ⑤ ★打断判定 ---
 r = I.api_barge_in(db, energy_db=-10.0)   # 大声 = 老人出声

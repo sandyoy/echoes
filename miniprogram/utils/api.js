@@ -788,6 +788,43 @@ function interviewRecapConfirm(o) {
   });
 }
 
+// ============ 九个九付费链路（2026-10-31 新增 · §9.6 五修） ============
+// 铁律：价格一律不在前端写死，全部从 /pay/plans 或本模块返回里取；
+//       按钮文案也不在前端编，用后端给的 label（老人看到的措辞不能各端各写一套）。
+const PAY = {
+  IDENTITY: '/api/echoes/pay/identity',
+  CHOICES: '/api/echoes/pay/choices',
+  CHOOSE: '/api/echoes/pay/choose',
+  ACCEPT_GIFT: '/api/echoes/pay/accept_gift',
+  PRINT_ELIGIBILITY: '/api/echoes/pay/print_eligibility',
+  PLANS: '/api/echoes/pay/plans'
+};
+
+/** 我是谁 → 我这一本册子现在什么状态（有没有书、归谁、付到哪一档） */
+function payIdentity(userId) {
+  return get(PAY.IDENTITY, { user_id: userId || '' });
+}
+/** 付完 9.9 之后的两个按钮（没到账 → bought=false，前端不给按钮） */
+function payChoices(userId) {
+  return get(PAY.CHOICES, { user_id: userId || '' });
+}
+/** self_first=我自己先说 / gift_to_elder=转给爸妈 */
+function payChoose(userId, choice) {
+  return post(PAY.CHOOSE, { user_id: userId || '', choice: choice || '' });
+}
+/** 老人/家人点开邀请卡后接受 → 接受的人成为书主人 */
+function payAcceptGift(token, newOwnerId) {
+  return post(PAY.ACCEPT_GIFT, { token: token || '', new_owner_id: newOwnerId || '' });
+}
+/** 299 实体书：答够页数才解锁 */
+function payPrintEligibility(ownerId) {
+  return get(PAY.PRINT_ELIGIBILITY, { owner_id: ownerId || '' });
+}
+/** 后台配的价格（前端只读展示，不写死） */
+function payPlans() {
+  return get(PAY.PLANS);
+}
+
 module.exports = {
   request, get, post, buildUrl,
   CLAIM,
@@ -818,5 +855,9 @@ module.exports = {
   STORY,
   storyDetail, storyList, storyCreate, storyDelete,
   clipSetVisibility,
-  interviewRecapConfirm
+  interviewRecapConfirm,
+  // 九个九付费链路（10-31）
+  PAY,
+  payIdentity, payChoices, payChoose, payAcceptGift,
+  payPrintEligibility, payPlans
 };

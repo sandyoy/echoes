@@ -1,0 +1,55 @@
+<!--
+  choose.wxml — 付完 9.9 之后的那一屏（2026-10-31）
+  ⚠️ 设计铁律（sandy 视角）：
+    1. 这一屏只有一件事：让用户选"给谁说"。不要放价格、不要放套餐对比、不要放客服。
+    2. 按钮文案**从后端拿**，不在 wxml 里写死（各端措辞必须一致）。
+    3. 老人永远看不到"这是孩子买给我的"——所以这一屏文字里不出现"赠送/购买/付费"。
+-->
+<view class="wrap">
+
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading">正在打开…</view>
+
+  <!-- 钱没到账：绝不假装成功，也绝不拦着人说话 -->
+  <view wx:elif="{{!bought}}" class="card">
+    <text class="h1">还没收到这笔钱</text>
+    <text class="p">如果刚付完，稍等几秒再进这个页面。也可以先直接说，说了不会丢。</text>
+    <button class="btn-main" bindtap="goCapture">先去说两句</button>
+  </view>
+
+  <!-- 已经有一本了：不重开（一人一本） -->
+  <view wx:elif="{{sameBook}}" class="card">
+    <text class="h1">还是那一本</text>
+    <text class="p">你已经有一本了，接着往下说就行，不用再买。</text>
+    <button class="btn-main" bindtap="goCapture">接着说这本</button>
+    <text class="link" bindtap="goBook">打开我的册子</text>
+  </view>
+
+  <!-- 正常：两个按钮 -->
+  <view wx:else class="card">
+    <text class="question">{{question}}</text>
+    <text class="sub">选择之后随时可以改，说过的内容都保留。</text>
+
+    <view wx:for="{{buttons}}" wx:key="key" class="opt" bindtap="onPick" data-key="{{item.key}}">
+      <text class="opt-label">{{item.label}}</text>
+      <text class="opt-hint" wx:if="{{item.hint}}">{{item.hint}}</text>
+    </view>
+  </view>
+
+  <!-- 选中 gift 之后：弹出这张卡 -->
+  <view wx:if="{{card}}" class="mask" catchtap="closeCard">
+    <view class="sheet" catchtap="noop">
+      <text class="sheet-title">{{card.title}}</text>
+      <text class="sheet-sub">{{card.subtitle}}</text>
+      <view class="fake-card">
+        <text class="fc-line1">{{card.title}}</text>
+        <text class="fc-line2">{{card.subtitle}}</text>
+        <text class="fc-cta">{{card.cta}}</text>
+      </view>
+      <button class="btn-main" open-type="share">转给家里人</button>
+      <button class="btn-ghost" bindtap="copyLink">复制链接，发微信</button>
+      <text class="link" bindtap="closeCard">先不转，我自己说</text>
+    </view>
+  </view>
+
+</view>

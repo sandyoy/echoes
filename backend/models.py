@@ -410,6 +410,11 @@ class Order(Base):
     transaction_id = Column(String(128), default="")
     created_at = Column(DateTime, default=datetime.utcnow)
     paid_at = Column(DateTime, nullable=True)
+    # ----- 2026-10-31 九个九付费链路（需求书 §9.6 五修）-----
+    gift_to_user_id = Column(String(128), default="")   # 为他人付费时，书最终归谁
+    book_id = Column(String(64), default="")            # 这笔钱买的是哪一本（一人一本锁）
+    refund_state = Column(String(32), default="")       # '' / waiting_refund / expired_waiting_refund / refunded
+    accept_deadline = Column(DateTime, nullable=True)   # 接受截止（付款时刻 + N 天，默认 30）
 
 
 # ============================================================

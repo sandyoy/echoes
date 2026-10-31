@@ -48,6 +48,7 @@ import join_api
 import family_api
 import group_api
 import payment_api
+import paid_flow_api
 import entitlement
 import storage_api
 import tts_api
@@ -737,7 +738,11 @@ def interview_start(owner_id: str, viewer_id: str = "", db=Depends(get_db)):
 
 @app.post("/api/echoes/interview/next")
 def interview_next(req: NextQuestionReq, db=Depends(get_db)):
-    """老人答完 → 出下一问（打断则不丢话题，先接回刚才那问）。"""
+    """老人答完 → 出下一问（打断则不丢话题，先接回刚才那问）。
+
+    ★10-31：老人这句有内容时走 llm_brain（读懂这句再决定下一问）；
+    没内容/模型不可用 → 自动降级到题库，永远有 question 返回。
+    """
     return interview_api.api_next_question(
         db, owner_id=req.owner_id, viewer_id=req.viewer_id or req.owner_id,
         last_answer=req.last_answer, interrupted_question=req.interrupted_question,
@@ -1319,3 +1324,83 @@ async def storage_upload_form(request: Request, key: str):
 
     return {"ok": True, "data": r,
             "message": "字节已落盘，请调 /api/echoes/storage/confirm 登记"}
+
+
+# ============================================================
+# ★ 九个九付费链路（2026-10-31 新增 · 需求书 §9.6 五修）
+#   四个口子：我是谁 / 付完两按钮 / 选路 / 接受邀请 / 能不能印实体书
+#   路由前缀统一 /api/echoes/pay/，前端只认这一个前缀
+# ============================================================
+
+class _PostPayIn(BaseModel):
+    user_id: str
+
+
+class _ChoosePathIn(BaseModel):
+    user_id: str
+    choice: str = ""
+
+
+class _AcceptGiftIn(BaseModel):
+    token: str
+    new_owner_id: str
+
+
+@app.get("/api/echoes/pay/identity")
+def pay_identity(user_id: str):
+    """我是谁：有没有册子、归谁、付到哪一档。前端所有付费判断走这一个口子。"""
+    db = SessionLocal()
+    try:
+        return paid_flow_api.book_identity(db, user_id=user_id)
+    finally:
+        db.close()
+
+
+@app.get("/api/echoes/pay/choices")
+def pay_choices(user_id: str):
+    """付完 9.9 之后的两个按钮。没到账就不给按钮（绝不假成功）。"""
+    db = SessionLocal()
+    try:
+        return paid_flow_api.post_pay_choices(db, user_id=user_id)
+    finally:
+        db.close()
+
+
+@app.post("/api/echoes/pay/choose")
+def pay_choose(body: _ChoosePathIn):
+    """self_first=我自己先说 / gift_to_elder=转给爸妈"""
+    db = SessionLocal()
+    try:
+        return paid_flow_api.choose_path(db, user_id=body.user_id, choice=body.choice)
+    finally:
+        db.close()
+
+
+@app.post("/api/echoes/pay/accept_gift")
+def pay_accept_gift(body: _AcceptGiftIn):
+    """老人/家人点开邀请卡后接受 → 接受的人成为书主人"""
+    db = SessionLocal()
+    try:
+        return paid_flow_api.accept_gift(db, token=body.token, new_owner_id=body.new_owner_id)
+    finally:
+        db.close()
+
+
+@app.get("/api/echoes/pay/print_eligibility")
+def pay_print_eligibility(owner_id: str):
+    """299 实体书：答够页数才解锁。不够就说差多少，不打击人。"""
+    db = SessionLocal()
+    try:
+        return paid_flow_api.print_eligibility(db, owner_id=owner_id)
+    finally:
+        db.close()
+
+
+@app.post("/api/echoes/pay/sweep_expired_gifts")
+def pay_sweep_expired():
+    """30 天无人接受 → 标记待退款（只出清单不动钱）。供 cron / 手动触发。"""
+    db = SessionLocal()
+    try:
+        return paid_flow_api.sweep_expired_gifts(db)
+    finally:
+        db.close()

@@ -101,7 +101,9 @@ def main():
     d = r["data"]
     check(d.get("upload_url", "").startswith("http") or d.get("upload_url", "").startswith("/"),
           "给了 upload_url")
-    check(d.get("method") == "PUT", "method=PUT")
+    # 2026-10-24 起：wx.uploadFile 只认 POST multipart，本地后端统一给 POST 表单端点
+    check(d.get("method") == "POST", "method=POST（微信只认表单，不认 PUT）")
+    check(d.get("form_field") == "file", "form_field=file")
     check(d["key"].startswith("clips/u_zhang/image/"), "key 前缀对")
     check(d.get("backend") == "local", "backend=local")
     r2 = S.api_upload_url(actor_id="", kind="image", file_name="a.jpg", file_size=100)

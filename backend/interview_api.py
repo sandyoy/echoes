@@ -30,6 +30,7 @@ I. **【待验证】不得凭印象承诺**：1 秒延迟能否达成需真机�
 
 from datetime import datetime
 import json
+import sys
 
 from permissions import can_view_story, visible_stories
 from anchor_api import get_anchors, api_get_anchors
@@ -236,6 +237,49 @@ def api_next_question(db, *, owner_id: str, viewer_id: str = "",
             "wait_ms": 1800,
             "follow_digression": True,
         })
+
+    # 老人这句没内容（嗯/不知道/空）→ 先换一个具体的小事问，别硬凑
+    # ★10-31 新增：老人**有内容**时，先让模型读懂这句再决定下一问（llm_brain）。
+    # 原来的做法是无条件走题库顺次 → sandy 真机验收定性「不跟老人上一句走」。
+    if ans and ans not in _VAGUE_YES and len(ans) > 2:
+        try:
+            import llm_brain
+            nxt = _pick_anchor_question(db, owner_id=owner_id)
+            hint = ""
+            if nxt:
+                hint = nxt.get("text", "")
+            u = db.query(User).filter(User.id == owner_id).first()
+            birth = None
+            for atype, _q, _f in ANCHOR_QUESTIONS:
+                if atype == "birth":
+                    birth = _anchor_of(db, owner_id=owner_id, anchor_type="birth")
+                    break
+            follow = llm_brain.next_question_from_answer(
+                answer_text=last_answer,
+                asked_question=pending_q,
+                anchor_hint=hint,
+                owner_birth_year=birth,
+            )
+            if follow.get("question"):
+                return ok({
+                    "question": {
+                        "kind": follow.get("kind", "llm"),
+                        "anchor_type": "",
+                        "anchor_label": "",
+                        "text": follow["question"],
+                        "follow_up": "",
+                        "audio_hint": "语音播放（老人只用听）",
+                    },
+                    "heard": follow.get("heard", ""),
+                    "years_found": follow.get("years", []),
+                    "missing_anchors": _missing_anchors(db, owner_id=owner_id),
+                    "state": "following_answer",
+                    "wait_ms": 1800,
+                    "follow_digression": True,
+                })
+        except Exception as e:
+            # 任何异常都不许让老人面前断线 → 落到下面的题库路径
+            print(f"[interview] 接话层异常，回落题库：{e}", file=sys.stderr)
 
     # 正常出下一问
     q = _pick_anchor_question(db, owner_id=owner_id) or _fallback_question(db, owner_id=owner_id)

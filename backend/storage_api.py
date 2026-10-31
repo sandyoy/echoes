@@ -530,6 +530,8 @@ def api_upload_url(*, actor_id: str, kind: str = KIND_IMAGE, file_name: str,
         "upload_url": info["upload_url"],
         "method": info.get("method", "PUT"),
         "headers": info.get("headers", {}),
+        # ★10-31：本地后端走 POST 表单，字段名必须透出去——前端 wx.uploadFile 要用
+        "form_field": info.get("form_field", ""),
         "key": key,
         "expire": info.get("expire", DEFAULT_EXPIRE_SECONDS),
         "backend": getattr(st, "name", "unknown"),
@@ -607,10 +609,21 @@ def api_confirm_upload(*, db, actor_id: str, owner_id: str = "", key: str,
             mime=mime, duration=duration, visibility=visibility,
         )
     elif kind == KIND_AUDIO:
+        # ★10-31：转写**从"尽量"改成"必须跑"**——sandy 真机验收定死：
+        # 老人按着说完松手，屏幕上必须出字；转不出字要给一句实话，不能静默。
+        # 原来 do_transcribe 传了 True 但 audio_path 没传 → try_transcribe 直接返回
+        # "原声文件不在本机，转写稍后由后台补" → 真机上永远没有字。这就是根因。
+        local_audio = ""
+        try:
+            if hasattr(st, "_abs"):
+                local_audio = st._abs(key)
+        except Exception:
+            local_audio = ""
         res = collect_av.api_add_audio_clip(
             db, story_id=story_id, owner_id=oid, actor_id=actor_id,
             media_url=media_url, file_name=fname, file_size=size,
             mime=mime, duration=duration, visibility=visibility,
+            audio_path=local_audio,     # ← 关键：把本机真实路径给转写层
             do_transcribe=True,   # 语音：留声为主 + 留字为辅（§6.2.2）
         )
     elif kind == KIND_VIDEO:
@@ -632,6 +645,22 @@ def api_confirm_upload(*, db, actor_id: str, owner_id: str = "", key: str,
         "kind": kind,
         "key": key,
     })
+
+    # ★10-31：语音/原声统一补两个前端必需的字段，缺一样前端就是空壳
+    #   play_url   可直接播放的地址（前端拿去画音频条）
+    #   transcript 转写文字（前端拿去逐字上屏）
+    if kind in (KIND_AUDIO, KIND_ORIGINAL):
+        abs_play = data.get("media_url") or media_url
+        data["play_url"] = abs_play
+        data["transcribed"] = bool(data.get("transcribed", False))
+        if not data.get("transcript"):
+            data["transcript"] = ""
+        if kind == KIND_AUDIO and not data["transcribed"]:
+            # 转不出字 → 说一句实话，让前端显示黄提示（不弹红叉、不要求重录）
+            data["transcribe_hint"] = ("这段声音存下来了，但这几句没听清成文字——"
+                                       "不影响您的记录，可以再说一段。")
+        data["duration"] = float(duration or data.get("media_duration") or 0.0)
+
     return ok(data, message="已存好，" + ("公开" if visibility == "public" else "私有"))
 
 
