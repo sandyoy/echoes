@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>心脏健康管理闭环 · 双折页 · 医生版 v4</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --brand:#0b6b5c; --brand-dark:#084f44; --brand-light:#e8f4f1;
+    --accent:#c9a227; --ink:#1a2b28; --ink-2:#4a5f5b; --ink-3:#7d918d;
+    --line:#dfe8e6; --bg-soft:#f6faf9;
+  }
+  body{font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:#4a4a4a;color:var(--ink);padding:30px 0;line-height:1.7}
+  .sheetlabel{text-align:center;color:#fff;font-size:15px;margin:26px 0 12px;font-weight:600;letter-spacing:1px}
+  .a4{width:1123px;height:794px;background:#fff;margin:0 auto;position:relative;
+    display:grid;grid-template-columns:1fr 1fr;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+  .panel{position:relative;overflow:hidden;padding:36px 32px;display:flex;flex-direction:column}
+  .panel+.panel{border-left:1px dashed #bbb}
+  .pnum{position:absolute;top:10px;right:14px;font-size:11px;color:var(--ink-3);letter-spacing:1px}
+  .fnum{position:absolute;top:10px;left:14px;font-size:11px;color:#c0392b;opacity:.5;letter-spacing:.5px}
+
+  .cover{background:linear-gradient(160deg,#f2f9f7 0%,#dcefe9 100%);justify-content:center}
+  .cover .kicker{font-size:12px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:16px}
+  .cover h1{font-size:42px;font-weight:800;color:var(--brand-dark);line-height:1.24;letter-spacing:-.5px}
+  .cover h1 em{font-style:normal;color:var(--brand);border-bottom:4px solid var(--accent);padding-bottom:2px}
+  .cover .sub{margin-top:20px;font-size:16.5px;color:var(--ink-2);line-height:1.75}
+  .cover .brandline{margin-top:38px;padding-top:18px;border-top:2px solid var(--brand);font-size:15px;color:var(--brand-dark);font-weight:600;letter-spacing:1px}
+  .cover .brandline span{color:var(--ink-3);font-weight:400;letter-spacing:0;font-size:13px;display:block;margin-top:5px}
+
+  .ptitle{font-size:20px;font-weight:800;color:var(--brand-dark);margin-bottom:4px;letter-spacing:-.3px}
+  .ptitle .en{display:block;font-size:10.5px;font-weight:700;letter-spacing:2px;color:var(--accent);margin-bottom:4px}
+  .pbar{width:44px;height:3px;background:var(--brand);margin:8px 0 14px;border-radius:2px}
+  .ptxt{font-size:13px;color:var(--ink-2);line-height:1.75}
+  .sec{font-size:13.5px;font-weight:700;color:var(--brand);margin:12px 0 6px}
+
+  .flow{display:flex;flex-direction:column;gap:0;margin-top:6px}
+  .fstep{position:relative;padding:9px 12px 9px 44px;background:#fff;border:1px solid var(--line);border-radius:8px;margin-bottom:7px}
+  .fstep .n{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .fstep h4{font-size:13.5px;color:var(--brand-dark);margin-bottom:2px}
+  .fstep p{font-size:12px;color:var(--ink-2);line-height:1.6}
+  .arrowdown{text-align:center;color:var(--brand);font-size:14px;line-height:1;margin:-3px 0 -3px}
+
+  .fork{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:7px}
+  .fork .col{border-radius:8px;padding:11px 12px;border:1px solid var(--line)}
+  .fork .col.a{background:#f0f8f6;border-color:#bfded7}
+  .fork .col.b{background:#fdf7ea;border-color:#e8d9a8}
+  .fork .col h5{font-size:13px;color:var(--brand-dark);margin-bottom:5px}
+  .fork .col p{font-size:11.5px;color:var(--ink-2);line-height:1.6}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-bottom:10px}
+  .card h4{font-size:13.5px;color:var(--brand-dark);margin-bottom:6px}
+  .card ul{margin-left:16px}
+  .card li{font-size:11.5px;color:var(--ink-2);line-height:1.65;margin-bottom:2px}
+  .card li b{color:var(--brand-dark)}
+  .tagline-in{margin-top:8px;background:var(--brand-light);border-left:3px solid var(--brand);border-radius:0 6px 6px 0;padding:8px 11px;font-size:11.5px;color:var(--brand-dark)}
+
+  table.mgmt{width:100%;border-collapse:collapse;font-size:11px;margin-top:4px}
+  table.mgmt th{background:var(--brand);color:#fff;padding:6px 7px;text-align:left;font-size:10.5px}
+  table.mgmt td{padding:5.5px 7px;border-bottom:1px solid var(--line);color:var(--ink-2);line-height:1.45}
+  table.mgmt tr:nth-child(even){background:#fbfdfc}
+  table.mgmt td:first-child{color:var(--brand);font-weight:700;width:22px;text-align:center}
+  table.mgmt td:nth-child(2){width:60px;color:var(--brand-dark);font-weight:600}
+
+  .bigquote{margin-top:12px;background:var(--brand);border-radius:9px;padding:13px 16px;color:#fff;font-size:12.5px;line-height:1.7}
+  .bigquote b{color:#ffe9a8}
+
+  .devbox{background:#fff;border:1px solid #bfded7;border-radius:9px;padding:13px 15px}
+  .devbox h4{font-size:13px;color:var(--brand-dark);margin-bottom:6px}
+  .devbox p{font-size:11.5px;color:var(--ink-2);line-height:1.7}
+  .lit{margin-top:10px}
+  .lit p{font-size:11px;color:var(--ink-2);line-height:1.7;margin-bottom:2px}
+  .quote-in{margin-top:9px;background:var(--brand-light);border-left:3px solid var(--brand);border-radius:0 6px 6px 0;padding:8px 11px;font-size:11px;color:var(--brand-dark)}
+  .foot{border-top:2px solid var(--brand);padding-top:12px;margin-top:14px}
+  .foot .b{font-size:15px;font-weight:700;color:var(--brand-dark);letter-spacing:.5px}
+  .foot .s{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+
+  .note{text-align:center;color:#ffe9a8;font-size:12.5px;margin:8px auto 0;max-width:950px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<div class="note">▼ 一张 A4 纸的<b>正面</b>与<b>背面</b>；虚线 = 对折线。折起来 = A5 大小、共 <b>4 个面</b> 的双折页。<br>本版为【纯临床医生版】——只讲医生手上患者的治疗与管理，无渠道/部署/经营内容。</div>
+
+<!-- A4 正面：P4封底 | P1封面（印刷拼版：正面左=封底，右=封面） -->
+<div class="sheetlabel">A4 · 正面</div>
+<div class="a4">
+
+  <!-- P4 封底 -->
+  <div class="panel" style="background:linear-gradient(160deg,#eef7f5 0%,#dcefe9 100%)">
+    <div class="pnum">P4 · 封底</div>
+    <div class="fnum">正面·左</div>
+    <div class="ptitle"><span class="en">EVIDENCE</span>凭据</div>
+    <div class="pbar"></div>
+
+    <div class="devbox">
+      <h4>核心设备</h4>
+      <p>心脏超声波治疗仪（SUT-C）<br>国家二类医疗器械 ｜ 注册证号 京械注准 20162091164<br>适用范围：冠心病辅助治疗</p>
+    </div>
+
+    <div class="lit">
+      <div class="sec">依据的权威文献（6 份）</div>
+      <p>· 中国心脏康复指南（2018）</p>
+      <p>· 慢性心力衰竭心脏康复中国专家共识（2020）</p>
+      <p>· PCI 术后运动康复专家共识（2016）</p>
+      <p>· 心脏康复分级诊疗中国专家共识（2022）</p>
+      <p>· 冠心病患者运动治疗中国专家共识</p>
+      <p>· 八段锦团体标准 T/CACM 1676—2026</p>
+      <div class="quote-in">学术共识指出：<b>规律的心脏康复是心血管疾病长期管理的重要一环</b>。</div>
+    </div>
+
+    <div class="foot" style="margin-top:auto">
+      <div class="b">圆爱康 · 居家康复 · 智慧康复</div>
+      <div class="s">与心内科医生共建患者全周期管理　|　联系方式待补</div>
+    </div>
+  </div>
+
+  <!-- P1 封面 -->
+  <div class="panel cover">
+    <div class="pnum">P1 · 封面</div>
+    <div class="fnum">正面·右</div>
+    <div class="kicker">圆爱康 · 智慧康复</div>
+    <h1>心脏健康<br><em>管理闭环</em></h1>
+    <div class="sub">从评估、手术到术后康复管理<br>让您手上的每一位患者<br>「进得来 · 管得住 · 跟得上」</div>
+    <div class="brandline">圆爱康 · 居家康复 · 智慧康复
+      <span>与心内科共建患者全周期管理</span>
+    </div>
+  </div>
+</div>
+
+<!-- A4 背面：P2内页 | P3内页 -->
+<div class="sheetlabel">A4 · 背面（翻开后左右两页）</div>
+<div class="a4">
+
+  <!-- P2 内页：动线 -->
+  <div class="panel">
+    <div class="pnum">P2 · 内页</div>
+    <div class="fnum">背面·左</div>
+    <div class="ptitle"><span class="en">PATIENT JOURNEY</span>患者动线 · 六步闭环</div>
+    <div class="pbar"></div>
+    <div class="ptxt" style="margin-bottom:6px">从患者走进心内科，到术后康复管理，全程不断链。</div>
+
+    <div class="flow">
+      <div class="fstep"><div class="n">1</div><h4>患者进入心内科</h4><p>门诊 / 住院 / 科室通道</p></div>
+      <div class="arrowdown">▼</div>
+      <div class="fstep"><div class="n">2</div><h4>心脏评估</h4><p>心功能分级（NYHA）· 冠脉情况 · 危险因素</p></div>
+      <div class="arrowdown">▼</div>
+      <div class="fstep" style="background:#f0f8f6;border-color:#bfded7;padding-bottom:11px">
+        <div class="n">3</div><h4>分岔：有无手术指征？</h4>
+        <div class="fork">
+          <div class="col a"><h5>无手术指征</h5><p>进入居家心脏康复<br>减轻症状 · 控制风险<br>持续管理防进展</p></div>
+          <div class="col b"><h5>有手术指征</h5><p>安排手术 / 介入治疗<br>术后转入居家心脏康复<br>巩固疗效 · 预防再发</p></div>
+        </div>
+      </div>
+      <div class="arrowdown">▼</div>
+      <div class="fstep"><div class="n">4</div><h4>院内 + 居家，全程管理</h4><p>院内记录在案 · 居家按方训练 · 数据回落医生端</p></div>
+      <div class="arrowdown">▼</div>
+      <div class="fstep" style="background:var(--brand);border-color:var(--brand)">
+        <div class="n" style="background:#fff;color:var(--brand)">5</div>
+        <h4 style="color:#fff">患者不流失</h4>
+        <p style="color:#d8ece7">无手术指征的、有手术指征的、术后的——<b style="color:#fff">每一位患者都被持续管理</b></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- P3 内页：在您手上怎么管 -->
+  <div class="panel">
+    <div class="pnum">P3 · 内页</div>
+    <div class="fnum">背面·右</div>
+    <div class="ptitle"><span class="en">IN YOUR HANDS</span>在您手上，患者怎么被管起来</div>
+    <div class="pbar"></div>
+
+    <div class="card">
+      <h4>医生端（您在用）</h4>
+      <ul>
+        <li>查看患者康复方案与执行回执</li>
+        <li><b>训练时长与完成度可追踪</b>——不用追问，患者练没练、练了多少一目了然</li>
+        <li><b>远程调整方案</b>——患者在家，方案随时按数据调</li>
+        <li>按疗程生成治疗报告，供您查阅与解读</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h4>患者端（患者在家用）</h4>
+      <ul>
+        <li>视频动作指导，大字幕、自动跳转——不懂也能跟着练</li>
+        <li>心脏超声波治疗仪按医嘱居家使用</li>
+        <li>每日训练任务清晰，患者知道今天该做什么</li>
+      </ul>
+    </div>
+
+    <div class="sec" style="margin-top:4px">从开方到复诊，全流程管理</div>
+    <table class="mgmt">
+      <tr><th>#</th><th>环节</th><th>在您这儿发生的事</th></tr>
+      <tr><td>1</td><td>建档</td><td>患者进入您的管理，建立康复档案</td></tr>
+      <tr><td>2</td><td>开方</td><td>您核定治疗方案，录入、下发</td></tr>
+      <tr><td>3</td><td>执行</td><td>患者按方案在家治疗/训练</td></tr>
+      <tr><td>4</td><td>依从性</td><td>未按时治疗者被提醒、协助坚持</td></tr>
+      <tr><td>5</td><td>随访</td><td>按周期回访，记录使用情况与感受</td></tr>
+      <tr><td>6</td><td>异常响应</td><td>治疗中断/异常时主动联系、及时告知您</td></tr>
+      <tr><td>7</td><td>数据回落</td><td>训练数据回落到医生端，时长/完成度可追踪</td></tr>
+      <tr><td>8</td><td>报告</td><td>按疗程生成报告，供您查阅</td></tr>
+      <tr><td>9</td><td>调方案</td><td>您按数据远程调整方案并下发</td></tr>
+      <tr><td>10</td><td>复诊</td><td>复诊提醒、疗程衔接，患者持续在管理内</td></tr>
+    </table>
+
+    <div class="bigquote">从建档、开方、执行、随访到复诊——<b>您手上的每一位患者，整个康复过程都看得见、管得住</b>。</div>
+  </div>
+</div>
+
+</body>
+</html>
