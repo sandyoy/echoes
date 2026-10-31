@@ -244,11 +244,21 @@ def api_list_clips(db, *, story_id: str, owner_id: str, viewer_id: str) -> dict:
     clips = visible_clips(db, story_id=story_id, owner_id=owner_id, viewer_id=viewer_id)
     items = []
     for c in clips:
+        media_url = c.media_url or ""
+        # ★ 2026-10-31 三链路：音频类素材必须给前端「能不能直接放」的判据，
+        #   不然前端只能瞎猜（media_url 为空 / 是照片 → 不能放）。
+        _is_audio = c.clip_type.value in ("voice", "audio", "original")
         items.append({
             "clip_id": c.id,
             "clip_type": c.clip_type.value,
             "text": c.text or "",
-            "media_url": c.media_url or "",
+            # ★ 说话类的「说了什么」在这里：前端直接上屏，不用再调接口
+            "transcript": (getattr(c, "transcript", "") or ""),
+            "transcript_status": (getattr(c, "transcript_status", "") or ""),
+            "media_url": media_url,
+            # ★ 音频条专用：playable=true 才画播放条（有可放地址 + 是音频类）
+            "playable": bool(media_url) and _is_audio,
+            "media_duration": float(getattr(c, "media_duration", 0) or 0),
             "cover_url": c.cover_url or "",
             "caption": c.caption or "",
             "keep_original_voice": bool(c.keep_original_voice),

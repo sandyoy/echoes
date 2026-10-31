@@ -33,12 +33,36 @@
     </view>
   </block>
 
+  <!-- ★ 三链路①：刚才那段变成了字，大字回显（老人松开手立刻能看见） -->
+  <view wx:if="{{lastTranscript}}" class="said">
+    <view class="said-label">你刚才说的是</view>
+    <view class="said-text">{{lastTranscript}}</view>
+  </view>
+
   <!-- 软提示（灰/黄，不弹红叉：转写稍后 / 建议分段 / 上传通道未开） -->
   <view wx:if="{{notice}}" class="notice">{{notice}}</view>
 
   <!-- 已采集素材（挂同一件事） -->
   <view wx:if="{{clips.length > 0}}" class="list-title">这件事已经有 {{clips.length}} 项</view>
-  <view wx:for="{{clips}}" wx:key="clip_id" class="clip-item">{{item.clip_type}}</view>
+  <view wx:for="{{clips}}" wx:key="clip_id" class="clip-item">
+
+    <!-- ★ 三链路②：音频条（playable 才画）——一个按钮放/停 -->
+    <view wx:if="{{item.playable}}" class="audio-bar"
+          data-id="{{item.clip_id}}" data-url="{{item.media_url}}" bindtap="onTogglePlay">
+      <view class="audio-btn">{{item.playing ? '❚❚' : '▶'}}</view>
+      <view class="audio-wave {{item.playing ? 'on' : ''}}">
+        <view class="bar b1"></view><view class="bar b2"></view><view class="bar b3"></view>
+        <view class="bar b4"></view><view class="bar b5"></view><view class="bar b6"></view>
+        <view class="bar b7"></view><view class="bar b8"></view>
+      </view>
+      <view class="audio-tip">{{item.playing ? '正在放' : '听一下'}}</view>
+    </view>
+
+    <!-- ★ 三链路①：说了什么（转写文字直接上屏，不再只显示类型名） -->
+    <view wx:if="{{item.transcript || item.text}}" class="clip-text">{{item.transcript || item.text}}</view>
+    <view wx:elif="{{item.clip_type === 'voice'}}" class="clip-text dim">这段的字还没转好，声音已经留着了</view>
+    <view wx:else class="clip-type">{{item.clip_type === 'original' ? '留个声' : item.clip_type}}</view>
+  </view>
 
   <view class="big-btn" bindtap="onSave">保存</view>
 

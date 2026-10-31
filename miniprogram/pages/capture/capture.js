@@ -52,7 +52,10 @@ Page({
     mediaList: [],     // 本地已选/已录素材（仅展示用）
     clips: [],         // 后端素材筐（已排序，直接渲染）
     ownerId: '',       // 书的主人（权限判定的根）；空＝用 actorId 顶上（自述场景）
-    notice: ''         // 上一次操作的软提示（灰/黄，不吓人）
+    notice: '',        // 上一次操作的软提示（灰/黄，不吓人）
+    // ★ 2026-10-31 三链路：刚才那段说了什么（大字回显）+ 交给采访页的上一句
+    lastTranscript: '',
+    last_answer: ''
   },
 
   onLoad(query) {
@@ -171,7 +174,26 @@ Page({
       '&owner_id=' + encodeURIComponent(owner),
       'GET'
     )
-      .then((data) => this.setData({ clips: data.clips || [] }))
+      .then((data) => {
+        // ★ 三链路：从服务端拉的素材也要能上字、能画条（字段归一，缺就补默认）
+        const list = (data.clips || []).map((c) => Object.assign({}, c, {
+          text: c.text || c.transcript || '',
+          transcript: c.transcript || c.text || '',
+          playable: (c.playable !== undefined)
+            ? !!c.playable
+            : (!!c.media_url && c.clip_type !== 'photo' && c.clip_type !== 'video'),
+          playing: false
+        }));
+        this.setData({ clips: list });
+        // 最后一条说话的内容 = 上一句（供采访接话）
+        for (let i = list.length - 1; i >= 0; i--) {
+          if (list[i].transcript && (list[i].clip_type === 'voice' || list[i].clip_type === 'audio')) {
+            this.setData({ lastTranscript: list[i].transcript, last_answer: list[i].transcript });
+            try { wx.setStorageSync('last_answer', list[i].transcript); } catch (e) {}
+            break;
+          }
+        }
+      })
       .catch(() => this.setData({ clips: [] }));   // no_permission → 当作没有
   },
 
@@ -215,6 +237,87 @@ Page({
     const rm = wx.getRecorderManager && wx.getRecorderManager();
     if (rm && this._recSupported) rm.stop();
     else wx.showToast({ title: '这台设备不支持录音', icon: 'none' });
+  },
+
+  /**
+   * ★ 2026-10-31 三链路②③：把后端返回的一条素材「当场」塞进素材筐并上屏。
+   * 不等 refreshClips 往返——老人松开手就要听见字、看见条。
+   * data 形如 {clip_id, clip_type, transcript, media_url, playable, media_duration}
+   */
+  _applyClipResult(data) {
+    if (!data) return;
+    const one = {
+      clip_id: data.clip_id || ('local_' + Date.now()),
+      clip_type: data.clip_type || (this.data.type === 'original' ? 'original' : 'voice'),
+      text: data.transcript || '',
+      transcript: data.transcript || '',
+      media_url: data.media_url || '',
+      playable: !!data.playable || (!!data.media_url && this.data.type !== 'photo'),
+      media_duration: data.media_duration || 0,
+      playing: false
+    };
+    // ★ 链③ 采访接话要用：老人刚说的那句必须落在 last_answer（前端不自己编）
+    this.setData({
+      clips: this.data.clips.concat([one]),
+      lastTranscript: one.text,      // 页面上「刚才说的是」大字回显
+      last_answer: one.text          // 交给 interview 页的上一句
+    });
+    try { wx.setStorageSync('last_answer', one.text || ''); } catch (e) {}
+    // 真正的一条音频条：有地址才画
+    if (one.playable && one.media_url) {
+      this._ensureAudio(one.clip_id, one.media_url);
+    }
+  },
+
+  // ==================== 音频条（链②：可回放） ====================
+
+  /** 懒建 player：一条素材一个 innerAudioContext，避免互相抢 */
+  _ensureAudio(id, url) {
+    if (!wx.createInnerAudioContext) return null;
+    this._players = this._players || {};
+    if (this._players[id]) return this._players[id];
+    const p = wx.createInnerAudioContext();
+    p.src = url;
+    p.onEnded(() => this._setPlaying(id, false));
+    p.onStop(() => this._setPlaying(id, false));
+    p.onError(() => {
+      this._setPlaying(id, false);
+      this.setData({ notice: '这段声音暂时放不出来，原件已经留着了' });
+    });
+    this._players[id] = p;
+    return p;
+  },
+
+  _setPlaying(id, playing) {
+    const clips = (this.data.clips || []).map((c) => {
+      if (c.clip_id !== id) return c.playable ? Object.assign({}, c, { playing: false }) : c;
+      return Object.assign({}, c, { playing: playing });
+    });
+    this.setData({ clips: clips });
+  },
+
+  /** 点音频条：放 / 停（同一个按钮，老人不用学第二下） */
+  onTogglePlay(e) {
+    const { id, url } = e.currentTarget.dataset;
+    if (!id || !url) return;
+    const p = this._ensureAudio(id, url);
+    if (!p) { wx.showToast({ title: '这台设备放不了声音', icon: 'none' }); return; }
+    const cur = (this.data.clips || []).filter((c) => c.clip_id === id)[0];
+    if (cur && cur.playing) { p.pause(); this._setPlaying(id, false); return; }
+    // 其他条先停，避免两条一起响
+    Object.keys(this._players || {}).forEach((k) => {
+      if (k !== id) { try { this._players[k].pause(); } catch (err) {} }
+    });
+    try { p.play(); this._setPlaying(id, true); } catch (err) {
+      this.setData({ notice: '这段声音暂时放不出来，原件已经留着了' });
+    }
+  },
+
+  onUnload() {
+    Object.keys(this._players || {}).forEach((k) => {
+      try { this._players[k].destroy(); } catch (e) {}
+    });
+    this._players = {};
   },
 
   /** 录音结束 → 本地校验 → 取上传址 → 上传 → 登记 */
@@ -264,6 +367,15 @@ Page({
       })
       .then((data) => {
         wx.hideLoading();
+        // ★ 三链路：后端 data 里已带 clip_id / transcript / media_url，当场落屏 + 画音频条
+        if (data && (data.clip_id || data.media_url || data.transcript)) {
+          const one = Object.assign({}, data, {
+            clip_type: isOriginal ? 'original' : 'voice',
+            playable: !!data.media_url,
+            media_duration: duration
+          });
+          this._applyClipResult(one);
+        }
         // ★ 语音：如果 transcribed=false 属预期（转写稍后），用灰/黄，不弹红叉
         if (data && data.transcribed === false && !isOriginal) {
           this.setData({ notice: '原声已留下，文字稍后补' });

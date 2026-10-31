@@ -52,6 +52,58 @@
   font-size: var(--font-base);
 }
 
+/* ★ 三链路①：刚才说的那句话，大字回显（老人一眼看见自己说的变成了字） */
+.said {
+  margin: var(--space) 0;
+  padding: var(--space);
+  border-radius: 12rpx;
+  background: #eaf5ff;
+  border-left: 8rpx solid var(--color-accent);
+}
+.said-label { font-size: 24rpx; color: #5b7a99; margin-bottom: 8rpx; }
+.said-text { font-size: 40rpx; line-height: 1.5; color: #1a1a1a; font-weight: 600; }
+
+/* ★ 三链路②：音频条 —— 一个大按钮 + 跳动的波，老人都认得「▶」 */
+.audio-bar {
+  display: flex;
+  align-items: center;
+  padding: calc(var(--space) / 2) 0;
+  margin-bottom: calc(var(--space) / 3);
+}
+.audio-btn {
+  width: 88rpx; height: 88rpx; border-radius: 50%;
+  background: var(--color-accent); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32rpx; flex-shrink: 0;
+}
+.audio-wave {
+  flex: 1;
+  display: flex; align-items: center; gap: 8rpx;
+  height: 60rpx; margin: 0 20rpx;
+}
+.audio-wave .bar {
+  flex: 1; background: #c9d9e8; border-radius: 4rpx; height: 30%;
+}
+.audio-wave.on .bar { background: var(--color-accent); animation: wave 900ms ease-in-out infinite; }
+.audio-wave.on .b1 { height: 30%; animation-delay: 0ms; }
+.audio-wave.on .b2 { height: 55%; animation-delay: 90ms; }
+.audio-wave.on .b3 { height: 80%; animation-delay: 180ms; }
+.audio-wave.on .b4 { height: 45%; animation-delay: 270ms; }
+.audio-wave.on .b5 { height: 70%; animation-delay: 360ms; }
+.audio-wave.on .b6 { height: 40%; animation-delay: 450ms; }
+.audio-wave.on .b7 { height: 75%; animation-delay: 540ms; }
+.audio-wave.on .b8 { height: 35%; animation-delay: 630ms; }
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.6); }
+  50%      { transform: scaleY(1.2); }
+}
+.audio-tip { font-size: 26rpx; color: #666; flex-shrink: 0; }
+
+/* ★ 三链路①：说了什么 —— 转写文字直接上屏，不再是「voice」这种机器话 */
+.clip-text { font-size: 32rpx; line-height: 1.55; color: #1a1a1a; }
+.clip-text.dim { color: #999; font-size: 26rpx; }
+.clip-type { font-size: 26rpx; color: #888; }
+
 /* ★ 做成一张图（次要入口，不抢「保存」的主位） */
 .sb-btn {
   margin-top: calc(var(--space) / 2);

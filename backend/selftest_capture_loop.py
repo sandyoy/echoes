@@ -56,7 +56,13 @@ print("① 转写层：腾讯云 ASR 直连")
 print("=" * 62)
 try:
     import tencent_asr
-    r = tencent_asr.recognize(SAMPLE)
+    # 2026-10-31 修：本模块的真实入口是 recognize_short / recognize_long，没有 recognize。
+    # 旧写法一直在报 "has no attribute 'recognize'"，且被 except 吞成「ASR 不可用」，
+    # 会让人误判成"腾讯云 ASR 坏了"——实际是自测调错了名字。
+    _fn = getattr(tencent_asr, 'recognize_short', None) or getattr(tencent_asr, 'recognize_long', None)
+    if _fn is None:
+        raise RuntimeError('tencent_asr 里找不到 recognize_short/recognize_long')
+    r = _fn(SAMPLE)
     txt = r.get("text", "") if isinstance(r, dict) else str(r)
     check("ASR 返回非空文字", bool(txt.strip()), txt[:80])
     print(f"       识别结果：{txt[:70]}")
