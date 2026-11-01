@@ -234,6 +234,9 @@ Page({
           playable: (c.playable !== undefined)
             ? !!c.playable
             : (!!c.media_url && c.clip_type !== 'photo' && c.clip_type !== 'video'),
+          transcribed: (c.transcribed !== undefined)
+            ? !!c.transcribed
+            : !!(c.transcript || c.text),
           playing: false
         }));
         this.setData({ clips: list });

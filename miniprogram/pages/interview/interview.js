@@ -73,6 +73,14 @@ Page({
 
   onShow() {
     this.setData({ uiMode: app.getUiMode() });
+    // ★ 链③ 补传：录音页「说」完的那句落在 storage 的 last_answer，
+    //   采访页每次回到前台取一次，取到就清，避免同一句被反复当回答提交。
+    let said = '';
+    try { said = wx.getStorageSync('last_answer') || ''; } catch (e) {}
+    if (said) {
+      try { wx.removeStorageSync('last_answer'); } catch (e) {}
+      this.setData({ lastAnswer: said });
+    }
   },
 
   onUnload() {

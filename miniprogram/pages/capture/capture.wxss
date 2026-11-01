@@ -86,6 +86,9 @@
   padding: calc(var(--space) / 2) 0;
   margin-bottom: calc(var(--space) / 3);
 }
+/* playable=false：只给灰态，不弹红叉，不劝退老人 */
+.audio-bar.grey { opacity: .45; }
+.audio-bar.grey .audio-tip { font-size: 26rpx; }
 .audio-btn {
   width: 88rpx; height: 88rpx; border-radius: 50%;
   background: var(--color-accent); color: #fff;
