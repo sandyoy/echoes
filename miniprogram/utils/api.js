@@ -390,6 +390,31 @@ function interviewBargeIn(ownerId, energyDb, assumingNorm) {
   return post(INTERVIEW.BARGE_IN, body);
 }
 
+// ============ TTS 线（11-04 小龙虾接前端：采访页 AI 真要出声）============
+// 后端 backend/api_adapter_fastapi.py:1172 POST /api/echoes/tts/speak（唯一出声入口）
+// 生产实测 11-04：ok=true, engine=tencent, 返回 media_url=/media/clips/.../speech.mp3
+const TTS = {
+  SPEAK: '/api/echoes/tts/speak',
+  STATUS: '/api/echoes/tts/status'
+};
+
+/**
+ * 要一段"能出声的"问句：给文字 → 还 media_url（老人听得见的 mp3）
+ * scene: interview_host（采访）| recap（复述）| tip（提示）
+ * 失败必带明确错误码，绝不返回假 URL —— 调用方据 code 退化为「只显字」
+ */
+function ttsSpeak(actorId, text, scene, storyId) {
+  return post(TTS.SPEAK, {
+    actor_id: actorId || '', text: text || '',
+    scene: scene || '', story_id: storyId || ''
+  });
+}
+
+/** TTS 通道体检：能不能出声、用哪个引擎 */
+function ttsStatus() {
+  return get(TTS.STATUS);
+}
+
 /** 自述页保存后：要不要弹归类问（含频率保护，防烦） */
 function interviewAskClassify(ownerId, viewerId, newStoryId) {
   return post(INTERVIEW.ASK_CLASSIFY, {
@@ -618,7 +643,9 @@ function cardPreview(o) {
 // ============================================================
 // ★ P0-2（小鲸鱼 10-22 活地图）：后端已就绪、前端原先未接的 4 组接口
 //   一律「后端有、前端原无」，本次按活地图顺序 A→B→C→D 补接。
-//   明确不接：pay/* 支付、print/* 印刷、share/* 分享、storage/media_url、tts/*、group/*
+//   明确不接：pay/* 支付、print/* 印刷、share/* 分享、storage/media_url、group/*
+//   ★ 例外（11-04 小龙虾接）：tts/* 已接 —— 采访页要 AI 真出声（见 TTS_SPEAK），
+//     后端 /api/echoes/tts/speak 生产实测 ok=true、engine=tencent，返回 media_url。
 // ============================================================
 
 // —— A 成书的读：我的书列表 / 读某一本 / 锁状态 / 续添 ——
@@ -842,6 +869,8 @@ module.exports = {
   INTERVIEW,
   interviewStart, interviewNext, interviewBargeIn,
   interviewAskClassify, interviewClassifyAnswer, interviewPref,
+  TTS,
+  ttsSpeak, ttsStatus,
   BOOK,
   bookSource, bookGenerate, bookEbook,
   JOIN,

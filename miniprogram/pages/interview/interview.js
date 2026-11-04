@@ -122,24 +122,58 @@ Page({
     });
   },
 
-  /** TTS 播放问句（用系统语音合成；真机可换后端音频，audio_hint 提示「只用听」） */
+  /**
+   * TTS 播放问句：真出声（11-04 改）
+   *   旧版是「等一会儿假装在读」的占位计时器 —— 老人实际什么也听不到，打断也没意义。
+   *   现在：向 /api/echoes/tts/speak 要一段 mp3（腾讯云音色），InnerAudioContext 真播；
+   *   合成/播放失败一律退化为原占位时长，**不卡住流程**（铁律：绝不卡住老人）。
+   */
   speak(text, done) {
     if (!text) { if (done) done(); return; }
     this.setData({ speaking: true });
-    // 用微信同声传译插件不是必须；这里用 InnerAudioContext 播后端音频留位，
-    // 本机联调无音频源 → 退化为「读一会儿」的占位时长，不假装有 1 秒打断能力。
+    this._readingText = text;
+    this._ttsStopped = false;      // ★每句重置：否则打断过一次就永久哑了
+    // 兜底时长：合成回不来时按字数估，保证一定会走到 done
     const fakeMs = Math.min(6000, 60 * text.length + 800);
-    this._ttsTimer = setTimeout(() => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      if (this._ttsFallbackTimer) { clearTimeout(this._ttsFallbackTimer); this._ttsFallbackTimer = null; }
       this.setData({ speaking: false });
       if (done) done();
-    }, fakeMs);
-    this._readingText = text;
+    };
+    this._ttsFallbackTimer = setTimeout(finish, fakeMs + 4000);
+
+    api.ttsSpeak(this.data.ownerId, text, 'interview_host', this.data.storyId)
+      .then((d) => {
+        if (this._ttsStopped) return;                 // 老人已经打断，别又响起来
+        const url = api.absUrl((d && d.media_url) || '');
+        if (!url) return finish();                    // 没拿到地址 → 只显字，不假装有声音
+        this.stopAudioOnly();
+        const ctx = wx.createInnerAudioContext();
+        this._ttsCtx = ctx;
+        ctx.src = url;
+        ctx.onEnded(() => finish());
+        ctx.onError(() => { this.stopAudioOnly(); finish(); });
+        ctx.play();
+      })
+      .catch(() => finish());                          // TTS 不可用 → 退化，不报错弹窗
   },
 
-  /** 停 TTS（barge_in → stop_tts=true 时立刻调；真机这里应 stop InnerAudioContext） */
+  /** 停 TTS（barge_in → stop_tts=true 时立刻调；真机须 1 秒内停） */
   stopTts() {
-    if (this._ttsTimer) { clearTimeout(this._ttsTimer); this._ttsTimer = null; }
+    this._ttsStopped = true;
+    if (this._ttsFallbackTimer) { clearTimeout(this._ttsFallbackTimer); this._ttsFallbackTimer = null; }
+    this.stopAudioOnly();
     if (this.data.speaking) this.setData({ speaking: false });
+  },
+
+  /** 只停音频上下文（不置 _ttsStopped，供换语句时复用） */
+  stopAudioOnly() {
+    const ctx = this._ttsCtx;
+    this._ttsCtx = null;
+    if (ctx) { try { ctx.stop(); ctx.destroy(); } catch (e) { /* 已销毁 */ } }
   },
 
   /** 开始收声（真机接录音；本机联调用「说完了」按钮模拟一句回答） */
