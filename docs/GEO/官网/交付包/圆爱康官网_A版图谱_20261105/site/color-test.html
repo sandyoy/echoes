@@ -1,0 +1,26 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><title>logo配色适配测试</title>
+<style>body{font-family:-apple-system,"PingFang SC",sans-serif;margin:0;padding:28px;background:#eef2f1}
+h2{font-size:15px;color:#4a5f5b;margin:24px 0 10px;font-weight:600}
+.bar{height:76px;display:flex;align-items:center;padding:0 24px;border-radius:8px}
+.bar img{height:44px;width:auto}
+.white{background:#fff;border:1px solid #dfe8e6}
+.green{background:#0b6b5c}
+.greendark{background:#0d2420}
+.goldbg{background:#c9a227}
+.tag{font-size:12px;color:#7d918d;margin-top:6px}
+</style></head><body>
+<h2>① 白底（当前官网导航栏背景）</h2>
+<div class="bar white"><img src="02_品牌logo横版_圆爱康智慧家康_金色.jpg"></div>
+<div class="tag">绿底保留方案的导航栏实际是白底 → 问题不大</div>
+
+<h2>② 深绿 #0b6b5c（品牌主色，若做绿底导航栏）</h2>
+<div class="bar green"><img src="02_品牌logo横版_圆爱康智慧家康_金色.jpg"></div>
+<div class="tag">⚠️ 橙金 on 深绿 = 需要看对比度</div>
+
+<h2>③ 墨绿 #0d2420（页脚背景）</h2>
+<div class="bar greendark"><img src="02_品牌logo横版_圆爱康智慧家康_金色.jpg"></div>
+<div class="tag">页脚用色</div>
+
+<h2>④ 金色底（如果抠成金字版放金属色底）</h2>
+<div class="bar goldbg"><img src="02_品牌logo横版_圆爱康智慧家康_金色.jpg"></div>
+</body></html>

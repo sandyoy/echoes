@@ -1,0 +1,38 @@
+# robots.txt — www.yuanaikangss.com
+# 2026-11-05
+
+User-agent: *
+Allow: /
+
+# AI / 大模型抓取方（显式放行，便于被检索与引用）
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: Sogou web spider
+Allow: /
+
+User-agent: 360Spider
+Allow: /
+
+User-agent: PetalBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+Disallow: /*.bak
+Disallow: /color-test.html
+
+Sitemap: https://www.yuanaikangss.com/sitemap.xml
