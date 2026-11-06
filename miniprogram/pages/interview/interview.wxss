@@ -50,6 +50,50 @@
 
 /* 收声区 */
 .listen-box { margin: var(--space) 0; }
+
+/* ★11-06 按住说话：整块大热区，老人一指按住，松手就发 */
+.hold-btn {
+  width: 100%;
+  height: calc(var(--btn-h) * 1.6);
+  line-height: calc(var(--btn-h) * 1.6);
+  text-align: center;
+  font-size: var(--font-base);
+  border-radius: 22rpx;
+  background: var(--color-accent);
+  color: #ffffff;
+  box-sizing: border-box;
+}
+.hold-btn.recording {
+  background: #c0392b;
+  transform: scale(0.98);
+}
+/* 上传/转写中：变灰但不消失，老人知道它还在动 */
+.hold-btn.busy {
+  background: #b9a894;
+  color: #ffffff;
+}
+.hold-tip {
+  text-align: center;
+  color: #8a7d6b;
+  font-size: var(--font-base);
+  padding: 16rpx 0;
+}
+.ui-large .hold-tip { font-size: 42rpx; }
+.ui-large .hold-btn { font-size: 52rpx; }
+
+/* 兜底打字入口：小、灰、不抢眼，只有录不了音时才用 */
+.fallback-row { display: flex; justify-content: center; margin: 8rpx 0 16rpx; }
+.ghost-btn.small {
+  flex: none;
+  padding: 0 28rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  font-size: 26rpx;
+  color: #8a7d6b;
+  border: 1rpx solid #d8cbbb;
+  border-radius: 32rpx;
+}
+
 .answer-input {
   background: #ffffff;
   border: 1rpx solid #e2d6c6;

@@ -56,6 +56,13 @@ Page({
     classifyStoryId: '',
     mutedAsk: false,
 
+    // ★11-06 真录音（按住说话）：老人松手 → 上传 → 转文字 → 上屏 → 自动接下一问
+    recording: false,
+    recSec: 0,
+    answerBusy: false,      // 上传/转写中
+    answerStatus: '',       // 给老人看的进度话（正在听/正在转字）
+    typeAnswer: false,      // 兜底：设备录不了音时才露出打字入口
+
     submitting: false
   },
 
@@ -86,6 +93,14 @@ Page({
   onUnload() {
     this.stopTts();      // 离页必停播，别让声音跟着走
     this.clearClassifyTimer();
+    // ★11-06：离页别把录音留在后台（否则下次进页面麦克风是占着的）
+    clearInterval(this._secTimer);
+    this._secTimer = null;
+    if (this.data.recording) {
+      this._recDiscard = true;
+      const rm = wx.getRecorderManager && wx.getRecorderManager();
+      if (rm) rm.stop();
+    }
   },
 
   // ============ 采访主流程 ============
@@ -93,7 +108,10 @@ Page({
   /** 开始采访：AI 主动出第一问（优先问人生锚点） */
   startInterview() {
     this.setData({ loading: true, error: '' });
-    return api.interviewStart(this.data.ownerId, this.data.viewerId)
+    // ★11-06：先把"筐"建好（story_id）。不建的话老人每句录音都没处挂，
+    //   收尾复述也写不回任何一条故事 → 录音=白录。
+    return this.ensureStory()
+      .then(() => api.interviewStart(this.data.ownerId, this.data.viewerId))
       .then((data) => {
         this.setData({ loading: false });
         this.showQuestion(data);
@@ -101,6 +119,27 @@ Page({
       .catch((err) => {
         this.setData({ loading: false, error: (err && err.message) || '现在没能开始，请稍后再试' });
       });
+  },
+
+  /**
+   * ★11-06 保证有一段"故事"可挂：采访成品、每句录音都挂在它上面。
+   *   已有 storyId 直接用；没有就建一条（标题留空，收尾复述时后端会写自述体）。
+   *   建不出来也**不挡住采访**——宁可暂时录音不落库，也不能让老人对着屏幕干等。
+   */
+  ensureStory() {
+    if (this.data.storyId) return Promise.resolve(this.data.storyId);
+    if (this._storyPending) return this._storyPending;
+    const uid = this.data.ownerId || this.data.viewerId || '';
+    if (!uid) return Promise.resolve('');
+    this._storyPending = api.storyCreate({ ownerId: uid, actorId: this.data.viewerId || uid, title: '' })
+      .then((d) => {
+        const sid = (d && (d.story_id || (d.story && d.story.story_id))) || '';
+        if (sid) this.setData({ storyId: sid });
+        this._storyPending = null;
+        return sid;
+      })
+      .catch(() => { this._storyPending = null; return ''; });
+    return this._storyPending;
   },
 
   /** 展示一问：存下当前问句 → TTS 播 → 播完等 wait_ms → 收声（铁律 3） */
@@ -176,9 +215,167 @@ Page({
     if (ctx) { try { ctx.stop(); ctx.destroy(); } catch (e) { /* 已销毁 */ } }
   },
 
-  /** 开始收声（真机接录音；本机联调用「说完了」按钮模拟一句回答） */
+  /** 开始收声（★11-06：真录音，老人按住说话；录不了音的设备才退化成打字） */
   startListening() {
-    this.setData({ listening: true });
+    this.setData({ listening: true, answerBusy: false, answerStatus: '', lastAnswer: '' });
+  },
+
+  // ============ ★11-06 按住说话（真录音 → 转文字 → 自动接话） ============
+
+  /** 按住：开录。录音期间把 TTS 停掉（别让自己的声音录进去） */
+  onHoldStart() {
+    if (this.data.answerBusy) return;
+    const rm = wx.getRecorderManager && wx.getRecorderManager();
+    if (!rm) {
+      this.setData({ typeAnswer: true });
+      wx.showToast({ title: '这台设备录不了音，用打字说', icon: 'none' });
+      return;
+    }
+    this.stopTts();
+    this._recStart = Date.now();
+    this._recStopped = false;
+    this._recDiscard = false;
+    this.setData({ recording: true, recSec: 0, error: '', bargeTip: '' });
+    if (wx.vibrateShort) wx.vibrateShort();
+    // 秒数跳动：老人得看见"它在听"
+    clearInterval(this._secTimer);
+    this._secTimer = setInterval(() => {
+      const s = Math.floor((Date.now() - this._recStart) / 1000);
+      this.setData({ recSec: s });
+    }, 500);
+
+    this._onStop = (res) => this._handleRecStop(res);
+    rm.onStop(this._onStop);
+    rm.start({
+      duration: 5 * 60 * 1000,        // 一次回答最长 5 分钟，够了
+      sampleRate: 16000, numberOfChannels: 1,
+      encodeBitRate: 48000, format: 'mp3'
+    });
+  },
+
+  /** 松开：停录（真正处理在 onStop 回调） */
+  onHoldEnd() {
+    if (!this.data.recording) return;
+    this.setData({ recording: false });
+    clearInterval(this._secTimer);
+    this._secTimer = null;
+    // 误碰（<0.6 秒）→ 丢掉，不算一次回答
+    if (this._recStart && Date.now() - this._recStart < 600) {
+      this._recDiscard = true;
+      this._recStart = 0;
+      const rm = wx.getRecorderManager && wx.getRecorderManager();
+      if (rm) rm.stop();
+      wx.showToast({ title: '按住多说一会儿', icon: 'none' });
+      return;
+    }
+    const rm = wx.getRecorderManager && wx.getRecorderManager();
+    if (rm) rm.stop();
+  },
+
+  /** 触摸被系统打断（来电等）→ 当作松开处理，别让录音卡在"正在录" */
+  onHoldCancel() {
+    if (!this.data.recording) return;
+    this._recDiscard = true;
+    this.onHoldEnd();
+  },
+
+  /** 录完 → 上传 + 登记（后端当场转写）→ 字上屏 → 自动接下一问 */
+  _handleRecStop(res) {
+    if (this._recDiscard) { this._recDiscard = false; return; }
+    if (this._recStopped) return;       // 一次按住只处理一次
+    this._recStopped = true;
+
+    const path = (res && res.tempFilePath) || '';
+    const size = (res && res.fileSize) || 0;
+    const duration = (res && res.duration ? res.duration / 1000 : 0) || 0;
+    if (!path) {
+      this.setData({ answerBusy: false });
+      wx.showToast({ title: '没录上，再按一次', icon: 'none' });
+      return;
+    }
+
+    this.setData({ answerBusy: true, answerStatus: '正在听…' });
+    const name = (path.split('/').pop()) || 'voice.mp3';
+    const mime = /\.(m4a)$/i.test(name) ? 'audio/m4a'
+      : /\.(wav)$/i.test(name) ? 'audio/wav'
+      : /\.(amr)$/i.test(name) ? 'audio/amr' : 'audio/mpeg';
+
+    this._uploadAnswer(path, name, size, mime, duration)
+      .then((d) => {
+        const said = ((d && d.transcript) || '').trim();
+        if (!said) {
+          // 转不出字：原声已存，请老人再说一遍（不弹红叉，不骂人）
+          this.setData({ answerBusy: false, answerStatus: '' });
+          wx.showToast({ title: '这句没听清，再说一遍', icon: 'none' });
+          this.startListening();
+          return;
+        }
+        // 字上屏 → 立刻接下一问
+        this.setData({ lastAnswer: said, answerStatus: '', answerBusy: false });
+        wx.showToast({ title: '听到了', icon: 'none' });
+        this.onFinishAnswer();
+      })
+      .catch((e) => {
+        this.setData({ answerBusy: false, answerStatus: '' });
+        const msg = (e && e.message) || '';
+        if (e && e.code === 'upload_not_configured') {
+          this.setData({ typeAnswer: true });
+          wx.showToast({ title: '录音通道没开，先用打字', icon: 'none' });
+          return;
+        }
+        // 网络等失败 → 让老人再说一次，不丢页面
+        wx.showToast({ title: msg || '没传上，再按一次', icon: 'none' });
+      });
+  },
+
+  /** 上传 + 登记两步（与采集页同一条链：upload_url → wx.uploadFile → storage/confirm） */
+  _uploadAnswer(filePath, fileName, fileSize, mime, durationSec) {
+    const actorId = this.data.viewerId || this.data.ownerId || '';
+    let key = '';
+    return api.uploadUrl(fileName, fileSize, mime, actorId, 'audio')
+      .then((up) => {
+        key = (up && up.key) || '';
+        const url = api.absUrl((up && up.upload_url) || '');
+        if (!url) return Promise.reject(new Error('上传通道还没开'));
+        return new Promise((resolve, reject) => {
+          wx.uploadFile({
+            url: url, filePath: filePath, name: (up && up.form_field) || 'file',
+            success: (r) => {
+              let body = r.data;
+              try { body = typeof body === 'string' ? JSON.parse(body) : body; } catch (err) {}
+              if (r.statusCode && (r.statusCode < 200 || r.statusCode >= 300)) {
+                reject(new Error((body && body.error) || '上传失败，再按一次')); return;
+              }
+              if (body && body.ok === false) {
+                const e = new Error(body.error || '上传失败，再按一次');
+                e.code = body.code; reject(e); return;
+              }
+              resolve();
+            },
+            fail: () => reject(new Error('网络不太好，再按一次'))
+          });
+        });
+      })
+      .then(() => api.storageConfirm({
+        actorId: actorId,
+        key: key,
+        kind: 'audio',
+        storyId: this.data.storyId,
+        ownerId: this.data.ownerId || actorId,
+        duration: durationSec || 0,
+        fileName: fileName, fileSize: fileSize, mime: mime,
+        visibility: 'private'
+      }))
+      .then((d) => {
+        const out = Object.assign({}, d || {});
+        if (!out.transcript) out.transcript = '';
+        return out;
+      });
+  },
+
+  /** 兜底：切打字/切回来 */
+  onToggleTypeAnswer() {
+    this.setData({ typeAnswer: !this.data.typeAnswer });
   },
 
   /** 老人出声 → 调 barge_in（铁律 1/2）：停 TTS + 存下当前问句 + 计入打断次数 */
@@ -348,7 +545,11 @@ Page({
     });
   },
 
-  /** 模拟输入一句回答（本机联调；真机由语音识别填入） */
+  /**
+   * ★11-06 收声区不再靠打字：老人按住说话 → 松手转文字 → 自动接下一问。
+   *   原来的 onAnswerInput / onFinishAnswer 保留：前者给"录不了音的兜底打字"用，
+   *   后者是录音转出文字后的统一出口（也兼容打字点「说完了」）。
+   */
   onAnswerInput(e) {
     this.setData({ lastAnswer: (e.detail && e.detail.value) || '' });
   },

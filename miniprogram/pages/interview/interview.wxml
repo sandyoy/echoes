@@ -39,11 +39,24 @@
       <!-- ★打断提示（老人一出声就显示） -->
       <view wx:if="{{bargeTip}}" class="barge-tip">{{bargeTip}}</view>
 
-      <!-- 收声区：本机联调用输入框模拟；真机由语音识别填 -->
+      <!-- 收声区 ★11-06：真录音（按住说话）。老人按住说 → 松手转文字上屏 → 自动接下一问 -->
       <view wx:if="{{listening}}" class="listen-box">
-        <input class="answer-input" placeholder="（本机联调：老人说的大致意思）"
-               value="{{lastAnswer}}" bindinput="onAnswerInput" />
-        <view class="big-btn" bindtap="onFinishAnswer">说完了</view>
+        <view class="hold-btn {{recording ? 'recording' : ''}} {{answerBusy ? 'busy' : ''}}"
+              bindtouchstart="onHoldStart" bindtouchend="onHoldEnd" bindtouchcancel="onHoldCancel">
+          {{answerBusy ? (answerStatus || '正在听…') : (recording ? '松开 说完了' : '按住说话')}}
+        </view>
+        <view wx:if="{{recording}}" class="hold-tip">正在听您说…（{{recSec}} 秒）</view>
+        <view wx:elif="{{answerBusy && lastAnswer}}" class="hold-tip">您刚才说的是：{{lastAnswer}}</view>
+        <view wx:else class="hold-tip">说完了松手，我记下来</view>
+        <!-- 兜底：实在录不上的设备，可以点这里用文字说 -->
+        <view class="fallback-row">
+          <view class="ghost-btn small" bindtap="onToggleTypeAnswer">{{typeAnswer ? '不用打字了' : '这张嘴不方便，打字说'}}</view>
+        </view>
+        <block wx:if="{{typeAnswer}}">
+          <input class="answer-input" placeholder="想到什么写什么"
+                 value="{{lastAnswer}}" bindinput="onAnswerInput" />
+          <view class="big-btn" bindtap="onFinishAnswer">说完了</view>
+        </block>
       </view>
 
       <!-- 打断按钮（真机由能量检测自动触发；这里留手动入口便于联调/老人按键） -->
