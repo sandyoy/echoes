@@ -31,6 +31,7 @@ def add(t, transcript="", media="", dur=0):
     )
     db.add(c); db.commit(); return c
 
+# ★ 11-06 补：文字兜底回归——clip.text 未写回时，列表下发的 text 必须回落到 transcript
 add(ClipType.AUDIO, transcript="我小时候住在河边上", media="https://x/a.mp3", dur=12.5)
 add(ClipType.ORIGINAL, transcript="", media="https://x/b.mp3", dur=8)
 add(ClipType.PHOTO, transcript="", media="https://x/c.jpg")
@@ -57,6 +58,11 @@ chk("语音 playable=True（能画音频条）", by["audio"]["playable"] is True
 chk("语音时长给到前端", by["audio"]["media_duration"] == 12.5)
 chk("原声 playable=True（原声也要能回放）", by["original"]["playable"] is True)
 chk("照片 playable=False（不该画播放条）", by["photo"]["playable"] is False)
+# ★ 11-06 补（五号卡点：clip.text 未写回）：文字兜底与不串用
+chk("text 兜底=transcript（clip.text 空时前端仍能上屏）",
+    by["audio"]["text"] == "我小时候住在河边上")
+chk("原声无转写时 text 为空串（不拿照片/别的字串台）", by["original"]["text"] == "")
+chk("照片 text 为空串（不拿 transcript 冒充）", by["photo"]["text"] == "")
 
 print("\n结论:", "ALL PASS" if ok else "HAS FAILURE")
 sys.exit(0 if ok else 1)

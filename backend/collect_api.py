@@ -251,8 +251,11 @@ def api_list_clips(db, *, story_id: str, owner_id: str, viewer_id: str) -> dict:
         items.append({
             "clip_id": c.id,
             "clip_type": c.clip_type.value,
-            "text": c.text or "",
-            # ★ 说话类的「说了什么」在这里：前端直接上屏，不用再调接口
+            # 2026-11-06 补（clip.text 从未写回）：语音类 clip 的 text 一直是空串，
+            # 前端按 text 上屏的页面就永远空着。此处 text 对音频类回落到 transcript；
+            # 照片/纯文字类不带转写，仍只给 c.text，避免串台。
+            "text": (c.text or ((getattr(c, "transcript", "") or "") if _is_audio else "")),
+            # 说话类的「说了什么」在这里：前端直接上屏，不用再调接口
             "transcript": (getattr(c, "transcript", "") or ""),
             "transcript_status": (getattr(c, "transcript_status", "") or ""),
             "media_url": media_url,
