@@ -295,10 +295,10 @@ Page({
     }
 
     this.setData({ answerBusy: true, answerStatus: '正在听…' });
-    const name = (path.split('/').pop()) || 'voice.mp3';
-    const mime = /\.(m4a)$/i.test(name) ? 'audio/m4a'
-      : /\.(wav)$/i.test(name) ? 'audio/wav'
-      : /\.(amr)$/i.test(name) ? 'audio/amr' : 'audio/mpeg';
+    // ★11-06 安卓坑：wx.uploadFile 的临时文件名经常没后缀（tmp_xxx），
+    //   所以文件名统一按录制格式给，别用路径里那个。
+    const name = 'voice.mp3';
+    const mime = 'audio/mpeg';
 
     this._uploadAnswer(path, name, size, mime, duration)
       .then((d) => {
