@@ -193,6 +193,11 @@ class Story(Base):
     tags = Column(JSON, default=list)
     emotion = Column(String(64), default="")
 
+    # ---- 来源（2026-11-10 补：时间轴要分「自己说」和「采访问答」两类）----
+    # self = 自己按着说话/打字；interview = AI 采访聊出来的；family = 家人代录
+    # ⚠️ 空串按 self 处理（老数据没有这个字段，都是自述入口建的）
+    source = Column(String(32), default="self", index=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

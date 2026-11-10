@@ -10,6 +10,56 @@
 
 .big-btn.recording { background: #c0392b; }
 
+/* ============================================================
+   ★ 按住说话：固定屏幕底部（11-08 sandy 真机实测铁律）
+   病根：原来是普通流内元素，内容一长按钮就被顶下去 / 被键盘遮挡，
+         老人找不到、按不稳。
+   做法：dock 吸底（不随内容滚），圆圈直径 160rpx（>120rpx 拇指够按），
+         外面留安全区给 iPhone 底条。
+   ⚠️ 所有「按住说话」的页面统一用这一套（capture / interview）。
+   ============================================================ */
+.hold-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16rpx 0 calc(24rpx + env(safe-area-inset-bottom));
+  /* 底色带一点向上渐隐，内容滚到底也不压字 */
+  background: linear-gradient(to bottom, rgba(245,247,250,0) 0%, rgba(245,247,250,0.96) 30%, rgba(245,247,250,1) 100%);
+}
+
+.hold-circle {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 1.35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.18);
+  transition: transform 0.12s ease, background 0.12s ease;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.hold-circle.recording {
+  background: #c0392b;
+  transform: scale(0.94);
+  box-shadow: 0 0 0 12rpx rgba(192, 57, 43, 0.16), 0 6rpx 20rpx rgba(0, 0, 0, 0.18);
+}
+
+/* 有吸底圆圈时给页面留出底部空间，防最后一行被圆圈压住 */
+.has-hold-dock { padding-bottom: 260rpx; }
+
 .text-input {
   width: 100%;
   min-height: 320rpx;

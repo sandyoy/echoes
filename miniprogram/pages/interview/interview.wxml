@@ -59,11 +59,15 @@
         </block>
       </view>
 
-      <!-- 打断按钮（真机由能量检测自动触发；这里留手动入口便于联调/老人按键） -->
-      <view class="barge-row">
-        <view class="ghost-btn" bindtap="onBargeIn" data-energy="-10">我要插话</view>
-        <view class="ghost-btn" bindtap="onMuteAsk">别问了</view>
-        <view class="ghost-btn" bindtap="onFinishInterview">聊完了</view>
+      <!-- ★ 11-08 定死：三按钮（我要插话/别问了/聊完了）→ 底部一个圆圈
+           按住 = 打断 AI，松手 = AI 接着问。老人不用分辨三个功能。 -->
+      <view class="hold-dock">
+        <view class="hold-circle {{barging ? 'recording' : ''}}"
+              bindtouchstart="onCircleStart" bindtouchend="onCircleEnd">
+          {{barging ? '说 吧' : '按 住 插 话'}}
+        </view>
+        <!-- 「聊完了」收到右上角小字，不再占底部（正流程由复述确认自动收尾） -->
+        <view class="finish-link" bindtap="onFinishInterview">聊完了</view>
       </view>
     </block>
   </block>

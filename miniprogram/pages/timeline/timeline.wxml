@@ -52,6 +52,8 @@
                 {{story.title || '这段还没起名'}}
                 <text wx:if="{{story.is_anchor}}" class="anchor-tag">锚</text>
                 <text wx:if="{{story.time_confirmed_by_user}}" class="confirmed-tag">·已改</text>
+                <!-- ★ 11-08 定：自述和采访两类必须分开，不能混成一锅 -->
+                <text class="src-tag {{story.source === 'interview' ? 'src-interview' : 'src-self'}}">{{story.source === 'interview' ? '采访聊出来的' : '自己说的'}}</text>
               </view>
               <view class="story-time">
                 {{story.time_label}}

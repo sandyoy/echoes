@@ -1,1 +1,69 @@
 .empty { color: #999; }
+
+/* ============================================================
+   ★ 目录化（11-08 sandy 真机实测定死）
+   「我的故事」不再是原料碎片直倒，要有书的样子：年份段 + 条目 + 待整理区。
+   ============================================================ */
+.toc-section {
+  margin: 8rpx 0 20rpx;
+}
+
+.toc-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14rpx 0 10rpx;
+  border-bottom: 3rpx solid var(--color-accent);
+  margin-bottom: 8rpx;
+}
+
+.toc-year { font-size: 36rpx; font-weight: 700; color: #1a1a1a; }
+.toc-count { font-size: 24rpx; color: #8a97a5; }
+
+.toc-item {
+  padding: 18rpx 8rpx;
+  border-bottom: 1rpx solid #eef1f4;
+}
+.toc-item:active { background: #f4f7fa; }
+
+.toc-item-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+.toc-item-summary {
+  margin-top: 6rpx;
+  font-size: 26rpx;
+  color: #6b7a88;
+  line-height: 1.5;
+}
+
+/* 待整理区：视觉上明确「这不是正文」——虚线框 + 浅底 */
+.toc-tidy {
+  margin-top: 24rpx;
+  padding: 18rpx;
+  border: 2rpx dashed #c6d2dd;
+  border-radius: 16rpx;
+  background: #fafcfd;
+}
+
+.toc-tidy-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.toc-tidy-title { font-size: 30rpx; font-weight: 700; color: #5b7a99; }
+.toc-tidy-sub { font-size: 24rpx; color: #8a97a5; }
+
+.toc-tidy-hint {
+  margin: 10rpx 0 6rpx;
+  font-size: 24rpx;
+  color: #8a97a5;
+  line-height: 1.5;
+}
+
+.toc-item.tidy { border-bottom: 1rpx solid #e3eaf0; }
+.toc-item.tidy:last-child { border-bottom: none; }

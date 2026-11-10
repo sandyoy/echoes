@@ -1,5 +1,5 @@
 <!-- 采集页：5 类素材（文字/说话/留个声/照片/视频），素材挂同一件事 -->
-<view class="container">
+<view class="container {{type === 'voice' || type === 'original' ? 'has-hold-dock' : ''}}">
 
   <!-- 类型切换（标准版显示；大字版收起为单一模式） -->
   <view wx:if="{{uiMode !== 'large'}}" class="tabs">
@@ -11,11 +11,14 @@
   </view>
 
   <!-- 说话（语音→转文字）/ 留个声（原声，不转写）：按住说话 -->
+  <!-- ⚠️ 铁律（11-08 sandy 真机实测）：按住说话固定屏幕底部，不随内容滚；所有采集页统一 -->
   <block wx:if="{{type === 'voice' || type === 'original'}}">
     <view class="hint">{{type === 'original' ? '想留个声音？唱一句、说句方言都行，按原样留着' : '按住说话，松开就记下了'}}</view>
-    <view class="big-btn hold {{recording ? 'recording' : ''}}"
-          bindtouchstart="onHoldStart" bindtouchend="onHoldEnd">
-      {{recording ? '松开 保存' : '按住说话'}}
+    <view class="hold-dock">
+      <view class="hold-circle {{recording ? 'recording' : ''}}"
+            bindtouchstart="onHoldStart" bindtouchend="onHoldEnd">
+        {{recording ? '松 开' : '按住说话'}}
+      </view>
     </view>
   </block>
 

@@ -40,24 +40,42 @@
       </view>
 
       <!-- ===== 筐① 自己的：自动收录，不可取消 ===== -->
+      <!-- ★ 11-08 定：碎片不再直倒，做成「像书的目录」——分段/标题/年份 + 待整理区 -->
       <view class="basket">
         <view class="basket-head">
-          <text class="basket-title">你的记录</text>
+          <text class="basket-title">你的故事</text>
           <text class="basket-sub">自动收录（{{ownCount}} 条）</text>
         </view>
         <view wx:if="{{ownCount === 0}}" class="basket-empty">这里空着呢</view>
         <block wx:else>
-          <view class="clip-card locked"
-                wx:for="{{own}}" wx:key="clip_id">
-            <view class="clip-check locked">✓</view>
-            <view class="clip-body">
-              <view class="clip-text">{{item.text}}</view>
-              <view class="clip-meta">
-                <text>{{item.time_label}}</text>
-                <text wx:if="{{item.ref_author_name}}" class="quote-from">这段来自{{item.ref_author_name}}的讲述</text>
-              </view>
+
+          <!-- 有年份的 → 一段一年，点段进段 -->
+          <view class="toc-section" wx:for="{{ownSections}}" wx:key="year" wx:for-item="sec">
+            <view class="toc-section-head">
+              <text class="toc-year">{{sec.year_label}}</text>
+              <text class="toc-count">{{sec.count}} 段</text>
+            </view>
+            <view class="toc-item" wx:for="{{sec.items}}" wx:key="clip_id"
+                  bindtap="onOpenClip" data-clip-id="{{item.clip_id}}">
+              <view class="toc-item-title">{{item.title}}</view>
+              <view wx:if="{{item.summary}}" class="toc-item-summary">{{item.summary}}</view>
             </view>
           </view>
+
+          <!-- 没年份的 → 待整理区（不混进正文，等老人补时间再归位） -->
+          <view wx:if="{{ownToTidy.length > 0}}" class="toc-tidy">
+            <view class="toc-tidy-head">
+              <text class="toc-tidy-title">待整理</text>
+              <text class="toc-tidy-sub">{{ownToTidy.length}} 段还没说时间</text>
+            </view>
+            <view class="toc-tidy-hint">这些还没说是什么时候的事，想起来了补一句，就能归到年份里</view>
+            <view class="toc-item tidy" wx:for="{{ownToTidy}}" wx:key="clip_id"
+                  bindtap="onOpenClip" data-clip-id="{{item.clip_id}}">
+              <view class="toc-item-title">{{item.title}}</view>
+              <view wx:if="{{item.summary}}" class="toc-item-summary">{{item.summary}}</view>
+            </view>
+          </view>
+
         </block>
         <view class="basket-note">自己的内容会自动装进书里</view>
       </view>

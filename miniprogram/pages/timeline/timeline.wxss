@@ -147,3 +147,16 @@
   margin-bottom: var(--space);
 }
 .sheet-cancel { text-align: center; color: #999; padding: 12rpx 0; }
+
+/* ★ 11-08 定：自述 / 采访两类分开标（不能混成一锅） */
+.src-tag {
+  display: inline-block;
+  margin-left: 10rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  font-weight: 400;
+  vertical-align: middle;
+}
+.src-self { background: #e8f1f8; color: #3d6c92; }
+.src-interview { background: #fdf0e3; color: #a3672a; }

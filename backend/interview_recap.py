@@ -30,6 +30,7 @@ F. **本层只做判定与文本，不抢麦、不臆造语音**——TTS 由前
 """
 
 import re
+import uuid
 
 from permissions import can_view_story, visible_stories
 from models import (
@@ -302,13 +303,13 @@ def api_recap_confirm(db, *, owner_id: str, viewer_id: str = "",
     if key == "timeout":
         out = ok({"phase": "confirm", "decision": "accepted",
                   "reason": "timeout_safe_default", "polished_text": text})
-        return _maybe_apply(db, story, out, text, apply)
+        return _maybe_apply(db, story, out, text, apply, qa_pairs)
     # 明确按钮
     if key in ("accept", "reject"):
         if key == "accept":
             out = ok({"phase": "confirm", "decision": "accepted",
                       "reason": "button", "polished_text": text})
-            return _maybe_apply(db, story, out, text, apply)
+            return _maybe_apply(db, story, out, text, apply, qa_pairs)
         return ok({"phase": "confirm", "decision": "rejected",
                    "reason": "button", "need_revise": True, "polished_text": text})
     # 老人说「不对」→ 要改（不进成品，让老人重说）
@@ -326,30 +327,100 @@ def api_recap_confirm(db, *, owner_id: str, viewer_id: str = "",
                        **script})
         out = ok({"phase": "confirm", "decision": "accepted",
                   "reason": "retry_exhausted_safe_default", "polished_text": text})
-        return _maybe_apply(db, story, out, text, apply)
+        return _maybe_apply(db, story, out, text, apply, qa_pairs)
     # 含糊应答（嗯/对/好）→ 接受（安全侧）
     if txt in _VAGUE_ACCEPT or not txt:
         out = ok({"phase": "confirm", "decision": "accepted",
                   "reason": "vague_safe_default", "polished_text": text})
-        return _maybe_apply(db, story, out, text, apply)
+        return _maybe_apply(db, story, out, text, apply, qa_pairs)
     # 其余（老人又补了内容）→ 视为接受，并把补充并进自述体
     if txt:
         merged = (text + txt) if text.endswith(("。", "！", "？")) else (text + "。" + txt)
         out = ok({"phase": "confirm", "decision": "accepted",
                   "reason": "spoken_extra", "polished_text": merged})
-        return _maybe_apply(db, story, out, merged, apply)
+        return _maybe_apply(db, story, out, merged, apply, qa_pairs)
 
     out = ok({"phase": "confirm", "decision": "accepted",
               "reason": "empty_safe_default", "polished_text": text})
-    return _maybe_apply(db, story, out, text, apply)
+    return _maybe_apply(db, story, out, text, apply, qa_pairs)
 
 
-def _maybe_apply(db, story, out: dict, text: str, apply: bool) -> dict:
-    """accepted 且 apply=True → 把理顺后的自述体写回 Story.polished_content。"""
+def _title_from_question(qa_pairs) -> str:
+    """
+    用采访的第一问生成初始标题 —— 治「全落兜底『这段还没起名』」。
+
+    做法：取第一问，剥掉问句外壳（「您」「能不能」「讲讲」等），截到 18 字。
+    取不到就用第一个答案的前 18 字。都取不到 → 空串（让上层兜底）。
+    """
+    def _clean(s: str) -> str:
+        s = (s or "").strip()
+        for w in ("请问", "您能", "您", "能不能", "可以", "跟我", "给我们", "说一说",
+                  "讲一讲", "讲讲", "说说", "聊一聊", "聊一下", "当时", "小时候",
+                  "那会儿", "后来", "吗", "呢", "呀", "吧", "？", "?", "，"):
+            s = s.replace(w, "")
+        return s.strip("，。、 　")
+
+    first_q = ""
+    first_a = ""
+    for pair in (qa_pairs or []):
+        if isinstance(pair, dict):
+            q = (pair.get("q") or pair.get("question") or "").strip()
+            a = (pair.get("a") or pair.get("answer") or "").strip()
+        elif isinstance(pair, (list, tuple)) and len(pair) >= 2:
+            q, a = (pair[0] or "").strip(), (pair[1] or "").strip()
+        else:
+            continue
+        if q and not first_q:
+            first_q = q
+        if a and not first_a:
+            first_a = a
+        if first_q and first_a:
+            break
+
+    for candidate in (_clean(first_q), (first_a or "").strip()):
+        if candidate:
+            return candidate[:18]
+    return ""
+
+
+def _maybe_apply(db, story, out: dict, text: str, apply: bool,
+                 qa_pairs=None) -> dict:
+    """
+    accepted 且 apply=True →
+      ① 把理顺后的自述体写回 Story.polished_content
+      ② 打上 source='interview'（时间轴据此分两段）
+      ③ 没标题的用第一问补一个（不再全落「这段还没起名」）
+      ④ 落一条 TEXT clip 挂在 story 上（采访内容至少有一条素材，时间轴才有正文可读）
+    """
     if not apply or story is None or not text:
         return out
     try:
         story.polished_content = text
+        story.source = "interview"
+        if not (story.title or "").strip():
+            guess = _title_from_question(qa_pairs)
+            if guess:
+                story.title = guess
+
+        # ---- 落一条文字素材（幂等：已有采访素材就不重复塞）----
+        from models import Clip, ClipType
+        exists = (db.query(Clip)
+                  .filter(Clip.story_id == story.id,
+                          Clip.created_by == "interview")
+                  .first())
+        if exists is None:
+            db.add(Clip(
+                id=uuid.uuid4().hex,
+                story_id=story.id,
+                clip_type=ClipType.TEXT,
+                text=text,
+                keep_original_voice=True,
+                sort_order=0,
+                created_by="interview",
+            ))
+        else:
+            exists.text = text      # 老人补充过内容 → 同步到那条素材
+
         db.commit()
         out["data"]["applied"] = True
     except Exception:

@@ -85,6 +85,8 @@ def _story_time_dict(s: Story) -> dict:
         "story_id": s.id,
         "title": s.title or "",
         "summary": s.summary or "",
+        # 这条故事是「自己说的」还是「采访里问出来的」——时间轴按它分两段渲染
+        "source": (getattr(s, "source", "") or "self"),
         "time_raw": s.time_raw or "",
         "time_label": s.time_label or _fallback_label(s),
         "time_precision": getattr(s.time_precision, "value", s.time_precision) or TimePrecision.UNKNOWN.value,
@@ -159,6 +161,7 @@ def _build_timeline(db, *, owner_id: str, viewer_id: str) -> dict:
       pending = 【时间待定】区（sort_key 空/0 的，单列底部，不参与排序）
     """
     stories = _collect_visible_stories(db, owner_id=owner_id, viewer_id=viewer_id)
+    stories = _dedup_stories(db, stories)
 
     nodes_map: dict = {}
     pending: list = []
@@ -195,6 +198,67 @@ def _build_timeline(db, *, owner_id: str, viewer_id: str) -> dict:
             "node_count": len(nodes),
         },
     }
+
+
+def _story_content_head(db, s: Story) -> str:
+    """
+    取一条故事的内容指纹：正文（polished_content）→ 退回它挂的第一条 clip.text。
+    只取前 30 字做判等，不做分词、不做模糊匹配。
+    """
+    body = (getattr(s, "polished_content", "") or "").strip()
+    if not body:
+        try:
+            from models import Clip
+            clip = (db.query(Clip)
+                    .filter(Clip.story_id == s.id)
+                    .order_by(Clip.sort_order.asc(), Clip.created_at.asc())
+                    .first())
+            if clip is not None:
+                body = (clip.text or clip.transcript or "").strip()
+        except Exception:
+            body = ""
+    return body[:30]
+
+
+def _dedup_stories(db, stories: list) -> list:
+    """
+    去掉「同一个人 + 内容前 30 字完全相同」的重复故事（只保留最早创建的那条）。
+
+    ⚠️ 判等取**保守**：老人真可能把同一件事讲两遍、措辞略有不同，
+       那种措辞不同的**不合并**，宁可少合也不误杀。
+    ⚠️ 保留策略：保留 created_at 最早的一条；若它没有标题而重的有，把标题过继过去。
+    """
+    if not stories:
+        return stories
+
+    def _ckey(s):
+        return (s.created_at or datetime.min, s.id or "")
+
+    seen: dict = {}          # (owner_id, 前30字) → 保留下来的 Story
+    dropped: set = set()
+    for s in sorted(stories, key=_ckey):
+        head = _story_content_head(db, s)
+        if not head:
+            continue        # 空内容不参与去重（没内容的两条不算重复）
+        key = (s.owner_id or "", head)
+        keeper = seen.get(key)
+        if keeper is None:
+            seen[key] = s
+        else:
+            dropped.add(s.id)
+            # 保留的那条没标题、重复的这条有 → 把标题过继，别让好标题丢了
+            if not (keeper.title or "").strip() and (s.title or "").strip():
+                keeper.title = s.title
+            if not (keeper.summary or "").strip() and (s.summary or "").strip():
+                keeper.summary = s.summary
+
+    if not dropped:
+        return stories
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+    return [s for s in stories if s.id not in dropped]
 
 
 def _node_label(cards: list) -> str:

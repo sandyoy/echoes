@@ -53,22 +53,25 @@ import subprocess
 DEFAULT_VOICE = "zh-CN-XiaoxiaoNeural"
 
 # 场景 → edge-tts 音色
+# ⚠️ 2026-11-08 sandy 真机实测：采访 TTS「酥软」不合格 → 要**干净利索女声**（禁气声）。
+#    Xiaoxiao（晓晓）= 亲切偏柔、带气声 → 采访不用。
+#    Xiaoyi（晓伊）= 干练利索、播音腔、无气声 → 采访/复述/提示统一用它。
 VOICE_BY_SCENE = {
-    "interview_host": "zh-CN-XiaoxiaoNeural",   # AI 主持人的问句（亲切）
-    "recap": "zh-CN-XiaoxiaoNeural",            # §7.6 复述确认
-    "tip": "zh-CN-XiaoxiaoNeural",              # 界面提示音
+    "interview_host": "zh-CN-XiaoyiNeural",     # AI 主持人：干净利索，不酥软
+    "recap": "zh-CN-XiaoyiNeural",              # §7.6 复述确认（同上）
+    "tip": "zh-CN-XiaoyiNeural",                # 界面提示音
     "male": "zh-CN-YunxiNeural",                # 备选男声
 }
 
 # 场景 → 腾讯云 TTS VoiceType（101001=智瑜 女声/101002=智美/101003=智甜；
-# 100510000=智逍遥 男声）。老人听选亲和女声。
+# 100510000=智逍遥 男声）。采访要干净利索 → 用 101002 智美（清晰、少气声）。
 TENCENT_VOICE_BY_SCENE = {
-    "interview_host": 101001,
-    "recap": 101001,
-    "tip": 101001,
+    "interview_host": 101002,
+    "recap": 101002,
+    "tip": 101002,
     "male": 100510000,
 }
-TENCENT_DEFAULT_VOICE = 101001
+TENCENT_DEFAULT_VOICE = 101002
 
 # 老人听的默认语速：偏慢一档（§十「摁一下，哒哒就说」+ 老人听感）
 DEFAULT_RATE = "-12%"      # edge-tts rate

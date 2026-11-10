@@ -39,6 +39,7 @@ Page({
     interrupted: false,
     interruptCount: 0,
     bargeTip: '',           // 「您说，我听着」提示语
+    barging: false,         // ★ 底部圆圈按住中（按住=打断 AI，松手=AI 接着问）
 
     // ★ 收尾确认（P0-2 · D 组 recap_confirm，§7.6 C 方案）
     qaPairs: [],            // [{"q":..,"a":..}] 本轮一问一答，收尾时交给后端理顺
@@ -394,6 +395,29 @@ Page({
         });
       })
       .catch(() => { /* 打断失败也别卡住老人：本地先停播 */ this.stopTts(); });
+  },
+
+  /**
+   * ★ 底部圆圈：按住 = 打断 AI（把 AI 的嘴闭上，让老人能说）
+   *              松手 = AI 接着问
+   * 老人只需要记一件事：「想说就按住它」。
+   *
+   * ⚠️ 复用页面已有的真录音链路 onHoldStart/onHoldEnd，不另起一套（否则录音状态打架）。
+   *    顺序：先打断 AI（闭麦）→ 再开录（让老人说）。
+   */
+  onCircleStart() {
+    this.setData({ barging: true });
+    this.stopTts();                       // 立刻本地停播，不等接口
+    const p = this.onBargeIn({ currentTarget: { dataset: { energy: -10 } } });
+    this.onHoldStart();                   // 开录（内部自己管 recording/秒表/上传）
+    return p;
+  },
+
+  /** 松手 → 停录（内容由 _handleRecStop 上传转写并接下一问），AI 接着问 */
+  onCircleEnd() {
+    if (!this.data.barging) return;
+    this.setData({ barging: false });
+    return this.onHoldEnd();
   },
 
   /** 老人说完/点了「说完了」→ 调 next（打断则回填 interrupted_question，先接回再接别的） */

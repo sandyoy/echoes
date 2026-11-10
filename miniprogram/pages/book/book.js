@@ -22,6 +22,92 @@
 const api = require('../../utils/api.js');
 const app = getApp();
 
+/* ============================================================
+   ★ 目录化（11-08 sandy 真机实测：「我的故事」=原料碎片直倒 → 废掉重做）
+   要求形态：像一本书的目录 —— 分段 / 标题 / 年份，另有一个「待整理区」。
+   做法：
+     · 有年份的碎片 → 按年份归段，每段内按时间排；段标题 =「1978年」这种
+     · 没有年份的 → 全进「待整理区」，不放正文里（等老人补时间再归位）
+   这一层只做「分组」，不改任何碎片内容（碎片原文照留，点进去才看）。
+   ============================================================ */
+
+/** 从一条素材里抠年份（1978 / 一九七八 都认），抠不到返回 0 */
+function pickYear(item) {
+  const cands = [
+    item && item.time_label,
+    item && item.time_raw,
+    item && item.time_sort_key
+  ];
+  for (let i = 0; i < cands.length; i++) {
+    const v = cands[i];
+    if (!v && v !== 0) continue;
+    if (typeof v === 'number' && v > 1000 && v < 3000) return v;
+    const m = String(v).match(/(1[89]\d{2}|20\d{2})/);
+    if (m) return parseInt(m[1], 10);
+    // 中文年份「一九七八」
+    const cn = String(v).match(/([一二三四五六七八九〇零]{4})年/);
+    if (cn) {
+      const map = { '〇': 0, '零': 0, '一': 1, '二': 2, '三': 3, '四': 4,
+                    '五': 5, '六': 6, '七': 7, '八': 8, '九': 9 };
+      const digits = cn[1].split('').map((c) => map[c]);
+      if (digits.every((d) => d !== undefined)) {
+        const y = parseInt(digits.join(''), 10);
+        if (y > 1800 && y < 2100) return y;
+      }
+    }
+  }
+  return 0;
+}
+
+/** 给一条碎片起个短标题：正文前 12 字（没正文就用时间标签兜底） */
+function shortTitle(item) {
+  const t = (item && item.text ? String(item.text) : '').trim();
+  if (t) return t.length > 12 ? t.slice(0, 12) + '…' : t;
+  return '这段还没写内容';
+}
+
+/** 一句摘要：正文前 40 字（列表里够看懂，点进去才看全文） */
+function shortSummary(item) {
+  const t = (item && item.text ? String(item.text) : '').trim();
+  if (!t) return '';
+  return t.length > 40 ? t.slice(0, 40) + '…' : t;
+}
+
+/** 有年份的碎片 → 按年份成段（段内按时间升序） */
+function buildSections(list) {
+  const byYear = {};
+  (list || []).forEach((item) => {
+    const y = pickYear(item);
+    if (!y) return;
+    if (!byYear[y]) byYear[y] = [];
+    byYear[y].push(item);
+  });
+  const years = Object.keys(byYear).map(Number).sort((a, b) => a - b);
+  return years.map((y) => ({
+    year: y,
+    year_label: y + '年',
+    count: byYear[y].length,
+    items: byYear[y].map((it) => ({
+      clip_id: it.clip_id,
+      title: shortTitle(it),
+      summary: shortSummary(it),
+      time_label: it.time_label || ''
+    }))
+  }));
+}
+
+/** 没年份的碎片 → 待整理区 */
+function buildTidy(list) {
+  return (list || [])
+    .filter((item) => !pickYear(item))
+    .map((it) => ({
+      clip_id: it.clip_id,
+      title: shortTitle(it),
+      summary: shortSummary(it),
+      time_label: it.time_label || ''
+    }));
+}
+
 Page({
   data: {
     uiMode: 'standard',   // 'standard' | 'large'
@@ -42,6 +128,10 @@ Page({
     // public 筐的勾选态：以 clip_id 为键（Object 便于 wxml 判）
     checked: {},          // { clip_id: true }
     checkedCount: 0,
+
+    // ★ 目录化（11-08 定）：own 筐不再是碎片平铺，而是「按年份分段 + 待整理区」
+    ownSections: [],      // [{year, year_label, count, items:[{clip_id,title,summary,time_label}]}]
+    ownToTidy: [],        // 没年份的碎片 → 待整理区
 
     // 书名（空则由后端取昵称/「我的一生」）
     title: '',
@@ -106,7 +196,10 @@ Page({
           publicCount: dd.public_count || 0,
           sourceEmpty: !!dd.empty,
           checked: {},
-          checkedCount: 0
+          checkedCount: 0,
+          // ★ 目录化：碎片不再平铺直倒，按年份归段（无年份 → 待整理区）
+          ownSections: buildSections(dd.own || []),
+          ownToTidy: buildTidy(dd.own || [])
         });
       })
       .catch((err) => {
@@ -130,6 +223,21 @@ Page({
 
   onTitleInput(e) {
     this.setData({ title: (e.detail && e.detail.value) || '' });
+  },
+
+  /** ★ 点目录里的一条 → 展开看这段的原文（碎片原文一点没改，只是先收进目录里） */
+  onOpenClip(e) {
+    const cid = e.currentTarget.dataset.clipId;
+    if (!cid) return;
+    const all = (this.data.own || []).concat(this.data.public || []);
+    const hit = all.filter((x) => x.clip_id === cid)[0];
+    if (!hit) return;
+    wx.showModal({
+      title: (hit.time_label || '这段') ,
+      content: (hit.text || '（这段还没有文字）'),
+      showCancel: false,
+      confirmText: '看完了'
+    });
   },
 
   /** 切换到「我的书」：读已生成的电子书 */

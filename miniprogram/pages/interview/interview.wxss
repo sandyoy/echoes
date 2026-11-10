@@ -181,3 +181,6 @@
   overflow-y: auto;
 }
 .ui-large .recap-text { font-size: 44rpx; }
+
+/* ★ 底部圆圈样式（抽成独立文件，见下） */
+@import "interview_circle.wxss";
