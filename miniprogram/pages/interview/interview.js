@@ -19,6 +19,43 @@ const app = getApp();
 // 归类弹层：5 秒无反应 → 浮大字按钮（接口定义 §二.4 fallback_buttons_after_ms）
 const CLASSIFY_FALLBACK_MS = 5000;
 
+/**
+ * ★ 11-10 sandy 实测：「还是没有把它的结构变了……也没有编导」
+ * 这里定义"编导脚本"——采访不是一问一答乱聊，是照着一条人生线往下走：
+ *   开场 → 小时候 → 上学 → 干活/工作 → 成家 → 后来的事
+ * 每答完一问，进度骨就往前走一格。老人随时知道"讲到哪了、还剩多少"。
+ * 说明：这只是前端的"进度感"，具体问什么仍由后端采访引擎决定；
+ *      编导只负责把后端的问题归到某一段里，以及告诉老人"这一段是干什么的"。
+ */
+const SCRIPT_STEPS = [
+  { key: 'open',      name: '开场',   hint: '先随便聊聊，让老人放松' },
+  { key: 'child',     name: '小时候', hint: '这一段讲您小时候，家里什么样、住在哪儿' },
+  { key: 'school',    name: '上学',   hint: '这一段讲您上学的事，老师、同学、走多远' },
+  { key: 'work',      name: '干活',   hint: '这一段讲您干活/上班的事，第一份工作、吃了什么苦' },
+  { key: 'family',    name: '成家',   hint: '这一段讲成家的事，怎么认识的老伴、孩子' },
+  { key: 'later',     name: '后来',   hint: '这一段讲后来的事，搬过家、退下来、现在' }
+];
+
+/** 把一段问句/答案归到哪一步（关键词法，够用且不依赖后端） */
+function pickStepIndex(text) {
+  const t = String(text || '');
+  const rules = [
+    [1, ['小时候', '童年', '老家', '几岁', '父亲', '母亲', '爸爸', '妈妈', '住在哪']],
+    [2, ['上学', '学校', '老师', '同学', '读书', '几年级', '高考']],
+    [3, ['工作', '上班', '干活', '工厂', '部队', '当兵', '下乡', '插队', '单位', '工资']],
+    [4, ['结婚', '老伴', '爱人', '成家', '孩子', '儿子', '女儿', '生孩子']],
+    [5, ['后来', '搬家', '退休', '退下来', '现在', '这些年', '身体']]
+  ];
+  for (let i = 0; i < rules.length; i++) {
+    const idx = rules[i][0];
+    const keys = rules[i][1];
+    for (let k = 0; k < keys.length; k++) {
+      if (t.indexOf(keys[k]) >= 0) return idx;
+    }
+  }
+  return -1;
+}
+
 Page({
   data: {
     uiMode: 'standard',     // 'standard' | 'large'
@@ -43,6 +80,11 @@ Page({
 
     // ★ 收尾确认（P0-2 · D 组 recap_confirm，§7.6 C 方案）
     qaPairs: [],            // [{"q":..,"a":..}] 本轮一问一答，收尾时交给后端理顺
+
+    // ★ 11-10 sandy 实测「没有编导」→ 加一条编导进度骨（像书的目录，一段一格）
+    scriptSteps: [],        // [{key,name,state:'done'|'now'|'todo',done}]
+    scriptNow: '',          // 这一段是干什么的（开场/童年/上学/工作/家庭/晚年）
+    scriptLeft: 0,          // 还剩几段
     storyId: '',            // 收尾写回哪条故事（空 = 后端按 qa 新建）
     recapAsk: false,        // 收尾弹层（「我这样记，对不对？」）
     recapText: '',          // 后端给的复述稿（老人只读）
@@ -143,6 +185,32 @@ Page({
     return this._storyPending;
   },
 
+  /**
+   * ★ 11-10：编导进度骨 —— 后端问什么先归到人生哪一段，再把进度条推过去。
+   * 老人看到的是：「小时候✓ / 上学✓ / 干活●(这一段讲您第一份工作) / 成家○ / 后来○，还剩 2 段」
+   * 归不到类的（寒暄、追问）就沿用上一步，不倒退。
+   */
+  refreshScript(q) {
+    const label = ((q && (q.anchor_label || '')) + ' ' + ((q && q.text) || '')).trim();
+    let idx = pickStepIndex(label);
+    const prev = (typeof this._scriptIdx === 'number') ? this._scriptIdx : 0;
+    if (idx < 0) idx = prev;            // 归不到类 → 停在这一段，不乱跳
+    if (idx < prev) idx = prev;         // 不倒退
+    this._scriptIdx = idx;
+
+    const steps = SCRIPT_STEPS.map((st, i) => ({
+      key: st.key,
+      name: st.name,
+      done: i < idx,
+      state: i < idx ? 'done' : (i === idx ? 'now' : 'todo')
+    }));
+    this.setData({
+      scriptSteps: steps,
+      scriptNow: SCRIPT_STEPS[idx].hint,
+      scriptLeft: Math.max(0, SCRIPT_STEPS.length - idx - 1)
+    });
+  },
+
   /** 展示一问：存下当前问句 → TTS 播 → 播完等 wait_ms → 收声（铁律 3） */
   showQuestion(data) {
     const q = (data && data.question) || null;
@@ -155,6 +223,8 @@ Page({
       interrupted: false,
       bargeTip: ''
     });
+    // ★ 11-10：每次出问句就推一格编导进度骨（老人随时知道讲到哪、还剩多少）
+    this.refreshScript(q);
     this.speak(text, () => {
       // 播完留 wait_ms 再开始听（AI 主动让路，别连珠炮）
       const ms = this.data.waitMs || 0;

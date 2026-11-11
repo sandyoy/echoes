@@ -130,11 +130,14 @@ Page({
     wx.navigateTo({ url: '/pages/claim/claim' });
   },
 
-  /** 右上角头像：暂进「家里人」页（个人资料页尚未设计，不新造空页） */
+  /** 右上角头像：暂进「家里人」页（个人资料页尚未设计，不新造空页）
+   *  ★ 11-10：family 在 tabBar 里，navigateTo 必失败 → switchTab */
   onOpenAvatar() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/family/family',
-      fail: () => { /* 家人页未就绪时静默，不打断 */ }
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
     });
   },
 
@@ -175,11 +178,18 @@ Page({
     });
   },
 
-  /** 卡3「时间轴」（灵魂功能，v3.0 §五：时间轴是目录、故事是章节） */
+  /**
+   * 卡3「时间轴」（灵魂功能，v3.0 §五：时间轴是目录、故事是章节）
+   * ★ 11-10 sandy 实测「点不进去」——根因：timeline 在 tabBar 里，
+   *   navigateTo 跳 tabBar 页【必然失败】，而 fail 又是空的 → 点了毫无反应。
+   *   铁律：跳 tabBar 页只能 switchTab。
+   */
   onOpenTimeline() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/timeline/timeline',
-      fail: () => { /* 时间轴页未就绪时静默 */ }
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
     });
   },
 
@@ -193,16 +203,23 @@ Page({
     });
   },
 
-  /** 卡3「我的书」→ 成书页 */
+  /** 卡3「我的书」→ 成书页（★ book 也在 tabBar 里，必须 switchTab，否则静默失败） */
   onOpenBook() {
-    wx.navigateTo({ url: '/pages/book/book' });
+    wx.switchTab({
+      url: '/pages/book/book',
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
+    });
   },
 
-  /** 家人页（v3.0 §2.2/§2.3）：现由底部 tabBar「家里人」承担，此方法保留给头像入口 */
+  /** 家人页（v3.0 §2.2/§2.3）：family 在 tabBar 里 → switchTab */
   onOpenFamily() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/family/family',
-      fail: () => { /* 家人页未就绪时静默 */ }
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
     });
   }
 });

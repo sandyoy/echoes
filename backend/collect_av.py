@@ -167,6 +167,15 @@ def try_transcribe(audio_path: str, *, enabled: bool = True) -> dict:
         return {"done": False, "text": "", "source": "", "reason": f"转写出错：{e}"}
 
     text = (obj.get("text") or "").strip()
+    # ★ 11-10 sandy 实测：转写原始文本不能直接显示/入库
+    #   ①「2020年」被认成「二零。020年」②「啊，我在，嗯。」当正文
+    #   统一走 asr_text_clean.clean()，只清洗文本、不动原声
+    if text:
+        try:
+            from asr_text_clean import clean as _clean_asr
+            text = _clean_asr(text)
+        except Exception:
+            pass
     if text:
         return {"done": True, "text": text, "source": obj.get("source", ""), "reason": ""}
     return {"done": False, "text": "", "source": obj.get("source", ""),

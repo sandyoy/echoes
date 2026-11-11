@@ -80,12 +80,32 @@ Page({
       });
   },
 
-  /** 点故事卡 = 展开看故事（§1.3-4：点是"看故事"、不是"改时间"） */
+  /**
+   * 点故事卡 = 看这条故事本身（§1.3-4：点是"看故事"、不是"改时间"）
+   *
+   * ★ 11-10 sandy 真机实测：「点进去的每一条都是一样的」
+   *   病根：原来全部跳 /pages/capture?story_id=xxx —— 那是"继续加素材"的采集页，
+   *         不管点哪条都长一样，老人以为打不开/东西丢了。
+   *   改法：跳 /pages/story?story_id=xxx（真正的故事详情：标题 + 内容 + 素材列表），
+   *         没有 story_id 的（时间待定区里的空条目）才退到采集页。
+   */
   onTapStory(e) {
     const sid = e.currentTarget.dataset.storyId;
+    if (!sid || String(sid) === 'undefined') {
+      // 时间待定区里"还没成篇"的碎片 → 继续补素材
+      wx.navigateTo({
+        url: '/pages/capture/capture',
+        fail: () => {}
+      });
+      return;
+    }
+    const ownerId = this.data.ownerId || app.globalData.ownerId || '';
     wx.navigateTo({
-      url: '/pages/capture/capture?story_id=' + encodeURIComponent(sid),
-      fail: () => { /* 采集页未就绪时静默，不打断 */ }
+      url: '/pages/story/story?story_id=' + encodeURIComponent(sid) +
+        (ownerId ? '&owner_id=' + encodeURIComponent(ownerId) : ''),
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
     });
   },
 

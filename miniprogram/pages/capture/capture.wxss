@@ -73,9 +73,28 @@
 
 .media-grid { display: flex; flex-wrap: wrap; gap: calc(var(--space) / 2); }
 .media-item {
-  width: 160rpx; height: 160rpx; border-radius: 12rpx;
+  position: relative;
+  width: 160rpx; height: 160rpx; border-radius: 12rpx; overflow: hidden;
   background: #eee; display: flex; align-items: center; justify-content: center;
   font-size: 24rpx; color: #666;
+}
+/* ★ 11-10：真出预览图（原来只渲英文 kind，sandy 报"没预览、点不进去"） */
+.media-thumb { width: 100%; height: 100%; display: block; }
+.media-thumb-ph { background: #e6e6e6; color: #666; display: flex; align-items: center; justify-content: center; }
+.media-badge {
+  position: absolute; left: 8rpx; bottom: 8rpx;
+  padding: 2rpx 10rpx; border-radius: 8rpx;
+  background: rgba(0,0,0,.55); color: #fff; font-size: 20rpx;
+}
+.media-del {
+  position: absolute; right: 0; top: 0;
+  width: 44rpx; height: 44rpx; line-height: 44rpx; text-align: center;
+  background: rgba(0,0,0,.45); color: #fff; font-size: 30rpx;
+  border-bottom-left-radius: 12rpx;
+}
+.media-empty {
+  margin-top: calc(var(--space) / 2);
+  font-size: var(--font-small, 26rpx); color: #999;
 }
 .list-title { font-size: var(--font-base); font-weight: 600; margin: var(--space) 0; }
 

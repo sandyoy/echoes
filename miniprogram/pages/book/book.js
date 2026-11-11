@@ -59,18 +59,53 @@ function pickYear(item) {
   return 0;
 }
 
-/** 给一条碎片起个短标题：正文前 12 字（没正文就用时间标签兜底） */
-function shortTitle(item) {
-  const t = (item && item.text ? String(item.text) : '').trim();
-  if (t) return t.length > 12 ? t.slice(0, 12) + '…' : t;
-  return '这段还没写内容';
+/**
+ * ★ 11-10 sandy 真机实测：「我的故事这里头，还是写的是一堆一条一个一句话……会太多」
+ * 病根：标题取正文前 12 字 + 摘要取前 40 字 → 同一段话在同一行显示两遍，
+ *       一眼看过去就是"一堆一条一句"，目录感全无。
+ * 改法：标题【不再是正文截断】，改成能认人的"这段讲的是什么"——
+ *       优先用它自己的话里的时间点（如"1968 年"）+ 人物/主题词，都没有就按序编号。
+ *       摘要只在标题明显过短时才给，且不与标题重复。
+ */
+
+/** 从正文里挑一个"这段讲的是什么"的短标签（时间点/人物/主题词），挑不到返回 '' */
+function pickTag(text) {
+  const t = String(text || '').trim();
+  if (!t) return '';
+  // ① 先找时间点：「1968年」「那年我18岁」「五十年代」
+  let m = t.match(/((?:19|20)\d{2})\s*年/);
+  if (m) return m[1] + ' 年';
+  m = t.match(/([一二三四五六七八九十]{1,3})\s*十\s*年代/);
+  if (m) return m[1] + '十年代';
+  m = t.match(/那年我\s*(\d{1,2})\s*岁/);
+  if (m) return '那年 ' + m[1] + ' 岁';
+  // ② 再找人物/场景词（老人叙述里最常出现的"抓手"）
+  const keys = ['老伴', '父亲', '母亲', '爸爸', '妈妈', '爷爷', '奶奶', '外婆', '外公',
+    '老师', '部队', '当兵', '上学', '高考', '结婚', '生孩子', '搬家', '工作', '退休',
+    '生病', '去世', '老家', '工厂', '下乡', '插队'];
+  for (let i = 0; i < keys.length; i++) {
+    if (t.indexOf(keys[i]) >= 0) return keys[i];
+  }
+  return '';
 }
 
-/** 一句摘要：正文前 40 字（列表里够看懂，点进去才看全文） */
-function shortSummary(item) {
+/** 列表标题：优先"讲的是什么"，其次序号，绝不整句照搬正文 */
+function shortTitle(item, seq) {
+  const t = (item && item.text ? String(item.text) : '').trim();
+  const tag = pickTag(t);
+  if (tag) return tag;
+  if (t) return '第 ' + (seq || 1) + ' 段';
+  return '（还没说话）';
+}
+
+/** 摘要：只有标签订不出来时，才给一段短的、且明确是"开头是……" */
+function shortSummary(item, title) {
   const t = (item && item.text ? String(item.text) : '').trim();
   if (!t) return '';
-  return t.length > 40 ? t.slice(0, 40) + '…' : t;
+  if (!title || title.indexOf('第 ') === 0) {
+    return t.length > 34 ? t.slice(0, 34) + '…' : t;
+  }
+  return '';
 }
 
 /** 有年份的碎片 → 按年份成段（段内按时间升序） */
@@ -87,12 +122,15 @@ function buildSections(list) {
     year: y,
     year_label: y + '年',
     count: byYear[y].length,
-    items: byYear[y].map((it) => ({
-      clip_id: it.clip_id,
-      title: shortTitle(it),
-      summary: shortSummary(it),
-      time_label: it.time_label || ''
-    }))
+    items: byYear[y].map((it, i) => {
+      const tt = shortTitle(it, i + 1);
+      return {
+        clip_id: it.clip_id,
+        title: tt,
+        summary: shortSummary(it, tt),
+        time_label: it.time_label || ''
+      };
+    })
   }));
 }
 
@@ -100,12 +138,15 @@ function buildSections(list) {
 function buildTidy(list) {
   return (list || [])
     .filter((item) => !pickYear(item))
-    .map((it) => ({
-      clip_id: it.clip_id,
-      title: shortTitle(it),
-      summary: shortSummary(it),
-      time_label: it.time_label || ''
-    }));
+    .map((it, i) => {
+      const tt = shortTitle(it, i + 1);
+      return {
+        clip_id: it.clip_id,
+        title: tt,
+        summary: shortSummary(it, tt),
+        time_label: it.time_label || ''
+      };
+    });
 }
 
 Page({
@@ -351,11 +392,13 @@ Page({
     });
   },
 
-  /** 取材态空引导：去时间轴看看 / 说说 */
+  /** 取材态空引导：去时间轴看看 / 说说（★ timeline 在 tabBar 里 → switchTab） */
   onTapGoTimeline() {
-    wx.navigateTo({
+    wx.switchTab({
       url: '/pages/timeline/timeline',
-      fail: () => { /* 时间轴页未就绪时静默 */ }
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
     });
   },
 

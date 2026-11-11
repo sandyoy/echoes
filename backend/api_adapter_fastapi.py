@@ -205,9 +205,18 @@ def add_text(req: AddTextReq, db=Depends(get_db)):
     _r = _require_owner(req.owner_id)
     if _r:
         return _r
+    # ★ 11-11：文字入口也要清洗（老人用「留个声」转写后走这条）
+    # 之前只给 collect_av 接了清洗，clip/text 是裸的 → 实测「二零。020年」「啊我在嗯」照原样入库
+    try:
+        from asr_text_clean import clean as _clean_text
+        _t = _clean_text(req.text)
+        if not (_t or "").strip():
+            _t = (req.text or "").strip()   # 清洗后为空 → 宁可留原文，不能吃掉这条记录
+    except Exception:
+        _t = req.text
     return api.api_add_text_clip(
         db, story_id=req.story_id, owner_id=req.owner_id,
-        actor_id=req.actor_id, text=req.text, caption=req.caption,
+        actor_id=req.actor_id, text=_t, caption=req.caption,
         visibility=req.visibility, source_type=req.source_type,
         ref_from_id=req.ref_from_id, ref_author_name=req.ref_author_name,
     )

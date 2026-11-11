@@ -54,3 +54,57 @@
 
 /* 页面底部留白，防最后一行被圆圈压住 */
 .container, .page { padding-bottom: 260rpx; }
+
+
+/* ===== ★ 11-10 编导进度骨（sandy：「没有编导」）=====
+   一段一格，横向排开，像书的目录。走到哪格亮哪格，走过的打勾。 */
+.script-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4rpx;
+  padding: calc(var(--space) / 2) 4rpx;
+  margin-bottom: calc(var(--space) / 2);
+  background: #fff;
+  border-radius: 12rpx;
+}
+.script-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.script-dot {
+  width: 40rpx; height: 40rpx; line-height: 40rpx;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 22rpx;
+  background: #eee; color: #999;
+}
+.script-name { font-size: 22rpx; color: #999; margin-top: 6rpx; }
+.script-step.done .script-dot { background: #c4956a; color: #fff; }
+.script-step.done .script-name { color: #c4956a; }
+.script-step.now .script-dot { background: #c4956a; color: #fff; font-weight: 700; box-shadow: 0 0 0 6rpx rgba(196,149,106,.22); }
+.script-step.now .script-name { color: #7a5a3a; font-weight: 700; }
+.script-step.todo .script-dot { background: #f0ece6; color: #bbb; }
+
+/* 这一段是干什么的：一句话，大字，老人在问句上方先看到它 */
+.script-now {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+  padding: 10rpx 16rpx;
+  margin-bottom: calc(var(--space) / 2);
+  background: #fdf6ee;
+  border-left: 6rpx solid #c4956a;
+  border-radius: 8rpx;
+}
+.script-now-label { font-size: 22rpx; color: #a08b76; flex: none; }
+.script-now-text { flex: 1; font-size: var(--font-base); color: #5a4636; }
+.script-left { font-size: 22rpx; color: #a08b76; flex: none; }
+
+/* 大字版：进度骨不缩小，反而更粗更好认 */
+.ui-large .script-name { font-size: 26rpx; }
+.ui-large .script-dot { width: 52rpx; height: 52rpx; line-height: 52rpx; font-size: 26rpx; }
+.ui-large .script-now-text { font-size: var(--font-large, 38rpx); }

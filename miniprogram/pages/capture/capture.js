@@ -28,8 +28,10 @@
 const app = getApp();
 const api = require('../../utils/api.js');
 
-// 5 个入口（小鲸鱼：说话 与 留个声 是两件事，不合并）
-const TYPES = ['text', 'voice', 'original', 'photo', 'video'];
+// 3 个入口（★ 11-10 sandy 真机实测定死：5 个太多，且「说话」和「留个声」他分不清）
+//   ①说话（语音→转文字，原声一并留着）②照片视频（一个框，图库两边都能选）③打字
+// 注意：后端 clip_type 仍是 voice/audio/original/image/video/text 六种，这里只改前端入口，不改数据形状
+const TYPES = ['voice', 'media', 'text'];   // ★ 11-10 sandy 定：5 入口收成 3 个（说话 / 照片视频 / 打字）
 
 // 校验上限（与小鲸鱼《接口定义_采集v1.1》第四节一致，本地先拦少跑一趟网络）
 const MAX_AUDIO_MB = 20;
@@ -210,7 +212,7 @@ Page({
 
   /** 素材类型的中文名（原来直接把 clip_type 的英文 key 甩给用户看） */
   clipLabel(item) {
-    const map = { audio: '🎙 一段话', original: '🎵 原声', photo: '📷 照片', video: '🎬 视频', text: '✍️ 写下的' };
+    const map = { voice: '🎙 一段话', audio: '🎙 一段话', original: '🎵 原声', image: '📷 照片', photo: '📷 照片', video: '🎬 视频', text: '✍️ 写下的' };
     return map[item && item.clip_type] || '素材';
   },
 
@@ -233,7 +235,7 @@ Page({
           transcript: c.transcript || c.text || '',
           playable: (c.playable !== undefined)
             ? !!c.playable
-            : (!!c.media_url && c.clip_type !== 'photo' && c.clip_type !== 'video'),
+            : (!!c.media_url && c.clip_type !== 'image' && c.clip_type !== 'photo' && c.clip_type !== 'video'),
           transcribed: (c.transcribed !== undefined)
             ? !!c.transcribed
             : !!(c.transcript || c.text),
@@ -256,7 +258,7 @@ Page({
 
   /** 按住说话：开始录音（语音=要转文字；原声=只留声音） */
   onHoldStart() {
-    if (this.data.type !== 'voice' && this.data.type !== 'original') return;
+    if (this.data.type !== 'voice') return;
     // ★ 2026-10-31 P0：不再 `if (!this.requireLogin()) return;`
     //   登录未就绪也照样开录；只把「登录在后台推进」这件事做掉，不挡录音。
     if (!this.data.actorId) {
@@ -315,11 +317,11 @@ Page({
     if (!data) return;
     const one = {
       clip_id: data.clip_id || ('local_' + Date.now()),
-      clip_type: data.clip_type || (this.data.type === 'original' ? 'original' : 'voice'),
+      clip_type: data.clip_type || ('voice'),
       text: data.transcript || '',
       transcript: data.transcript || '',
       media_url: data.media_url || '',
-      playable: !!data.playable || (!!data.media_url && this.data.type !== 'photo'),
+      playable: !!data.playable || (!!data.media_url),
       media_duration: data.media_duration || 0,
       playing: false
     };
@@ -558,37 +560,72 @@ Page({
     });
   },
 
-  // ==================== 照片 / 视频 ====================
+  // ==================== 照片 / 视频（合并成一个入口）====================
 
-  /** 加号：直接跳系统图库/相机，不发明中间页（sandy 拍板：当场录 + 相册传） */
+  /**
+   * 加号：直接跳系统图库/相机，不发明中间页（sandy 拍板：当场录 + 相册传）
+   *
+   * ★ 11-10 改：照片和视频并成一个入口（sandy：「照片和视频是可以放在一个框框里头的」）。
+   *   mediaType 传 ['image','video'] → 系统图库两边都能选，不用先选"我要照片还是视频"。
+   *   count 取视频上限 1 条/次（一次选 9 张+1 条视频会让老人迷糊，也不好上传）。
+   *   回来按 f.fileType 判：image → 'image'，video → 'video'。
+   */
   onPlusPick(e) {
-    const kind = (e.currentTarget.dataset.kind) || this.data.type;
-    if (kind !== 'photo' && kind !== 'video') {
-      wx.showToast({ title: '请直接在下方输入', icon: 'none' });
-      return;
-    }
     if (!this.requireLogin()) return;
     wx.chooseMedia({
-      count: kind === 'photo' ? 9 : 1,
-      mediaType: [kind],
-      sourceType: ['album', 'camera'],   // 相册传 + 当场录
-      maxDuration: kind === 'video' ? 600 : 60,   // 视频 10 分钟上限
+      count: 1,
+      mediaType: ['image', 'video'],
+      sourceType: ['album', 'camera'],
+      maxDuration: 600,
       success: (res) => {
         (res.tempFiles || []).forEach((f) => {
           const size = f.size || 0;
-          // 视频本地拦 200MB
-          if (kind === 'video' && size > MAX_VIDEO_MB * 1024 * 1024) {
+          const isVideo = (f.fileType === 'video') ||
+            /\.(mp4|mov|m4v|avi|3gp)$/i.test(f.tempFilePath || '');
+          const kind = isVideo ? 'video' : 'image';
+          if (isVideo && size > MAX_VIDEO_MB * 1024 * 1024) {
             wx.showToast({ title: '视频太大（超200MB）', icon: 'none' });
             return;
           }
           const item = { kind, path: f.tempFilePath, size };
           this.setData({ mediaList: this.data.mediaList.concat([item]) });
-          if (kind === 'photo') this._uploadPhoto(item);
+          if (kind === 'image') this._uploadPhoto(item);
           else this._uploadVideo(item, f);
         });
       },
       fail: () => {}
     });
+  },
+
+  /** ★ 11-10：点缩略图能看大图/放视频（sandy 报「点了点不进去」） */
+  onPreviewMedia(e) {
+    const idx = Number(e.currentTarget.dataset.idx);
+    const item = (this.data.mediaList || [])[idx];
+    if (!item || !item.path) return;
+    if (item.kind === 'video') {
+      wx.previewMedia({
+        sources: this.data.mediaList
+          .filter((m) => m && m.path)
+          .map((m) => ({ url: m.path, type: m.kind === 'video' ? 'video' : 'image' })),
+        current: Math.max(0, idx),
+        fail: () => wx.previewImage({ urls: [item.path], current: item.path })
+      });
+      return;
+    }
+    wx.previewImage({
+      urls: this.data.mediaList.filter((m) => m && m.kind === 'image' && m.path).map((m) => m.path),
+      current: item.path,
+      fail: () => wx.previewImage({ urls: [item.path], current: item.path })
+    });
+  },
+
+  /** ★ 11-10：选错了能删掉（老人手滑选错很常见） */
+  onDelMedia(e) {
+    const idx = Number(e.currentTarget.dataset.idx);
+    const list = (this.data.mediaList || []).slice();
+    if (idx < 0 || idx >= list.length) return;
+    list.splice(idx, 1);
+    this.setData({ mediaList: list });
   },
 
   /** 照片：_uploadBytes 内已走「取址 → POST 表单上传 → confirm 登记」，此处只刷新素材筐 */
@@ -631,7 +668,7 @@ Page({
   /** 保存：文字走文字接口；照片/视频在选择时已上传登记；语音/原声在松手时已完成 */
   onSave() {
     if (this.data.type === 'text') { this.saveText(); return; }
-    if (this.data.type === 'voice' || this.data.type === 'original') {
+    if (this.data.type === 'voice') {
       // ★ 不再回「按住说话就存下来了」这种打太极的话：如实说清当前有什么、还差什么
       const n = (this.data.clips || []).length;
       if (n > 0) {

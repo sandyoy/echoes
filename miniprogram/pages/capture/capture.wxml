@@ -1,19 +1,21 @@
-<!-- 采集页：5 类素材（文字/说话/留个声/照片/视频），素材挂同一件事 -->
-<view class="container {{type === 'voice' || type === 'original' ? 'has-hold-dock' : ''}}">
+<!-- 采集页：3 类素材（说话 / 照片视频 / 打字），素材挂同一件事 -->
+<!-- ★ 11-10 sandy 真机实测定死：
+     ①「说话」和「留个声」他分不清 → 合成一个「说话」（原声一并留着）
+     ②「照片」和「视频」并成一个框（都走图库/相机，不用隔两个入口）
+     ③入口从 5 个收到 3 个 -->
+<view class="container {{type === 'voice' ? 'has-hold-dock' : ''}}">
 
   <!-- 类型切换（标准版显示；大字版收起为单一模式） -->
   <view wx:if="{{uiMode !== 'large'}}" class="tabs">
-    <view class="tab {{type === 'voice'    ? 'on' : ''}}" data-type="voice"    bindtap="onTypeChange">说话</view>
-    <view class="tab {{type === 'original' ? 'on' : ''}}" data-type="original" bindtap="onTypeChange">留个声</view>
-    <view class="tab {{type === 'photo'    ? 'on' : ''}}" data-type="photo"    bindtap="onTypeChange">照片</view>
-    <view class="tab {{type === 'video'    ? 'on' : ''}}" data-type="video"    bindtap="onTypeChange">视频</view>
-    <view class="tab {{type === 'text'     ? 'on' : ''}}" data-type="text"     bindtap="onTypeChange">打字</view>
+    <view class="tab {{type === 'voice'  ? 'on' : ''}}" data-type="voice" bindtap="onTypeChange">说话</view>
+    <view class="tab {{type === 'media'  ? 'on' : ''}}" data-type="media" bindtap="onTypeChange">照片视频</view>
+    <view class="tab {{type === 'text'   ? 'on' : ''}}" data-type="text"  bindtap="onTypeChange">打字</view>
   </view>
 
-  <!-- 说话（语音→转文字）/ 留个声（原声，不转写）：按住说话 -->
+  <!-- 说话：按住说话（语音→转文字，原声一并留着） -->
   <!-- ⚠️ 铁律（11-08 sandy 真机实测）：按住说话固定屏幕底部，不随内容滚；所有采集页统一 -->
-  <block wx:if="{{type === 'voice' || type === 'original'}}">
-    <view class="hint">{{type === 'original' ? '想留个声音？唱一句、说句方言都行，按原样留着' : '按住说话，松开就记下了'}}</view>
+  <block wx:if="{{type === 'voice'}}">
+    <view class="hint">按住说话，松开就记下了</view>
     <view class="hold-dock">
       <view class="hold-circle {{recording ? 'recording' : ''}}"
             bindtouchstart="onHoldStart" bindtouchend="onHoldEnd">
@@ -28,12 +30,24 @@
               bindinput="onTextInput" value="{{text}}"></textarea>
   </block>
 
-  <!-- 照片 / 视频：加号直接跳图库（当场录 + 相册传） -->
+  <!-- 照片 / 视频：一个框，点加号直接跳图库（当场拍/录 + 相册选） -->
   <block wx:else>
-    <view class="big-btn" data-kind="{{type}}" bindtap="onPlusPick">+ 添加{{type === 'photo' ? '照片' : '视频'}}</view>
+    <view class="big-btn" data-kind="media" bindtap="onPlusPick">+ 添加照片或视频</view>
+    <!-- ★ 11-10 修：原来直接渲 {{item.kind}} → 页面露 "video"/"photo" 英文占位。
+         现在真出预览图（图片 image / 视频 video），拿不到缩略图就出中文角标 -->
     <view class="media-grid">
-      <view wx:for="{{mediaList}}" wx:key="path" class="media-item">{{item.kind}}</view>
+      <view wx:for="{{mediaList}}" wx:key="path" class="media-item"
+            data-idx="{{index}}" bindtap="onPreviewMedia">
+        <image wx:if="{{item.kind === 'image' || item.kind === 'photo'}}"
+               class="media-thumb" src="{{item.path}}" mode="aspectFill" />
+        <video wx:elif="{{item.kind === 'video'}}" class="media-thumb"
+               src="{{item.path}}" controls="{{false}}" show-center-play-btn="{{true}}" />
+        <view wx:else class="media-thumb media-thumb-ph">{{item.kind === 'video' ? '视频' : '照片'}}</view>
+        <view wx:if="{{item.kind === 'video'}}" class="media-badge">视频</view>
+        <view class="media-del" catchtap="onDelMedia" data-idx="{{index}}">×</view>
+      </view>
     </view>
+    <view wx:if="{{mediaList.length === 0}}" class="media-empty">还没有照片或视频</view>
   </block>
 
   <!-- ★ 三链路①：刚才那段变成了字，大字回显（老人松开手立刻能看见） -->

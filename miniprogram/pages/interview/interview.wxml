@@ -18,6 +18,22 @@
     <view wx:elif="{{error}}" class="hint error">{{error}}</view>
 
     <block wx:else>
+      <!-- ★ 11-10 sandy 实测：「还是没有把它的结构变了……也没有编导」
+           病根：采访页从头到尾只有一个问句卡片，老人不知道①现在讲到哪一段②还剩几段③这段是干什么的。
+           改法：最上面加一条【编导进度骨】——像书的目录，一段一格，走到哪格亮哪格；
+                标题条下面加一句【这段是干什么的】——由编导脚本给（开场/童年/工作/家庭/晚年）。 -->
+      <view class="script-bar">
+        <view class="script-step {{item.state}}" wx:for="{{scriptSteps}}" wx:key="key">
+          <view class="script-dot">{{item.done ? '✓' : index + 1}}</view>
+          <view class="script-name">{{item.name}}</view>
+        </view>
+      </view>
+      <view wx:if="{{scriptNow}}" class="script-now">
+        <text class="script-now-label">这一段</text>
+        <text class="script-now-text">{{scriptNow}}</text>
+        <text class="script-left">还剩 {{scriptLeft}} 段</text>
+      </view>
+
       <!-- 标题条：AI 记者状态 -->
       <view class="stage-bar">
         <text wx:if="{{speaking}}" class="stage-dot on"></text>

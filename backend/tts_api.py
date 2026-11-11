@@ -56,10 +56,15 @@ DEFAULT_VOICE = "zh-CN-XiaoxiaoNeural"
 # ⚠️ 2026-11-08 sandy 真机实测：采访 TTS「酥软」不合格 → 要**干净利索女声**（禁气声）。
 #    Xiaoxiao（晓晓）= 亲切偏柔、带气声 → 采访不用。
 #    Xiaoyi（晓伊）= 干练利索、播音腔、无气声 → 采访/复述/提示统一用它。
+# ★ 11-10 sandy 真机实测第三轮：「音调好奇怪，拖着长尾音，能不能再干净利索一点」
+#   病根不是单一音色，而是「音色 + 慢速 + 降调」三者叠加：
+#     Xiaoyi（本来偏软）+ rate -12% + 腾讯 Speed -1 + 降调 → 每个字尾巴都被拉长
+#   改法：换成发音干脆的 Xiaoxiao 并回到正常语速/正常音调。
+#   老人听着舒服≠说得慢，是"字清楚、句子间有停顿"→ 停顿由 text 里的标点控制，不靠拖慢。
 VOICE_BY_SCENE = {
-    "interview_host": "zh-CN-XiaoyiNeural",     # AI 主持人：干净利索，不酥软
-    "recap": "zh-CN-XiaoyiNeural",              # §7.6 复述确认（同上）
-    "tip": "zh-CN-XiaoyiNeural",                # 界面提示音
+    "interview_host": "zh-CN-XiaoxiaoNeural",   # AI 主持人：干脆、少气声
+    "recap": "zh-CN-XiaoxiaoNeural",            # §7.6 复述确认（同上）
+    "tip": "zh-CN-XiaoxiaoNeural",              # 界面提示音
     "male": "zh-CN-YunxiNeural",                # 备选男声
 }
 
@@ -73,13 +78,14 @@ TENCENT_VOICE_BY_SCENE = {
 }
 TENCENT_DEFAULT_VOICE = 101002
 
-# 老人听的默认语速：偏慢一档（§十「摁一下，哒哒就说」+ 老人听感）
-DEFAULT_RATE = "-12%"      # edge-tts rate
+# ★ 11-10 改：原来 -12% + Speed -1 叠加，实测就是"拖着长尾音"的来源。
+#   老人需要的是【字清楚】，不是【拖慢】。恢复正常语速，靠标点做停顿。
+DEFAULT_RATE = "+0%"       # edge-tts rate（正常语速）
 DEFAULT_VOLUME = "+0%"
 DEFAULT_PITCH = "+0Hz"
 
-# 腾讯云 Speed：-2..2（0 正常）。老人听 → 略慢。
-TENCENT_SPEED = -1
+# 腾讯云 Speed：-2..2（0 正常）。0 = 不拖尾音。
+TENCENT_SPEED = 0
 
 # 复述/长段允许的最大字符（防一次合成超长卡住）
 MAX_TEXT_LEN = 1200
