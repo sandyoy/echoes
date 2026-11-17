@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>小桥的学习</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f7fa;color:#1f2937;font-size:17px;line-height:1.75;padding-bottom:80px}
+.header{background:linear-gradient(135deg,#ffb340,#ff8a00);color:#fff;padding:22px 20px 18px;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(255,138,0,.25)}
+.header h1{font-size:21px;font-weight:700;letter-spacing:.5px}
+.header p{font-size:13px;opacity:.92;margin-top:4px}
+.header .ttsbtn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.25);border:none;color:#fff;width:38px;height:38px;border-radius:50%;font-size:19px;cursor:pointer;line-height:1}
+.header .ttsbtn:active{transform:translateY(-50%) scale(.92)}
+.wrap{padding:16px}
+.card{background:#fff;border-radius:14px;padding:18px 17px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.card h2{font-size:17px;color:#ff8a00;margin-bottom:10px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card h2 .tag{background:#fff3e0;color:#e67300;font-size:12px;padding:2px 8px;border-radius:9px;font-weight:500}
+.say{background:#fffbf0;border-left:4px solid #ffb340;padding:14px 15px;border-radius:8px;font-size:16px;line-height:1.85;color:#4a3a20;position:relative}
+.say p{margin-bottom:9px}
+.say p:last-child{margin-bottom:0}
+.say .replay{position:absolute;right:10px;bottom:8px;background:#fff3e0;border:1px solid #ffd9a0;color:#e67300;border-radius:14px;padding:2px 11px;font-size:12px;font-family:inherit;cursor:pointer}
+.q{margin-bottom:18px}
+.q .stem{font-weight:600;margin-bottom:9px;color:#1f2937}
+.blank{display:inline-block;min-width:76px;border-bottom:2px solid #ffb340;height:24px;margin:0 4px;vertical-align:bottom}
+input[type=text]{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:11px 13px;font-size:16px;font-family:inherit;background:#fafbfc;transition:.2s}
+input[type=text]:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 0 3px rgba(255,179,64,.15)}
+textarea{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:11px 13px;font-size:16px;font-family:inherit;background:#fafbfc;min-height:76px;resize:vertical}
+textarea:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 0 3px rgba(255,179,64,.15)}
+.hint{font-size:13px;color:#9ca3af;margin-top:7px}
+.row{display:flex;align-items:center;gap:10px;margin-bottom:11px}
+.row .idx{color:#ff8a00;font-weight:700;min-width:24px}
+.row .item{flex:1}
+.btn{display:block;width:100%;background:linear-gradient(135deg,#ffb340,#ff8a00);color:#fff;border:none;border-radius:12px;padding:16px;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 3px 12px rgba(255,138,0,.3);transition:.15s}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:#fff;color:#ff8a00;border:2px solid #ffb340;box-shadow:none}
+.footer-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);padding:12px 16px 20px;box-shadow:0 -2px 14px rgba(0,0,0,.07);backdrop-filter:blur(10px)}
+.done{text-align:center;padding:40px 20px}
+.done .big{font-size:52px;margin-bottom:14px}
+.done h2{color:#ff8a00;font-size:22px;margin-bottom:10px}
+.done p{color:#6b7280;font-size:15px;line-height:1.9}
+.progress{position:fixed;top:0;left:0;height:3px;background:#22c55e;width:0;z-index:99;transition:width .3s}
+.hidden{display:none}
+.summary{background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:15px;margin-top:14px;font-size:14px;color:#166534;line-height:1.85}
+.summary b{color:#15803d}
+
+/* 开场封面：老师形象 + 说话 */
+.cover{position:fixed;inset:0;z-index:999;background:linear-gradient(160deg,#ffc76b 0%,#ff9d2e 55%,#ff8a00 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px;text-align:center;transition:opacity .45s,transform .45s}
+.cover.out{opacity:0;transform:scale(1.06);pointer-events:none}
+.avatar{width:118px;height:118px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:60px;box-shadow:0 10px 34px rgba(150,70,0,.3);margin-bottom:22px;transition:transform .5s}
+.avatar.talk{animation:bob .9s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:scale(1) translateY(0)}50%{transform:scale(1.06) translateY(-5px)}}
+.cover h2{color:#fff;font-size:23px;font-weight:700;margin-bottom:12px;text-shadow:0 2px 8px rgba(150,70,0,.25)}
+.cover .line{color:#fff;font-size:16px;line-height:1.95;max-width:330px;opacity:.96;margin-bottom:8px;text-shadow:0 1px 6px rgba(150,70,0,.2)}
+.cover .tap{color:#fff;font-size:14px;opacity:.88;margin-top:16px;animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:.45}50%{opacity:1}}
+.cover .go{margin-top:26px;background:#fff;color:#ff8a00;border:none;border-radius:26px;padding:14px 44px;font-size:18px;font-weight:700;font-family:inherit;box-shadow:0 6px 20px rgba(150,70,0,.28);cursor:pointer}
+.cover .go:active{transform:scale(.96)}
+.cover .skip{position:absolute;bottom:26px;color:#fff;opacity:.6;font-size:13px;background:none;border:none;font-family:inherit}
+
+/* 跟老师说话 */
+.talkcard{border:2px solid #ffd9a0;background:#fffdf7}
+.talktip{font-size:14px;color:#8a6a35;margin-bottom:12px;line-height:1.7}
+.chatlog{margin-bottom:12px}
+.chatlog:empty{display:none}
+.bubble{background:#ff8a00;color:#fff;padding:11px 14px;border-radius:14px 14px 4px 14px;margin-bottom:9px;font-size:15px;line-height:1.7;max-width:88%;margin-left:auto;word-break:break-word}
+.bubble .who{font-size:11px;opacity:.75;display:block;margin-bottom:3px}
+.bubble.reply{background:#fff3e0;color:#7a4a00;border-radius:14px 14px 14px 4px;margin-left:0}
+.talkrow{display:flex;gap:9px}
+.talkrow input{flex:1}
+.talkbtn{background:linear-gradient(135deg,#ffb340,#ff8a00);color:#fff;border:none;border-radius:10px;padding:0 17px;font-size:15px;font-weight:700;font-family:inherit;white-space:nowrap;cursor:pointer}
+.talkbtn:active{transform:scale(.96)}
+.thinking{opacity:.75}
+.dots{display:inline-flex;gap:4px;align-items:center;height:20px}
+.dots i{width:6px;height:6px;border-radius:50%;background:#ff8a00;display:block;animation:dotbounce 1.2s infinite ease-in-out}
+.dots i:nth-child(2){animation-delay:.2s}
+.dots i:nth-child(3){animation-delay:.4s}
+@keyframes dotbounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-5px);opacity:1}}
+
+/* ===== 浮动「问老师」按钮 ===== */
+.fab{position:fixed;right:16px;bottom:96px;z-index:60;display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,#ffb340,#ff8a00);color:#fff;border:none;border-radius:26px;padding:12px 19px;font-size:15px;font-weight:700;font-family:inherit;box-shadow:0 6px 18px rgba(255,138,0,.42);cursor:pointer;transition:.18s}
+.fab:active{transform:scale(.94)}
+.fab .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+.fab.hide{display:none}
+
+/* ===== 聊天抽屉（像微信） ===== */
+.sheet{position:fixed;left:0;right:0;bottom:0;height:72vh;background:#f5f7fa;z-index:200;border-radius:18px 18px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.22);display:flex;flex-direction:column;transform:translateY(102%);transition:transform .3s ease}
+.sheet.open{transform:translateY(0)}
+.sheet-head{background:linear-gradient(135deg,#ffb340,#ff8a00);color:#fff;padding:13px 16px;border-radius:18px 18px 0 0;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.sheet-head .who2{font-size:16px;font-weight:700;flex:1}
+.sheet-head .st{font-size:12px;opacity:.9}
+.sheet-head .x{background:rgba(255,255,255,.22);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer}
+.sheet-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.sheet-body .bubble{max-width:82%;margin:0}
+.sheet-body .bubble.reply{margin-left:0}
+.sheet-body .bubble:not(.reply){margin-left:auto}
+.sheet-foot{background:#fff;padding:10px 12px 16px;display:flex;gap:8px;flex-shrink:0;box-shadow:0 -2px 12px rgba(0,0,0,.06)}
+.sheet-foot input{flex:1;border:1.5px solid #e5e7eb;border-radius:20px;padding:11px 16px;font-size:16px;font-family:inherit;background:#f7f8fa}
+.sheet-foot input:focus{outline:none;border-color:#ffb340;background:#fff}
+.sheet-foot button{background:linear-gradient(135deg,#ffb340,#ff8a00);color:#fff;border:none;border-radius:20px;padding:0 20px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap}
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.34);z-index:150;opacity:0;pointer-events:none;transition:opacity .3s}
+.mask.on{opacity:1;pointer-events:auto}
+.quickrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.quickrow button{background:#fff;border:1.5px solid #ffd9a0;color:#e67300;border-radius:15px;padding:6px 13px;font-size:13px;font-family:inherit;cursor:pointer}
+.quickrow button:active{background:#fff3e0}
+</style>
+</head>
+<body>
+
+<!-- ===== 开场封面 ===== -->
+<div class="cover" id="cover">
+  <div class="avatar" id="avatar">👩‍🏫</div>
+  <h2>小桥，你好呀</h2>
+  <p class="line">我是圆圆老师，从今天起我陪你一起学习</p>
+  <p class="line" style="font-size:15px;opacity:.9">今天先做23道小题，我看看你哪儿会、哪儿不会</p>
+  <button class="go" id="goBtn" onclick="startStudy()">开始学习</button>
+  <div class="tap" id="tapHint">点上面的按钮，老师会跟你说话</div>
+  <button class="skip" onclick="skipIntro()">跳过</button>
+</div>
+
+<div class="progress" id="prog"></div>
+
+<div class="header">
+  <h1>小桥的学习</h1>
+  <p>第 1 天 · 摸底 · 大约 20 分钟 · 共 23 题</p>
+  <button class="ttsbtn" onclick="speak('02_start')" title="老师再说一遍">🔊</button>
+</div>
+
+<div class="wrap" id="main">
+
+  <div class="card">
+    <div class="say">
+      <p>小桥，我是你的老师。</p>
+      <p>你妈妈跟我说了，你打算用一年时间，把一到六年级的东西系统地过一遍。明年下半年就能集中复习。</p>
+      <p>我觉得这个计划很好，而且你同意开始，这本身就挺了不起的。</p>
+      <p>今天我们先做一件很小的事：我想看看你哪儿会、哪儿不会。<b>做不出来的就空着，空着不是错，空着是告诉我"这里要教你"。</b></p>
+      <p>准备好了吗？开始吧。</p>
+      <button class="replay" onclick="speak('02_start')">🔊 再听一遍</button>
+    </div>
+  </div>
+
+  <!-- 第一部分 拼音 -->
+  <div class="card">
+    <h2>第一部分 认一认 <span class="tag">拼音</span></h2>
+    <div class="q">
+      <div class="stem">1. 写下"妈"的拼音</div>
+      <input type="text" id="a1" placeholder="不会就空着">
+    </div>
+    <div class="q">
+      <div class="stem">2. 写下"花"的拼音</div>
+      <input type="text" id="a2" placeholder="不会就空着">
+    </div>
+    <div class="q">
+      <div class="stem">3. 写下"水"的拼音</div>
+      <input type="text" id="a3" placeholder="不会就空着">
+    </div>
+    <div class="q">
+      <div class="stem">4. b 和 d，下面哪个是 b？</div>
+      <input type="text" id="a4" placeholder="直接写字母">
+    </div>
+    <div class="q">
+      <div class="stem">5. p 和 q，下面哪个是 p？</div>
+      <input type="text" id="a5" placeholder="直接写字母">
+    </div>
+    <p class="hint">写不出来的直接空着，空着老师才知道这儿要教你。</p>
+  </div>
+
+  <!-- 第二部分 声调 -->
+  <div class="card">
+    <h2>第二部分 声调 <span class="tag">拼音</span></h2>
+    <div class="q">
+      <div class="stem">6. 给"妈"标上声调（第一声）</div>
+      <input type="text" id="a6" placeholder="写出带声调的拼音">
+    </div>
+    <div class="q">
+      <div class="stem">7. 给"马"标上声调（第三声）</div>
+      <input type="text" id="a7" placeholder="写出带声调的拼音">
+    </div>
+    <div class="q">
+      <div class="stem">8. 给"骂"标上声调（第四声）</div>
+      <input type="text" id="a8" placeholder="写出带声调的拼音">
+    </div>
+  </div>
+
+  <!-- 第三部分 拼读 -->
+  <div class="card">
+    <h2>第三部分 拼一拼 <span class="tag">拼音</span></h2>
+    <div class="q">
+      <div class="stem">9. b—à 拼起来是什么？</div>
+      <input type="text" id="a9" placeholder="写出音节">
+    </div>
+    <div class="q">
+      <div class="stem">10. x—i—ǎo 拼起来是什么？</div>
+      <input type="text" id="a10" placeholder="写出音节">
+    </div>
+  </div>
+
+  <!-- 第四部分 口诀 -->
+  <div class="card">
+    <h2>第四部分 乘法口诀 <span class="tag">数学</span></h2>
+    <div class="q">
+      <div class="stem">11. 7 × 8 = ?</div>
+      <input type="text" id="a11" placeholder="填数字">
+    </div>
+    <div class="q">
+      <div class="stem">12. 6 × 9 = ?</div>
+      <input type="text" id="a12" placeholder="填数字">
+    </div>
+    <div class="q">
+      <div class="stem">13. 8 × 8 = ?</div>
+      <input type="text" id="a13" placeholder="填数字">
+    </div>
+    <div class="q">
+      <div class="stem">14. 9 × 7 = ?</div>
+      <input type="text" id="a14" placeholder="填数字">
+    </div>
+    <div class="q">
+      <div class="stem">15. 56 ÷ 7 = ?</div>
+      <input type="text" id="a15" placeholder="填数字">
+    </div>
+    <div class="q">
+      <div class="stem">16. 54 ÷ 6 = ?</div>
+      <input type="text" id="a16" placeholder="填数字">
+    </div>
+  </div>
+
+  <!-- 第五部分 英语 -->
+  <div class="card">
+    <h2>第五部分 英语语块 <span class="tag">英语</span></h2>
+    <div class="q">
+      <div class="stem">17. "吃早饭"的英语怎么说？</div>
+      <input type="text" id="a17" placeholder="写短语">
+    </div>
+    <div class="q">
+      <div class="stem">18. "去上学"的英语怎么说？</div>
+      <input type="text" id="a18" placeholder="写短语">
+    </div>
+    <div class="q">
+      <div class="stem">19. "踢足球"的英语怎么说？</div>
+      <input type="text" id="a19" placeholder="写短语">
+    </div>
+    <div class="q">
+      <div class="stem">20. 补全句子：I usually ______ at 7:00.（我通常七点起床）</div>
+      <input type="text" id="a20" placeholder="填空">
+    </div>
+  </div>
+
+  <!-- 第六部分 说说话 -->
+  <div class="card">
+    <h2>第六部分 说说话 <span class="tag">开放</span></h2>
+    <div class="q">
+      <div class="stem">21. 你最喜欢哪门课？为什么？</div>
+      <textarea id="a21" placeholder="想到什么写什么，写不出来就空着"></textarea>
+    </div>
+    <div class="q">
+      <div class="stem">22. 数学里，你觉得最难的是什么？</div>
+      <textarea id="a22" placeholder="说说看"></textarea>
+    </div>
+    <div class="q">
+      <div class="stem">23. 这些里面，你最想先弄明白哪一个？</div>
+      <textarea id="a23" placeholder="说说看"></textarea>
+    </div>
+  </div>
+
+  <div id="summaryBox" class="summary hidden"></div>
+
+</div>
+
+<!-- 浮动「问老师」按钮：随时可点 -->
+<button class="fab" id="fab" onclick="openChat()">
+  <span class="dot"></span>问老师
+</button>
+
+<!-- 遮罩 -->
+<div class="mask" id="mask" onclick="closeChat()"></div>
+
+<!-- 聊天抽屉：像微信 -->
+<div class="sheet" id="sheet">
+  <div class="sheet-head">
+    <div>
+      <div class="who2">圆圆老师</div>
+      <div class="st" id="stText">随时问我，不会也能问</div>
+    </div>
+    <button class="x" onclick="closeChat()">✕</button>
+  </div>
+  <div class="sheet-body" id="chatlog"></div>
+  <div class="sheet-foot">
+    <input type="text" id="talkInput" placeholder="跟老师说句话…"
+           onkeydown="if(event.key==='Enter')sayToTeacher()">
+    <button onclick="sayToTeacher()">发送</button>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <button class="btn" id="submitBtn" onclick="submitAll()">我写完了，交给老师</button>
+</div>
+
+<script>
+const QIDS = Array.from({length:23},(_,i)=>'a'+(i+1));
+let audioCache = {};
+
+/* ===== 开场：不自动播（浏览器会拦），点按钮播完整一段 ===== */
+window.addEventListener('load', ()=>{
+  const savedTalk = localStorage.getItem('xq_talklog');
+  if(savedTalk){
+    try{
+      JSON.parse(savedTalk).forEach(t=>addBubble(t.text, t.time, false));
+    }catch(e){}
+  }
+});
+
+function startStudy(){
+  stopSpeak();
+  // 完整自我介绍，一段播完，不拆
+  playOnce('01_welcome');
+  const c = document.getElementById('cover');
+  c.classList.add('out');
+  setTimeout(()=>{ c.style.display='none'; }, 460);
+  window.scrollTo({top:0});
+}
+function skipIntro(){
+  stopSpeak();
+  const c = document.getElementById('cover');
+  c.classList.add('out');
+  setTimeout(()=>{ c.style.display='none'; }, 460);
+}
+
+/* 播一段（播完才允许下一段） */
+let currentAudio = null;
+function playOnce(name){
+  try{
+    if(currentAudio){ currentAudio.pause(); currentAudio.currentTime = 0; }
+    const a = new Audio('audio/'+name+'.m4a');
+    currentAudio = a;
+    const av = document.getElementById('avatar');
+    if(av) av.classList.add('talk');
+    a.addEventListener('ended', ()=>{ if(av) av.classList.remove('talk'); });
+    a.play().catch(()=>{ if(av) av.classList.remove('talk'); });
+    return a;
+  }catch(e){ return null; }
+}
+function speak(name){ return playOnce(name); }
+function stopSpeak(){
+  if(currentAudio){ try{currentAudio.pause(); currentAudio.currentTime=0;}catch(e){} }
+  const av = document.getElementById('avatar');
+  if(av) av.classList.remove('talk');
+}
+
+/* ===== 跟老师说话（真对话） ===== */
+let chatHistory = [];
+
+function sayToTeacher(){
+  const inp = document.getElementById('talkInput');
+  const text = (inp.value||'').trim();
+  if(!text){ inp.focus(); return; }
+  const time = nowTime();
+  addBubble(text, time, 'me');
+  inp.value = '';
+
+  // 老师"正在想"的占位
+  const log = document.getElementById('chatlog');
+  const thinking = document.createElement('div');
+  thinking.className = 'bubble reply thinking';
+  thinking.innerHTML = '<span class="who">圆圆老师</span><span class="dots"><i></i><i></i><i></i></span>';
+  log.appendChild(thinking);
+  thinking.scrollIntoView({block:'center', behavior:'smooth'});
+
+  const t0 = Date.now();
+  fetch('/api/ask', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({q:text, history:chatHistory})
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    thinking.remove();
+    const ans = d.answer || '老师没听清，你再说一遍好不好？';
+    addBubble(ans, nowTime(), 'teacher');
+    chatHistory.push({role:'user', content:text});
+    chatHistory.push({role:'assistant', content:ans});
+    saveChat(text, ans);
+    if(d.used !== undefined){
+      document.getElementById('stText').textContent = '今天已经问了 ' + d.used + ' 次';
+    }
+  })
+  .catch(()=>{
+    thinking.remove();
+    addBubble('老师这边网有点慢，你等一下再问一次好不好？', nowTime(), 'teacher');
+  });
+
+  // 存孩子的问话
+  saveTalk(text, time);
+}
+
+function nowTime(){
+  return new Date().toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+
+function addBubble(text, time, kind){
+  const log = document.getElementById('chatlog');
+  const d = document.createElement('div');
+  if(kind === 'teacher'){
+    d.className = 'bubble reply';
+    d.innerHTML = '<span class="who">圆圆老师 · ' + time + '</span>' + escapeHtml(text).replace(/\n/g,'<br>');
+  } else {
+    d.className = 'bubble';
+    d.innerHTML = '<span class="who">小桥 · ' + time + '</span>' + escapeHtml(text).replace(/\n/g,'<br>');
+  }
+  log.appendChild(d);
+  d.scrollIntoView({block:'nearest', behavior:'smooth'});
+}
+
+function saveTalk(text, time){
+  let arr = [];
+  try{ arr = JSON.parse(localStorage.getItem('xq_talklog')||'[]'); }catch(e){ arr=[]; }
+  arr.push({text:text, time:time});
+  localStorage.setItem('xq_talklog', JSON.stringify(arr));
+}
+
+function saveChat(q, a){
+  // 留一份在本地，妈妈可查
+  let arr = [];
+  try{ arr = JSON.parse(localStorage.getItem('xq_chat')||'[]'); }catch(e){ arr=[]; }
+  arr.push({q:q, a:a, t:nowTime()});
+  if(arr.length > 200) arr = arr.slice(-200);
+  localStorage.setItem('xq_chat', JSON.stringify(arr));
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ===== 聊天抽屉开关 ===== */
+function openChat(){
+  document.getElementById('sheet').classList.add('open');
+  document.getElementById('mask').classList.add('on');
+  document.getElementById('fab').classList.add('hide');
+  document.body.style.overflow = 'hidden';
+  setTimeout(()=>{
+    const inp = document.getElementById('talkInput');
+    if(inp) inp.focus();
+    const log = document.getElementById('chatlog');
+    if(log) log.scrollTop = log.scrollHeight;
+  }, 320);
+  // 第一次打开时，老师先打个招呼
+  if(!localStorage.getItem('xq_greeted')){
+    localStorage.setItem('xq_greeted','1');
+    setTimeout(()=>{
+      addBubble('小桥，我在呢。哪里不会、哪里看不懂，直接问我。不想学的时候也可以跟我说。', nowTime(), 'teacher');
+    }, 420);
+  }
+}
+function closeChat(){
+  document.getElementById('sheet').classList.remove('open');
+  document.getElementById('mask').classList.remove('on');
+  document.getElementById('fab').classList.remove('hide');
+  document.body.style.overflow = '';
+}
+
+/* ===== 本地暂存，防止误关 ===== */
+QIDS.forEach(id=>{
+  const el = document.getElementById(id);
+  const saved = localStorage.getItem('xq_'+id);
+  if(saved) el.value = saved;
+  el.addEventListener('input', ()=>{
+    localStorage.setItem('xq_'+id, el.value);
+    updateProgress();
+  });
+});
+
+function filled(){
+  return QIDS.filter(id=>document.getElementById(id).value.trim()!=='').length;
+}
+function updateProgress(){
+  document.getElementById('prog').style.width = (filled()/QIDS.length*100)+'%';
+}
+updateProgress();
+
+function submitAll(){
+  stopSpeak();
+  const data = {};
+  QIDS.forEach(id=>{
+    data[id] = document.getElementById(id).value.trim();
+  });
+  const n = filled();
+
+  // 没填完先温柔问一句，不拦着
+  if(n < QIDS.length){
+    const go = confirm('还有 ' + (QIDS.length-n) + ' 题空着。\n\n点「取消」回去接着做，点「确定」就先交给老师。');
+    if(!go){ backToWork(); return; }
+  }
+  speak('05_end');
+
+  // 生成可复制文本
+  let txt = '【小桥第1天作业】\n';
+  const names = {
+    a1:'1. 妈的拼音', a2:'2. 花的拼音', a3:'3. 水的拼音',
+    a4:'4. b和d哪个是b', a5:'5. p和q哪个是p',
+    a6:'6. 妈标声调', a7:'7. 马标声调', a8:'8. 骂标声调',
+    a9:'9. b—à', a10:'10. x—i—ǎo',
+    a11:'11. 7×8', a12:'12. 6×9', a13:'13. 8×8', a14:'14. 9×7',
+    a15:'15. 56÷7', a16:'16. 54÷6',
+    a17:'17. have breakfast', a18:'18. go to school', a19:'19. play football', a20:'20. I usually __ at 7:00',
+    a21:'21. 最喜欢的课', a22:'22. 数学最难', a23:'23. 最想弄明白'
+  };
+  QIDS.forEach(id=>{
+    txt += names[id] + '：' + (data[id] || '（空着）') + '\n';
+  });
+
+  const box = document.getElementById('summaryBox');
+  box.innerHTML = '<b>做完了 ' + n + ' / 23 题</b><br>'
+    + '空着的题目不是错，是告诉老师需要教的地方。<br><br>'
+    + '<b>还没做完？随时可以回去接着做，填过的答案都还在。</b>';
+
+  // 加「回去继续做」按钮（每次都重新生成，保证点得动）
+  let backBtn = document.getElementById('backBtn');
+  if(!backBtn){
+    backBtn = document.createElement('button');
+    backBtn.id = 'backBtn';
+    backBtn.textContent = '← 还没做完，回去继续做';
+    backBtn.style.cssText = 'display:block;width:100%;margin:14px 0 0;padding:14px;'
+      + 'border:2px solid #ff8a1f;background:#fff;color:#ff8a1f;border-radius:14px;'
+      + 'font-size:17px;font-weight:700;';
+    backBtn.onclick = backToWork;
+    box.appendChild(backBtn);
+  }
+  box.classList.remove('hidden');
+  box.scrollIntoView({behavior:'smooth', block:'center'});
+
+  // 复制到剪贴板
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(txt).then(()=>{
+      document.getElementById('submitBtn').textContent = '已复制，拿给妈妈吧';
+    }).catch(()=>{
+      document.getElementById('submitBtn').textContent = '拿给妈妈看吧';
+    });
+  } else {
+    document.getElementById('submitBtn').textContent = '拿给妈妈看吧';
+  }
+  document.getElementById('submitBtn').onclick = ()=>{ alert(txt); };
+}
+
+// 回去继续做：隐藏结果框、恢复提交按钮、滚回第一题
+function backToWork(){
+  const box = document.getElementById('summaryBox');
+  box.classList.add('hidden');
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '我写完了，交给老师';
+  btn.onclick = submitAll;
+  const first = document.getElementById(QIDS[0]);
+  if(first){
+    // 从第一道空着的题开始，没有空的就回第一题
+    let target = QIDS.map(id=>document.getElementById(id)).find(el=>el && el.value.trim()==='');
+    (target || first).scrollIntoView({behavior:'smooth', block:'center'});
+    setTimeout(()=>{ if(target) target.focus({preventScroll:true}); }, 400);
+  }
+}
+</script>
+</body>
+</html>
