@@ -41,6 +41,7 @@ import story_api
 import book_api
 import book_view_api
 import timeline_api
+import anchor_api
 import interview_api
 import interview_recap
 import share_api
@@ -50,6 +51,7 @@ import group_api
 import payment_api
 import paid_flow_api
 import entitlement
+import polish_api
 import storage_api
 import tts_api
 import print_api
@@ -513,6 +515,30 @@ def my_ebook(owner_id: str, db=Depends(get_db)):
     return book_api.api_my_ebook(db, owner_id=owner_id)
 
 
+# ============================================================
+# AI 润色成文（§7.5 自述体；成书前置步骤）
+# ============================================================
+class PolishStoryReq(BaseModel):
+    story_id: str
+    force: bool = False
+
+
+class PolishOwnerReq(BaseModel):
+    owner_id: str
+    force: bool = False
+
+
+@app.post("/api/echoes/polish/story")
+def polish_story_api(req: PolishStoryReq, db=Depends(get_db)):
+    return polish_api.polish_story(db, req.story_id, force=req.force)
+
+
+@app.post("/api/echoes/polish/owner")
+def polish_owner_api(req: PolishOwnerReq, db=Depends(get_db)):
+    return polish_api.polish_owner(db, req.owner_id, force=req.force)
+
+
+
 # handler: book_view_api.py（§8.6 三种形态 + §8.4 续添；本机无 fastapi 未实测，形状已冻结）
 class BookViewReq(BaseModel):
     owner_id: str
@@ -692,6 +718,36 @@ def set_story_time(req: SetStoryTimeReq, db=Depends(get_db)):
 def auto_place(story_id: str, db=Depends(get_db)):
     """保存即触发自动归位（用户手改过的会自动跳过，不覆盖）。"""
     return timeline_api.auto_place_story(db, story_id=story_id)
+
+
+# ------------------------------------------------------------
+# 人生锚点路由（2026-11-17，人物关系时间线）
+# 为什么要开：老头说「我儿子8岁那年」，必须用**儿子自己的出生年**换算，
+# 不能借讲述人的出生年。所以锚点表要能按人物分别存（儿子/女儿/配偶各一行），
+# 前端也要能查「这本书现在已知哪些锚点、哪些人物还缺出生年」。
+# ------------------------------------------------------------
+
+@app.get("/api/echoes/anchors")
+def get_anchors_api(owner_id: str, harvest: bool = True, db=Depends(get_db)):
+    """查这本书的人生锚点（含按人物的出生年）。harvest=True 先扫一遍正文。"""
+    return anchor_api.api_get_anchors(db, owner_id=owner_id, harvest=harvest)
+
+
+class UpsertAnchorReq(BaseModel):
+    owner_id: str
+    anchor_type: str               # birth / marriage / child_birth / person_birth:儿子
+    year: int
+    source_story_id: str = ""
+    confirm: bool = True           # 用户拍板 → 之后自动采集不得覆盖
+
+
+@app.post("/api/echoes/anchors/upsert")
+def upsert_anchor(req: UpsertAnchorReq, db=Depends(get_db)):
+    """用户手动设置/纠正锚点（最高优先级，confirmed=True 后不再被自动采集覆盖）。"""
+    return anchor_api.api_upsert_anchor(
+        db, owner_id=req.owner_id, anchor_type=req.anchor_type,
+        year=req.year, source_story_id=req.source_story_id, confirm=req.confirm,
+    )
 
 
 # ============================================================

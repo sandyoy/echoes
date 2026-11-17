@@ -74,6 +74,18 @@ _ANCHOR_NAME = {
 # 允许用户手动录入的类型（与 extract_anchors 对齐，不扩语义）
 VALID_TYPES = tuple(_ANCHOR_NAME.keys())
 
+# ★ 2026-11-17：按人物分别记出生年 —— anchor_type 形如 "person_birth:儿子"
+#   铁律：谁的岁数只能配谁自己的出生年；人物名按老人怎么称呼记（不替他判定老大老二）
+PERSON_PREFIX = "person_birth:"
+
+
+def _is_person_type(anchor_type: str) -> bool:
+    return anchor_type.startswith(PERSON_PREFIX) and len(anchor_type) > len(PERSON_PREFIX)
+
+
+def _person_of(anchor_type: str) -> str:
+    return anchor_type[len(PERSON_PREFIX):]
+
 
 # ============================================================
 # 一、采集：扫整本书 → 落 LifeAnchor 表
@@ -119,6 +131,13 @@ def harvest_anchors(db, *, owner_id: str, commit: bool = True) -> dict:
             continue
         got = extract_anchors(blob)
         for key, year in got.items():
+            # ★ 2026-11-17：按人物分别采（person_birth_years: {'儿子': 1981}）
+            if key == 'person_birth_years':
+                for who, py in (year or {}).items():
+                    pkey = f"person_birth:{who}"
+                    if pkey not in found:
+                        found[pkey] = (int(py), s.id)
+                continue
             if key not in found:
                 found[key] = (int(year), s.id)
 
@@ -132,7 +151,8 @@ def harvest_anchors(db, *, owner_id: str, commit: bool = True) -> dict:
     kept_confirmed = {}
 
     for key, (year, story_id) in found.items():
-        anchor_type = _KEY_TO_TYPE.get(key)
+        anchor_type = (_KEY_TO_TYPE.get(key)
+                       or (key if _is_person_type(key) else None))
         if not anchor_type:
             continue
 
@@ -143,12 +163,15 @@ def harvest_anchors(db, *, owner_id: str, commit: bool = True) -> dict:
             kept_confirmed[anchor_type] = cur.year
             continue
 
+        aname = (_ANCHOR_NAME[anchor_type] if anchor_type in _ANCHOR_NAME
+                 else f"{_person_of(anchor_type)}出生")
+
         if cur is None:
             db.add(LifeAnchor(
                 id=uuid.uuid4().hex,
                 owner_id=owner_id,
                 anchor_type=anchor_type,
-                anchor_name=_ANCHOR_NAME[anchor_type],
+                anchor_name=aname,
                 year=year,
                 time_precision=TimePrecision.YEAR,
                 source_story_id=story_id,
@@ -185,17 +208,25 @@ def harvest_anchors(db, *, owner_id: str, commit: bool = True) -> dict:
 def get_anchors(db, *, owner_id: str) -> dict:
     """
     读 LifeAnchor 表，转成 timeline.extract_time(anchors=..) 要的键名。
-    返回 {'birth_year':1950, 'marriage_year':1972, 'child_birth_year':1975}
+    返回 {'birth_year':1950, 'marriage_year':1972, 'child_birth_year':1975,
+          'person_birth_years': {'儿子':1981, '女儿':1984}}
     （只有已采到的才有键；没有锚点的书返回 {}，extract_time 自然走【待定】，不瞎猜）
     """
     rows = db.query(LifeAnchor).filter(LifeAnchor.owner_id == owner_id).all()
     out = {}
+    persons = {}
     for a in rows:
         if a.year is None:
+            continue
+        # ★ 2026-11-17：按人物的出生年单独归到 person_birth_years
+        if _is_person_type(a.anchor_type):
+            persons[_person_of(a.anchor_type)] = int(a.year)
             continue
         key = _TYPE_TO_KEY.get(a.anchor_type)
         if key:
             out[key] = int(a.year)
+    if persons:
+        out['person_birth_years'] = persons
     return out
 
 
@@ -204,9 +235,13 @@ def get_anchors(db, *, owner_id: str) -> dict:
 # ============================================================
 
 def _anchor_dict(a: LifeAnchor) -> dict:
+    # ★ 2026-11-17：人物类锚点 anchor_name 兜底为「儿子出生」
+    default_name = (_ANCHOR_NAME.get(a.anchor_type)
+                    or (f"{_person_of(a.anchor_type)}出生"
+                        if _is_person_type(a.anchor_type) else ""))
     return {
         "anchor_type": a.anchor_type,
-        "anchor_name": a.anchor_name or _ANCHOR_NAME.get(a.anchor_type, ""),
+        "anchor_name": a.anchor_name or default_name,
         "year": a.year,
         "precision": a.time_precision.value if a.time_precision else "year",
         "source_story_id": a.source_story_id or "",
@@ -244,7 +279,8 @@ def api_upsert_anchor(db, *, owner_id: str, anchor_type: str,
     """
     if not owner_id:
         return fail("BAD_OWNER", "缺少 owner_id")
-    if anchor_type not in VALID_TYPES:
+    # ★ 2026-11-17：放行 "person_birth:儿子" 这类按人物的锚点
+    if anchor_type not in VALID_TYPES and not _is_person_type(anchor_type):
         return fail("BAD_TYPE", f"不支持的锚点类型：{anchor_type}")
 
     try:
@@ -264,7 +300,8 @@ def api_upsert_anchor(db, *, owner_id: str, anchor_type: str,
             id=uuid.uuid4().hex,
             owner_id=owner_id,
             anchor_type=anchor_type,
-            anchor_name=_ANCHOR_NAME[anchor_type],
+            anchor_name=(_ANCHOR_NAME.get(anchor_type)
+                          or f"{_person_of(anchor_type)}出生"),
             year=y,
             time_precision=TimePrecision.YEAR,
             source_story_id=source_story_id or None,
@@ -273,7 +310,8 @@ def api_upsert_anchor(db, *, owner_id: str, anchor_type: str,
         db.add(cur)
     else:
         cur.year = y
-        cur.anchor_name = _ANCHOR_NAME[anchor_type]
+        cur.anchor_name = (_ANCHOR_NAME.get(anchor_type)
+                           or f"{_person_of(anchor_type)}出生")
         cur.time_precision = TimePrecision.YEAR
         if source_story_id:
             cur.source_story_id = source_story_id

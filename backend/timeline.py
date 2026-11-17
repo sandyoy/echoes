@@ -106,11 +106,46 @@ HISTORY_EVENTS = {
 }
 
 # --- ③ 人生锚点表述模板 ---
-# "我X岁那年" / "X岁那年" / "嫁过来第N年" / "结婚第N年" / "生老大那年"
-RE_AGE_YEAR = re.compile(r"(?:我|俺|自己)?\s*(\d{1,2}|[一二三四五六七八九十]{1,3})\s*岁(?:那|的)?(?:一)?年")
+# ★ 2026-11-17 修：主语必须显式绑定，禁止「我」可选
+#   病根（原 RE_AGE_YEAR）：(?:我|俺|自己)?\s*(\d{1,2})岁那年
+#   → 「我儿子8岁那年」被吃成「我8岁那年」，用讲述人出生年硬算 → 错 20 年且看不出来。
+#   铁律：一句话里的岁数只能挂在这句话真正的主语身上；换算只能用那个主语自己的出生年。
+SUBJECT_SELF = r"(?:我|俺|自己)"
+SUBJECT_OTHER = r"(?:我|俺)?(?:家)?(?P<who>儿子|大儿子|小儿子|二儿子|三儿子|闺女|女儿|大女儿|小女儿|老婆|老伴|爱人|媳妇|丈夫|老公|老头|孙子|孙女|外孙|外孙女|父亲|母亲|爹|娘|爸|妈)"
+
+# 我 N 岁那年（主语=讲述人）
+RE_AGE_YEAR = re.compile(
+    rf"{SUBJECT_SELF}\s*(\d{{1,2}}|[一二三四五六七八九十]{{1,3}})\s*岁(?:那|的)?(?:一)?年"
+)
+# 〔我〕儿子 N 岁那年（主语=他人，须用他人自己的出生年）
+RE_OTHER_AGE_YEAR = re.compile(
+    rf"{SUBJECT_OTHER}\s*(\d{{1,2}}|[一二三四五六七八九十]{{1,3}})\s*岁(?:那|的)?(?:一)?年"
+)
+# 光秃秃的 "8岁那年"（无主语）→ 不猜，走待定
+RE_NAKED_AGE_YEAR = re.compile(r"(?<![我俺儿子女儿岁])\s*(\d{1,2}|[一二三四五六七八九十]{1,3})\s*岁(?:那|的)?(?:一)?年")
+
 RE_MARRIAGE_N = re.compile(r"(?:嫁过来|结婚|过门)(?:的)?第\s*(\d{1,2}|[一二三四五六七八九十]{1,3})\s*年")
 RE_MOVE_N = re.compile(r"(?:搬|迁)(?:到|来)(?:这|那)?(?:儿|里)?(?:的)?第\s*(\d{1,2})\s*年")
-RE_CHILD_YEAR = re.compile(r"(?:生|有)(?:了)?(?:大|二|三|老)(?:儿子|闺女|娃|女儿|小子)那年")
+
+# 他人出生：两种语序都要认
+#   ① 1981年我儿子出生了 / 1981年儿子出生
+#   ② 1981年生了儿子 / 1981年有了女儿
+RE_OTHER_BIRTH_YEAR = re.compile(
+    r"(1[89]\d{2}|20[0-2]\d)\s*年\s*(?:[，,]?\s*)?"
+    r"(?:(?:我|俺)?(?:家)?的?(?P<who1>大儿子|小儿子|二儿子|三儿子|儿子|大女儿|小女儿|闺女|女儿)\s*(?:就|也)?出生"
+    r"|(?:生|有)了?(?:我|俺)?(?:家)?的?(?P<who2>大儿子|小儿子|二儿子|三儿子|儿子|大女儿|小女儿|闺女|女儿))"
+)
+RE_OTHER_BEFORE_BORN = re.compile(
+    rf"{SUBJECT_OTHER}\s*(?:还)?(?:没|未)(?:有)?出生"
+)
+RE_OTHER_AFTER_BORN = re.compile(
+    rf"{SUBJECT_OTHER}\s*(?:出生)(?:之后|以后|后)"
+)
+# 老式写法：生老大那年 / 大儿子出生那年 / 生了老大那年
+RE_CHILD_YEAR = re.compile(
+    r"(?:(?:生|有)(?:了)?(?:大|二|三|老)(?:儿子|闺女|娃|女儿|小子|大|二|三)?那(?:一)?年"
+    r"|(?:大|二|三|老)(?:儿子|闺女|娃|女儿|小子)出生(?:的)?那(?:一)?年)"
+)
 
 # 锚点类型
 ANCHOR_AGE = "age"                  # 当时几岁（须配出生年）
@@ -272,6 +307,33 @@ def extract_time(text: str, anchors: Optional[dict] = None) -> TimeResult:
         )
 
     # ---- 优先级 3：人生锚点（须有 anchors 才能算，否则待定）----
+    # ★ 2026-11-17：先判「他人 N 岁」，再判「我 N 岁」，顺序不能反。
+    #    若先判「我N岁」，虽然 RE_AGE_YEAR 已要求显式「我」，但「我儿子8岁」里的「我」
+    #    仍可能被 RE_AGE_YEAR 从「我 儿子8岁」中间切走（「我」后允许 \s*，中间夹着「儿子」不会匹配，
+    #    但保险起见仍先跑他人分支）。他人分支的优先级更高，因为它更具体。
+    m_other = RE_OTHER_AGE_YEAR.search(t)
+    if m_other:
+        who = m_other.group('who')
+        age = _cn2int(m_other.group(2))
+        # 只能用「这个人物自己的出生年」；不许借讲述人的 birth_year
+        person_birth = (anchors.get('person_birth_years') or {}).get(who)
+        if age is not None and person_birth:
+            y = int(person_birth) + age
+            return TimeResult(
+                raw=m_other.group(0), label=f"{y}年（老人说的「{who}{age}岁那年」）",
+                precision=Precision.YEAR.value, sort_key=y, start_year=y, end_year=y,
+                method=Method.LIFE_ANCHOR.value,
+                evidence=m_other.group(0), confidence=0.88,
+                note=f"由「{who}」出生年 {person_birth} + {age} 岁推算",
+            )
+        return TimeResult(
+            raw=m_other.group(0), label=f"老人说的「{who}{age}岁那年」",
+            precision=Precision.FUZZY.value, sort_key=None,
+            method=Method.LIFE_ANCHOR.value,
+            evidence=m_other.group(0), confidence=0.35,
+            note=f"⚠️ 缺「{who}」的出生年 → 时间待定（禁止借用讲述人出生年换算）",
+        )
+
     m = RE_AGE_YEAR.search(t)
     if m:
         age = _cn2int(m.group(1))
@@ -314,8 +376,89 @@ def extract_time(text: str, anchors: Optional[dict] = None) -> TimeResult:
             note="⚠️ 缺结婚年锚点，无法换算 → 时间待定（不猜）",
         )
 
+    # ★ 2026-11-17 新增：他人出生年（"1981年我儿子出生了"）
+    m_ob = RE_OTHER_BIRTH_YEAR.search(t)
+    if m_ob:
+        y = int(m_ob.group(1))
+        who = m_ob.group('who')
+        return TimeResult(
+            raw=m_ob.group(0), label=f"{y}年（老人说的「{who}出生」）",
+            precision=Precision.YEAR.value, sort_key=y, start_year=y, end_year=y,
+            method=Method.EXPLICIT_YEAR.value,
+            evidence=m_ob.group(0), confidence=0.95,
+            note=f"已采到「{who}」出生年 = {y}",
+        )
+
+    # ★ 2026-11-17 新增：相对定位（无年份也能排前后，但绝不标年份）
+    m_bb = RE_OTHER_BEFORE_BORN.search(t)
+    if m_bb:
+        who = m_bb.group('who')
+        person_birth = (anchors.get('person_birth_years') or {}).get(who)
+        if person_birth:
+            y = int(person_birth)
+            return TimeResult(
+                raw=m_bb.group(0), label=f"「{who}」出生（{y}年）之前",
+                precision=Precision.FUZZY.value, sort_key=y - 1,
+                start_year=None, end_year=y - 1,
+                method=Method.LIFE_ANCHOR.value,
+                evidence=m_bb.group(0), confidence=0.75,
+                note=f"相对定位：早于「{who}」出生年 {y}；具体年份待老人确认",
+            )
+        return TimeResult(
+            raw=m_bb.group(0), label=f"「{who}」出生之前",
+            precision=Precision.FUZZY.value, sort_key=None,
+            method=Method.LIFE_ANCHOR.value,
+            evidence=m_bb.group(0), confidence=0.3,
+            note=f"⚠️ 缺「{who}」出生年 → 只知道早于该事件，不标年份",
+        )
+
+    m_ab = RE_OTHER_AFTER_BORN.search(t)
+    if m_ab:
+        who = m_ab.group('who')
+        person_birth = (anchors.get('person_birth_years') or {}).get(who)
+        if person_birth:
+            y = int(person_birth)
+            return TimeResult(
+                raw=m_ab.group(0), label=f"「{who}」出生（{y}年）之后",
+                precision=Precision.FUZZY.value, sort_key=y + 1,
+                start_year=y + 1, end_year=None,
+                method=Method.LIFE_ANCHOR.value,
+                evidence=m_ab.group(0), confidence=0.75,
+                note=f"相对定位：晚于「{who}」出生年 {y}；具体年份待老人确认",
+            )
+        return TimeResult(
+            raw=m_ab.group(0), label=f"「{who}」出生之后",
+            precision=Precision.FUZZY.value, sort_key=None,
+            method=Method.LIFE_ANCHOR.value,
+            evidence=m_ab.group(0), confidence=0.3,
+            note=f"⚠️ 缺「{who}」出生年 → 只知道晚于该事件，不标年份",
+        )
+
     if RE_CHILD_YEAR.search(t):
         cb = anchors.get('child_birth_year')
+        if not cb:
+            # ★ 2026-11-17 新增：反推 —— "大儿子出生那年，我三十岁"
+            #    两个事件同时出现时，可用讲述人自己的年龄反推出老大出生年。
+            #    铁律：只用讲述人自己的出生年 + 他自己说的岁数，一步算出，不连环推。
+            _m_self_age = re.search(
+                r"(?:我|俺|自己)\s*(\d{1,2}|[一二三四五六七八九十]{1,3})\s*岁",
+                t,
+            )
+            _birth = anchors.get('birth_year')
+            if _m_self_age and _birth:
+                _age = _cn2int(_m_self_age.group(1))
+                if _age is not None:
+                    cb = int(_birth) + _age
+                    raw = RE_CHILD_YEAR.search(t).group(0)
+                    return TimeResult(
+                        raw=raw, label=f"{cb}年（老大出生那年）",
+                        precision=Precision.YEAR.value, sort_key=cb,
+                        start_year=cb, end_year=cb,
+                        method=Method.LIFE_ANCHOR.value,
+                        evidence=raw, confidence=0.8,
+                        note=(f"反推：讲述人出生年 {_birth} + 他说的 {_age} 岁 "
+                              f"= {cb}年（老大出生年）"),
+                    )
         if cb:
             return TimeResult(
                 raw=RE_CHILD_YEAR.search(t).group(0),
@@ -363,11 +506,17 @@ def extract_time(text: str, anchors: Optional[dict] = None) -> TimeResult:
 
 RE_BIRTH = re.compile(r"(?:我|俺)?\s*(1[89]\d{2}|20[0-2]\d)\s*年\s*(?:出生|生的)")
 RE_MARRIAGE_Y = re.compile(r"(?:我|俺)?\s*(1[89]\d{2}|20[0-2]\d)\s*年\s*(?:结的婚|嫁|结婚)")
-RE_CHILD_BIRTH_Y = re.compile(r"(1[89]\d{2}|20[0-2]\d)\s*年\s*(?:生|有)了?(?:大|二|三|老)(?:儿子|闺女|娃|女儿|小子)")
+RE_CHILD_BIRTH_Y = re.compile(
+    r"(1[89]\d{2}|20[0-2]\d)\s*年\s*(?:生|有)了?(?:大|二|三|老)(?:儿子|闺女|娃|女儿|小子|大|二|三)"
+)
 
 
 def extract_anchors(text: str) -> dict:
-    """从文本里采集人生锚点，返回 {'birth_year':.., 'marriage_year':..}"""
+    """
+    从文本里采集人生锚点，返回 {'birth_year':.., 'marriage_year':..}
+    ★ 2026-11-17 新增 'person_birth_years': {'儿子': 1981, ...}
+       —— 按人物分别记出生年。铁律：谁的岁数只能配谁自己的出生年，绝不混用。
+    """
     out = {}
     m = RE_BIRTH.search(text)
     if m:
@@ -378,6 +527,18 @@ def extract_anchors(text: str) -> dict:
     m = RE_CHILD_BIRTH_Y.search(text)
     if m:
         out['child_birth_year'] = int(m.group(1))
+
+    # 按人物记出生年：允许一句里出现多个（"1981年我儿子出生，1984年女儿出生"）
+    persons = {}
+    for pm in RE_OTHER_BIRTH_YEAR.finditer(text):
+        who = pm.group('who1') or pm.group('who2')
+        if who not in persons:          # 同一人物先到先得，不反复覆盖
+            persons[who] = int(pm.group(1))
+        # 兼容老字段：儿子/闺女/女儿 的出生年同时可作 child_birth_year 兜底
+        if 'child_birth_year' not in out:
+            out['child_birth_year'] = int(pm.group(1))
+    if persons:
+        out['person_birth_years'] = persons
     return out
 
 
