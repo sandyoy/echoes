@@ -1,0 +1,14 @@
+# 小桥线 —— 孩子真实档案禁止进公开仓库（sandy 2026-11-17 定）
+
+# 学生真实档案 / 私人信息（年级、弱点、家庭称呼）
+xiaoqiao/01_档案/
+xiaoqiao/*学生档案*
+xiaoqiao/档案/
+xiaoqiao/个人*
+
+# 对话记录 / 诊断 / 用量
+xiaoqiao/logs/
+xiaoqiao_data/
+
+# 脱敏版档案若要入库，只允许放这个文件名
+!xiaoqiao/01_档案_脱敏版_*.md
