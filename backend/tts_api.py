@@ -75,6 +75,10 @@ TENCENT_VOICE_BY_SCENE = {
     "recap": 101002,
     "tip": 101002,
     "male": 100510000,
+    # ★ 2026-11-18 sandy 定：小桥专属小老师 → 大模型音色 301034（24k/96kbps）。
+    #   普通版 101002/101003 是 16k/32kbps，压缩得太狠，听感"像机器人"的主因是音质不是音色。
+    #   语速保持原速（腾讯云 Speed 只能整数档，没有 0.5 档；sandy 拍定"就按原声"）。
+    "xiaoqiao": 301034,
 }
 TENCENT_DEFAULT_VOICE = 101002
 
@@ -350,13 +354,17 @@ def _synth_tencent(text: str, out_path: str, *, scene: str,
     """腾讯云 TTS：TextToVoice，返回 base64 mp3 → 落盘。"""
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import tencent_asr as T
+    vt = _tencent_voice_for_scene(scene, voice_type)
+    # ★ 大模型音色（301xxx）只支持 24k 采样；普通版音色（101xxx）只支持 16k。
+    #   传错会报 InvalidParameterValue.SampleRate。
+    sr = 24000 if 300000 <= int(vt) < 400000 else 16000
     params = {
         "Text": text,
         "SessionId": "echoes-tts",
         "ModelType": 1,
-        "VoiceType": _tencent_voice_for_scene(scene, voice_type),
+        "VoiceType": vt,
         "PrimaryLanguage": 1,
-        "SampleRate": 16000,
+        "SampleRate": sr,
         "Codec": "mp3",
         "Speed": TENCENT_SPEED,
         "Volume": 0,
