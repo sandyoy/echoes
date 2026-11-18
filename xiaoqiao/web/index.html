@@ -138,7 +138,7 @@ textarea:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 
   <div class="avatar" id="avatar">👩‍🏫</div>
   <h2>小桥，你好呀</h2>
   <p class="line">我是圆圆老师，从今天起我陪你一起学习</p>
-  <p class="line" style="font-size:15px;opacity:.9">今天先做23道小题，我看看你哪儿会、哪儿不会</p>
+  <p class="line" style="font-size:15px;opacity:.9">今天先做一组小题，我看看你哪儿会、哪儿不会</p>
   <button class="go" id="goBtn" onclick="startStudy()">开始学习</button>
   <div class="tap" id="tapHint">点上面的按钮，老师会跟你说话</div>
   <button class="skip" onclick="skipIntro()">跳过</button>
@@ -148,7 +148,7 @@ textarea:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 
 
 <div class="header">
   <h1>小桥的学习</h1>
-  <p>第 1 天 · 摸底 · 大约 20 分钟 · 共 23 题</p>
+  <p id="quizSub">第 1 天 · 约 20 分钟</p>
   <button class="ttsbtn" onclick="speak('02_start')" title="老师再说一遍">🔊</button>
 </div>
 
@@ -165,128 +165,7 @@ textarea:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 
     </div>
   </div>
 
-  <!-- 第一部分 拼音 -->
-  <div class="card">
-    <h2>第一部分 认一认 <span class="tag">拼音</span></h2>
-    <div class="q">
-      <div class="stem">1. 写下"妈"的拼音</div>
-      <input type="text" id="a1" placeholder="不会就空着">
-    </div>
-    <div class="q">
-      <div class="stem">2. 写下"花"的拼音</div>
-      <input type="text" id="a2" placeholder="不会就空着">
-    </div>
-    <div class="q">
-      <div class="stem">3. 写下"水"的拼音</div>
-      <input type="text" id="a3" placeholder="不会就空着">
-    </div>
-    <div class="q">
-      <div class="stem">4. b 和 d，下面哪个是 b？</div>
-      <input type="text" id="a4" placeholder="直接写字母">
-    </div>
-    <div class="q">
-      <div class="stem">5. p 和 q，下面哪个是 p？</div>
-      <input type="text" id="a5" placeholder="直接写字母">
-    </div>
-    <p class="hint">写不出来的直接空着，空着老师才知道这儿要教你。</p>
-  </div>
-
-  <!-- 第二部分 声调 -->
-  <div class="card">
-    <h2>第二部分 声调 <span class="tag">拼音</span></h2>
-    <div class="q">
-      <div class="stem">6. 给"妈"标上声调（第一声）</div>
-      <input type="text" id="a6" placeholder="写出带声调的拼音">
-    </div>
-    <div class="q">
-      <div class="stem">7. 给"马"标上声调（第三声）</div>
-      <input type="text" id="a7" placeholder="写出带声调的拼音">
-    </div>
-    <div class="q">
-      <div class="stem">8. 给"骂"标上声调（第四声）</div>
-      <input type="text" id="a8" placeholder="写出带声调的拼音">
-    </div>
-  </div>
-
-  <!-- 第三部分 拼读 -->
-  <div class="card">
-    <h2>第三部分 拼一拼 <span class="tag">拼音</span></h2>
-    <div class="q">
-      <div class="stem">9. b—à 拼起来是什么？</div>
-      <input type="text" id="a9" placeholder="写出音节">
-    </div>
-    <div class="q">
-      <div class="stem">10. x—i—ǎo 拼起来是什么？</div>
-      <input type="text" id="a10" placeholder="写出音节">
-    </div>
-  </div>
-
-  <!-- 第四部分 口诀 -->
-  <div class="card">
-    <h2>第四部分 乘法口诀 <span class="tag">数学</span></h2>
-    <div class="q">
-      <div class="stem">11. 7 × 8 = ?</div>
-      <input type="text" id="a11" placeholder="填数字">
-    </div>
-    <div class="q">
-      <div class="stem">12. 6 × 9 = ?</div>
-      <input type="text" id="a12" placeholder="填数字">
-    </div>
-    <div class="q">
-      <div class="stem">13. 8 × 8 = ?</div>
-      <input type="text" id="a13" placeholder="填数字">
-    </div>
-    <div class="q">
-      <div class="stem">14. 9 × 7 = ?</div>
-      <input type="text" id="a14" placeholder="填数字">
-    </div>
-    <div class="q">
-      <div class="stem">15. 56 ÷ 7 = ?</div>
-      <input type="text" id="a15" placeholder="填数字">
-    </div>
-    <div class="q">
-      <div class="stem">16. 54 ÷ 6 = ?</div>
-      <input type="text" id="a16" placeholder="填数字">
-    </div>
-  </div>
-
-  <!-- 第五部分 英语 -->
-  <div class="card">
-    <h2>第五部分 英语语块 <span class="tag">英语</span></h2>
-    <div class="q">
-      <div class="stem">17. "吃早饭"的英语怎么说？</div>
-      <input type="text" id="a17" placeholder="写短语">
-    </div>
-    <div class="q">
-      <div class="stem">18. "去上学"的英语怎么说？</div>
-      <input type="text" id="a18" placeholder="写短语">
-    </div>
-    <div class="q">
-      <div class="stem">19. "踢足球"的英语怎么说？</div>
-      <input type="text" id="a19" placeholder="写短语">
-    </div>
-    <div class="q">
-      <div class="stem">20. 补全句子：I usually ______ at 7:00.（我通常七点起床）</div>
-      <input type="text" id="a20" placeholder="填空">
-    </div>
-  </div>
-
-  <!-- 第六部分 说说话 -->
-  <div class="card">
-    <h2>第六部分 说说话 <span class="tag">开放</span></h2>
-    <div class="q">
-      <div class="stem">21. 你最喜欢哪门课？为什么？</div>
-      <textarea id="a21" placeholder="想到什么写什么，写不出来就空着"></textarea>
-    </div>
-    <div class="q">
-      <div class="stem">22. 数学里，你觉得最难的是什么？</div>
-      <textarea id="a22" placeholder="说说看"></textarea>
-    </div>
-    <div class="q">
-      <div class="stem">23. 这些里面，你最想先弄明白哪一个？</div>
-      <textarea id="a23" placeholder="说说看"></textarea>
-    </div>
-  </div>
+  <div id="quizCards"></div>
 
   <div id="summaryBox" class="summary hidden"></div>
 
@@ -323,7 +202,120 @@ textarea:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 
 </div>
 
 <script>
-const QIDS = Array.from({length:23},(_,i)=>'a'+(i+1));
+
+/* ===== 出题引擎（2026-11-19 接入）：题目不再写死在页面里 ===== */
+/* 数据优先级：?day=N 或 按开始日期算天数 -> 先试服务器 /api/quiz（带上昨天错题）,
+   拿不到就用内联的 QUZ（已按当天规则生成好，离线也能用）。 */
+const QUZ = {"v": "1.0", "day": 3, "title": "第 3 天", "learner": "小桥", "subtitle": "第 3 天 · 约 20 分钟 · 共 14 题", "note": "本套题由出题引擎按第 3 天规则生成（种子固定，同一天永远同一套）", "parts": [{"name": "开始", "tag": "", "say": "今天还是四块：拼音、乘法口诀、英语，最后跟我说三句话。做不出来的就空着，空着不是错，空着是告诉我「这里要教你」。", "qs": []}, {"name": "语文", "tag": "语文", "say": "", "qs": [{"id": "y1", "stem": "给「骂」标上声调（写拼音）", "ans": ["mà4", "mà"], "ref": "骂", "ph": "写带声调的拼音"}, {"id": "y2", "stem": "给「妈」标上声调（写拼音）", "ans": ["mā1", "mā"], "ref": "妈", "ph": "写带声调的拼音"}, {"id": "y3", "stem": "给「麻」标上声调（写拼音）", "ans": ["má2", "má"], "ref": "麻", "ph": "写带声调的拼音"}]}, {"name": "数学", "tag": "数学", "say": "", "qs": [{"id": "m1", "stem": "5 × 3 = ？", "ans": ["15"], "ref": "5×3", "ph": "填数字"}, {"id": "m2", "stem": "5 × 7 = ？", "ans": ["35"], "ref": "5×7", "ph": "填数字"}, {"id": "m3", "stem": "5 × 9 = ？", "ans": ["45"], "ref": "5×9", "ph": "填数字"}, {"id": "m4", "stem": "5 × 2 = ？", "ans": ["10"], "ref": "5×2", "ph": "填数字"}]}, {"name": "英语", "tag": "英语", "say": "", "qs": [{"id": "e1", "stem": "「睡觉」用英语怎么说？", "ans": ["go to bed"], "ref": "睡觉", "ph": "写英文"}, {"id": "s1", "stem": "用「go to bed」说一句话（不会就空着）", "ans": ["I go to bed at nine."], "ref": "go to bed", "ph": "写句子", "ta": true}, {"id": "e2", "stem": "「踢足球」用英语怎么说？", "ans": ["play football"], "ref": "踢足球", "ph": "写英文"}, {"id": "s2", "stem": "用「play football」说一句话（不会就空着）", "ans": ["I play football after school."], "ref": "play football", "ph": "写句子", "ta": true}, {"id": "e3", "stem": "「吃早饭」用英语怎么说？", "ans": ["have breakfast"], "ref": "吃早饭", "ph": "写英文"}, {"id": "s3", "stem": "用「have breakfast」说一句话（不会就空着）", "ans": ["I have breakfast at seven thirty."], "ref": "have breakfast", "ph": "写句子", "ta": true}]}, {"name": "跟我说三句话", "tag": "聊一聊", "say": "最后随便跟我说说，没有对错。", "qs": [{"id": "o1", "stem": "今天学的这些东西里，你觉得哪一条最难？为什么？", "ans": [], "ref": "说一说", "open": true, "ph": "想到什么写什么，写不出来就空着", "ta": true}]}]};
+let QIDS = [];
+let answers = {};
+const START_DATE = '2026-11-17';
+
+function dayNo(){
+  const u = new URLSearchParams(location.search);
+  if(u.get('day')) return Math.max(1, parseInt(u.get('day'), 10) || 1);
+  const d = new Date(); d.setHours(0,0,0,0);
+  const s = new Date(START_DATE + 'T00:00:00');
+  return Math.max(1, Math.round((d - s) / 86400000) + 1);
+}
+let QUIZ = QUZ;
+if(QUZ.day !== dayNo()) QUIZ.day = dayNo();
+
+function renderQuiz(q){
+  const box = document.getElementById('quizCards');
+  if(!box) return;
+  box.innerHTML = '';
+  let k = 0;
+  (q.parts || []).forEach(part=>{
+    if(part.say){
+      const c = document.createElement('div'); c.className = 'card';
+      c.innerHTML = '<div class="say"><p>' + esc(part.say) + '</p></div>';
+      box.appendChild(c);
+    }
+    if(!part.qs || !part.qs.length) return;
+    const c = document.createElement('div'); c.className = 'card';
+    const h = document.createElement('h2');
+    h.innerHTML = esc(part.name) + (part.tag ? ' <span class="tag">' + esc(part.tag) + '</span>' : '');
+    c.appendChild(h);
+    part.qs.forEach(qq=>{
+      k++;
+      const id = (qq.id || ('q' + k)) + '_' + k;
+      QIDS.push(id);
+      if(qq.ans && qq.ans.length) answers[id] = qq.ans;
+      const d = document.createElement('div'); d.className = 'q';
+      const stem = document.createElement('div'); stem.className = 'stem';
+      stem.textContent = k + '. ' + (qq.stem || '');
+      d.appendChild(stem);
+      let el;
+      if(qq.ta){ el = document.createElement('textarea'); }
+      else { el = document.createElement('input'); el.type = 'text'; }
+      el.id = id;
+      el.placeholder = qq.ph || '不会就空着';
+      el.dataset.ref = qq.ref || qq.stem || '';
+      if(qq.open) el.dataset.open = '1';
+      d.appendChild(el);
+      c.appendChild(d);
+    });
+    box.appendChild(c);
+  });
+  document.querySelectorAll('#quizCards input, #quizCards textarea').forEach(el=>{
+    const saved = localStorage.getItem('xq_'+el.id);
+    if(saved) el.value = saved;
+    el.addEventListener('input', ()=>{
+      localStorage.setItem('xq_'+el.id, el.value);
+      updateProgress();
+    });
+  });
+  const sub = document.getElementById('quizSub');
+  if(sub && q.subtitle) sub.textContent = q.subtitle;
+}
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+/* 拉服务器版题目（带昨天错题做变式复习）；失败就静默用内联版 */
+function loadQuiz(){
+  const day = QUIZ.day;
+  document.querySelectorAll('#quizCards').forEach(b=>{ b.innerHTML = '<div class="card">正在准备今天的题…</div>'; });
+  let wrong = [];
+  try{ wrong = JSON.parse(localStorage.getItem('xq_wrong_'+day) || '[]'); }catch(e){}
+  const p = fetch('api/quiz?day=' + day + (wrong.length ? '&review=' + encodeURIComponent(wrong.join(',')) : ''))
+    .then(r=> r.ok ? r.json() : null).catch(()=>null);
+  p.then(q=>{
+    document.getElementById('quizCards').innerHTML = '';
+    QIDS = []; answers = {};
+    if(q && q.parts) { QUIZ = q; }
+    renderQuiz(QUIZ);
+    updateProgress();
+  });
+}
+loadQuiz();
+
+/* 判分：有标准答案的当场判，开放题不算分，交老师看 */
+function gradeLocal(){
+  const rows = [];
+  let right = 0, total = 0;
+  const wrongRefs = [];
+  QIDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    const val = (el.value || '').trim();
+    const ref = el.dataset.ref || '';
+    const ans = answers[id];
+    const open = el.dataset.open === '1' || !ans;
+    rows.push({ref, ans: val, open});
+    if(open) return;
+    total++;
+    const norm = s => String(s).replace(/\s+/g, '').replace(/[，。！？,.!?]/g, '').toLowerCase();
+    const ok = ans.some(a => norm(a) === norm(val));
+    if(ok) right++;
+    else wrongRefs.push(ref);
+  });
+  try{ localStorage.setItem('xq_wrong_' + QUIZ.day, JSON.stringify(wrongRefs)); }catch(e){}
+  return {right, total, rows, wrongRefs};
+}
+
 let audioCache = {};
 
 /* ===== 老师的聲音开关：开=念，关=只看字 =====
@@ -882,16 +874,6 @@ function closeChat(){
   document.body.style.overflow = '';
 }
 
-/* ===== 本地暂存，防止误关 ===== */
-QIDS.forEach(id=>{
-  const el = document.getElementById(id);
-  const saved = localStorage.getItem('xq_'+id);
-  if(saved) el.value = saved;
-  el.addEventListener('input', ()=>{
-    localStorage.setItem('xq_'+id, el.value);
-    updateProgress();
-  });
-});
 
 function filled(){
   return QIDS.filter(id=>document.getElementById(id).value.trim()!=='').length;
@@ -914,26 +896,23 @@ function submitAll(){
     const go = confirm('还有 ' + (QIDS.length-n) + ' 题空着。\n\n点「取消」回去接着做，点「确定」就先交给老师。');
     if(!go){ backToWork(); return; }
   }
+
+  const g = gradeLocal();
   speak('05_end');
 
   // 生成可复制文本
-  let txt = '【小桥第1天作业】\n';
-  const names = {
-    a1:'1. 妈的拼音', a2:'2. 花的拼音', a3:'3. 水的拼音',
-    a4:'4. b和d哪个是b', a5:'5. p和q哪个是p',
-    a6:'6. 妈标声调', a7:'7. 马标声调', a8:'8. 骂标声调',
-    a9:'9. b—à', a10:'10. x—i—ǎo',
-    a11:'11. 7×8', a12:'12. 6×9', a13:'13. 8×8', a14:'14. 9×7',
-    a15:'15. 56÷7', a16:'16. 54÷6',
-    a17:'17. have breakfast', a18:'18. go to school', a19:'19. play football', a20:'20. I usually __ at 7:00',
-    a21:'21. 最喜欢的课', a22:'22. 数学最难', a23:'23. 最想弄明白'
-  };
+  let txt = '【小桥第' + QUIZ.day + '天作业】\n';
   QIDS.forEach(id=>{
-    txt += names[id] + '：' + (data[id] || '（空着）') + '\n';
+    const el0 = document.getElementById(id);
+    const ref = (el0 && el0.dataset.ref) || '';
+    txt += ref + '：' + (data[id] || '（空着）') + '\n';
   });
 
   const box = document.getElementById('summaryBox');
-  box.innerHTML = '<b>做完了 ' + n + ' / 23 题</b><br>'
+  const gline = g.total ? ('<b>当场判了 ' + g.total + ' 道，对 ' + g.right + ' 道。</b>'
+      + (g.wrongRefs.length ? '我记住这些不熟：' + g.wrongRefs.map(esc).join('、') + '，明天我会再出同类的。' : '全对，很棒。') + '<br>')
+    : '';
+  box.innerHTML = gline + '<b>做完了 ' + n + ' / ' + QIDS.length + ' 题</b><br>'
     + '空着的题目不是错，是告诉老师需要教的地方。<br><br>'
     + '<b>还没做完？随时可以回去接着做，填过的答案都还在。</b>';
 
