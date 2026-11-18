@@ -6,7 +6,27 @@
 <title>小桥的学习</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f7fa;color:#1f2937;font-size:17px;line-height:1.75;padding-bottom:80px}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f7fa;color:#1f2937;font-size:17px;line-height:1.75;padding-bottom:80px;
+  --kb:0px;            /* 软键盘高度，JS 实时写进来 */
+  --fbbar:80px;        /* 底部按钮条高度 */
+}
+/* 键盘弹出时：页面底部让出键盘的位置，就能滚到键盘上面去写 */
+body.kb-up{padding-bottom:calc(var(--kb) + 96px)}
+body.kb-up .footer-bar{transform:translateY(calc(-1 * var(--kb)))}
+body.kb-up .fab{bottom:calc(96px + var(--kb))}
+body.kb-up .sheet{height:calc(72vh - var(--kb));transition:none}
+body.kb-up #summaryBox{bottom:calc(var(--kb) + 8px)}
+
+/* 键盘顶上的快跳条：弹着键盘也能上一题/下一题，不用先收键盘 */
+#jumpBar{position:fixed;left:0;right:0;bottom:var(--kb);z-index:130;display:none;align-items:center;gap:8px;
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.98);
+  box-shadow:0 -3px 16px rgba(0,0,0,.13);border-top:1px solid #f0f0f0}
+#jumpBar.show{display:flex}
+#jumpBar .jp{border:1.5px solid #ffd9a0;background:#fff8ec;color:#c25a00;border-radius:18px;
+  padding:8px 13px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap}
+#jumpBar .jp.main{background:linear-gradient(135deg,#ffb340,#ff8a00);border-color:transparent;color:#fff;flex:1}
+#jumpBar .jp.done{background:#f3f4f6;border-color:#e5e7eb;color:#6b7280;font-weight:500}
+#jumpBar .pos{font-size:13px;color:#9ca3af;white-space:nowrap}
 .header{background:linear-gradient(135deg,#ffb340,#ff8a00);color:#fff;padding:22px 20px 18px;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(255,138,0,.25)}
 .header h1{font-size:21px;font-weight:700;letter-spacing:.5px}
 .header p{font-size:13px;opacity:.92;margin-top:4px}
@@ -23,10 +43,13 @@ body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;backgr
 .q{margin-bottom:18px}
 .q .stem{font-weight:600;margin-bottom:9px;color:#1f2937}
 .blank{display:inline-block;min-width:76px;border-bottom:2px solid #ffb340;height:24px;margin:0 4px;vertical-align:bottom}
-input[type=text]{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:11px 13px;font-size:16px;font-family:inherit;background:#fafbfc;transition:.2s}
+input[type=text]{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:11px 13px;font-size:16px;font-family:inherit;background:#fafbfc;transition:border-color .2s,background .2s,box-shadow .2s}
 input[type=text]:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 0 3px rgba(255,179,64,.15)}
-textarea{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:11px 13px;font-size:16px;font-family:inherit;background:#fafbfc;min-height:76px;resize:vertical}
+textarea{width:100%;border:1.5px solid #e5e7eb;border-radius:9px;padding:11px 13px;font-size:16px;font-family:inherit;background:#fafbfc;min-height:76px;resize:none;overflow:hidden;transition:border-color .2s,background .2s,box-shadow .2s}
 textarea:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 0 3px rgba(255,179,64,.15)}
+/* 正在写的这道题：整道题亮起来，一眼就知道现在写的是哪一题 */
+.q.editing .stem{color:#c25a00}
+.q.editing input,.q.editing textarea{border-color:#ff8a00;background:#fffdf8;box-shadow:0 0 0 4px rgba(255,138,0,.14)}
 .hint{font-size:13px;color:#9ca3af;margin-top:7px}
 .row{display:flex;align-items:center;gap:10px;margin-bottom:11px}
 .row .idx{color:#ff8a00;font-weight:700;min-width:24px}
@@ -91,6 +114,8 @@ textarea:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 
 .sheet-head .who2{font-size:16px;font-weight:700;flex:1}
 .sheet-head .st{font-size:12px;opacity:.9}
 .sheet-head .x{background:rgba(255,255,255,.22);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:17px;line-height:1;cursor:pointer}
+.spk{background:rgba(255,255,255,.22);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:15px;line-height:1;cursor:pointer;margin-left:auto}
+.spk.off{background:rgba(0,0,0,.22)}
 .sheet-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
 .sheet-body .bubble{max-width:82%;margin:0}
 .sheet-body .bubble.reply{margin-left:0}
@@ -282,6 +307,7 @@ textarea:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 
       <div class="who2">圆圆老师</div>
       <div class="st" id="stText">随时问我，不会也能问</div>
     </div>
+    <button class="spk" id="spkBtn" onclick="toggleVoice()" title="关掉老师的聲音，只看文字">🔊</button>
     <button class="x" onclick="closeChat()">✕</button>
   </div>
   <div class="sheet-body" id="chatlog"></div>
@@ -299,6 +325,33 @@ textarea:focus{outline:none;border-color:#ffb340;background:#fff;box-shadow:0 0 
 <script>
 const QIDS = Array.from({length:23},(_,i)=>'a'+(i+1));
 let audioCache = {};
+
+/* ===== 老师的聲音开关：开=念，关=只看字 =====
+   状态记在 localStorage，下次打开还是上次的样子，不用每天重设。 */
+let voiceOn = true;
+try{ voiceOn = (localStorage.getItem('xq_voice') !== '0'); }catch(e){}
+
+function paintSpk(){
+  const b = document.getElementById('spkBtn');
+  if(!b) return;
+  b.textContent = voiceOn ? '🔊' : '🔇';
+  b.classList.toggle('off', !voiceOn);
+  b.title = voiceOn ? '点一下关掉声音，只看文字' : '点一下打开声音，让老师念出来';
+}
+
+function toggleVoice(){
+  voiceOn = !voiceOn;
+  try{ localStorage.setItem('xq_voice', voiceOn ? '1' : '0'); }catch(e){}
+  paintSpk();
+  if(!voiceOn){
+    stopSpeak();          // 关的瞬间就把正在说的话掐断
+  } else {
+    // 打开时给个确认音，让孩子知道开了
+    speakText('好，我说话了。');
+  }
+}
+
+window.addEventListener('load', paintSpk);
 
 /* ===== 开场：不自动播（浏览器会拦），点按钮播完整一段 ===== */
 window.addEventListener('load', ()=>{
@@ -328,24 +381,394 @@ function skipIntro(){
 
 /* 播一段（播完才允许下一段） */
 let currentAudio = null;
+
+/* 所有发声都从这里走：先掐掉上一段，再把新的登记成 currentAudio，
+   这样任何时候按喇叭都能立刻停住正在说的那句。 */
 function playOnce(name){
   try{
-    if(currentAudio){ currentAudio.pause(); currentAudio.currentTime = 0; }
+    stopSpeak();
     const a = new Audio('audio/'+name+'.m4a');
     currentAudio = a;
     const av = document.getElementById('avatar');
     if(av) av.classList.add('talk');
-    a.addEventListener('ended', ()=>{ if(av) av.classList.remove('talk'); });
-    a.play().catch(()=>{ if(av) av.classList.remove('talk'); });
+    a.addEventListener('ended', ()=>{ if(currentAudio===a){currentAudio=null;} if(av) av.classList.remove('talk'); });
+    a.addEventListener('error', ()=>{ if(currentAudio===a){currentAudio=null;} if(av) av.classList.remove('talk'); });
+    a.play().catch(()=>{ if(currentAudio===a){currentAudio=null;} if(av) av.classList.remove('talk'); });
     return a;
   }catch(e){ return null; }
 }
 function speak(name){ return playOnce(name); }
+
 function stopSpeak(){
-  if(currentAudio){ try{currentAudio.pause(); currentAudio.currentTime=0;}catch(e){} }
+  if(currentAudio){
+    try{ currentAudio.pause(); currentAudio.currentTime = 0; }catch(e){}
+    try{ if(currentAudio.__stopHook) currentAudio.__stopHook(); }catch(e){}
+    currentAudio = null;
+  }
+  // 浏览器朗读也要一起停
+  if(window.speechSynthesis){ try{ speechSynthesis.cancel(); }catch(e){} }
   const av = document.getElementById('avatar');
   if(av) av.classList.remove('talk');
 }
+
+/* ===== 朗读老师说的话（浏览器自带，能被喇叭打断） ===== */
+/* 老师说话：一律走服务器 TTS，不用浏览器自带的朗读
+   ——手机/微信内置浏览器常没有中文语音，或禁自动播放，会静悄悄不出声。
+   ★ 2026-11-18 改：按句切开、逐句边做边播。
+     实测：整段 78 字要 7.7 秒才出声，孩子早走神了；
+           切成 5 句后第一句 1.5 秒就能开口，后面边播边做。
+     句与句之间留 240ms，听感从"念稿"变"讲话"。 */
+let _speakSeq = 0;
+const _audioQueue = [];      // 待播地址队列
+let _playing = false;
+
+function _absUrl(u){
+  if(/^https?:|^\//.test(u)) return u;
+  // 后端回的是 audio/tts_xxx.mp3，页面在 /xiaoqiao/ 下 → 补成同目录绝对路径
+  return location.pathname.replace(/[^/]*$/, '') + u;
+}
+
+function _ttsOne(text){
+  return fetch('api/tts', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text: text.slice(0,220)})
+  }).then(r=>r.json()).then(d=>{
+    if(!d || !d.url){ console.warn('[TTS] 无地址', d); return ''; }
+    return _absUrl(d.url);
+  }).catch(e=>{ console.warn('[TTS] 单句失败', e && e.message); return ''; });
+}
+
+/* ★ 2026-11-18：手机/微信的硬规矩——页面在"用户点过屏幕"之前不许出声。
+   喇叭默认是开的，但孩子只是打开网页没点过，老师一说话就被拦 → 只看到字、没声音。
+   解法：第一次点屏幕就"解锁"一个静音音轨并一直保持，之后所有播放都算在授权内。 */
+let _audioUnlocked = false;
+function unlockAudio(){
+  if(_audioUnlocked) return;
+  _audioUnlocked = true;
+  try{
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(AC){
+      if(!window.__ac) window.__ac = new AC();
+      if(window.__ac.state === 'suspended') window.__ac.resume();
+    }
+    // 再用一个 0 长度静音 mp3 走一遍 play()，把 <audio> 通道也解锁
+    const a = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQxAADB8AhSmxhIIEVCSiEd6s8AAAAASUVORK5CYII=');
+    a.volume = 0;
+    a.play().catch(()=>{});
+  }catch(e){ console.warn('[audio] 解锁失败', e && e.message); }
+}
+['touchstart','touchend','click','pointerdown','keydown'].forEach(ev=>{
+  document.addEventListener(ev, unlockAudio, {capture:true, passive:true});
+});
+
+function _drainQueue(seq){
+  if(_playing) return;
+  const next = _audioQueue.shift();
+  if(!next){ return; }
+  if(seq !== _speakSeq){ _audioQueue.length = 0; return; }
+  _playing = true;
+  const av = document.getElementById('avatar');
+  const a = new Audio(next);
+  currentAudio = a;
+  if(av) a.onplay = ()=>av.classList.add('talk');
+  const done = ()=>{
+    if(av) av.classList.remove('talk');
+    _playing = false;
+    if(seq === _speakSeq){
+      // 句间停半拍（240ms）再接下一句
+      setTimeout(()=>_drainQueue(seq), 240);
+    }
+  };
+  a.onended = done;
+  a.onerror = ()=>{ console.warn('[TTS] 加载失败', next); done(); };
+  a.play().catch((e)=>{
+    console.warn('[TTS] 自动播放被拦', e && e.name);
+    _playing = false;
+    // 别静默：让家长一眼看见是"被浏览器拦了"而不是"坏了"
+    try{
+      if(!document.getElementById('_vbar')){
+        const d = document.createElement('div');
+        d.id='_vbar';
+        d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:86px;z-index:9999;background:rgba(0,0,0,.82);color:#fff;font-size:14px;padding:9px 16px;border-radius:20px;';
+        d.textContent='点一下屏幕，老师就能出声了';
+        document.body.appendChild(d);
+        setTimeout(()=>{ d.remove(); }, 5000);
+      }
+    }catch(x){}
+    const kick = ()=>{
+      document.removeEventListener('touchstart', kick);
+      document.removeEventListener('click', kick);
+      if(seq === _speakSeq) a.play().catch(()=>{ _playing=false; });
+    };
+    document.addEventListener('touchstart', kick, {once:true});
+    document.addEventListener('click', kick, {once:true});
+  });
+}
+
+function speakText(text){
+  if(!text) return;
+  if(!voiceOn) return;          // 老师的声音关了：只出文字，不念
+  stopSpeak();
+  const seq = ++_speakSeq;
+  _audioQueue.length = 0;
+  _playing = false;
+
+  const clean = String(text).replace(/[*#`>]/g,'').trim();
+  if(!clean) return;
+
+  // 按句子切开（保留标点），丢掉空段
+  const parts = clean.split(/(?<=[。！？!?；;])/).map(s=>s.trim()).filter(Boolean);
+  if(!parts.length) return;
+
+  // 第一句：拿到就播（大约 1.5 秒）
+  _ttsOne(parts[0]).then(url=>{
+    if(seq !== _speakSeq) return;
+    if(url){ _audioQueue.push(url); _drainQueue(seq); }
+    // 其余几句后台依次做，做完就进队列
+    let i = 1;
+    const nextOne = ()=>{
+      if(seq !== _speakSeq || i >= parts.length) return;
+      _ttsOne(parts[i++]).then(u=>{
+        if(seq !== _speakSeq) return;
+        if(u) _audioQueue.push(u);
+        _drainQueue(seq);
+        nextOne();
+      });
+    };
+    nextOne();
+  });
+}
+
+/* ===== 键盘避让：软键盘弹出时把正在写的那道题顶到可见处 =====
+   问题：一点写字框，手机键盘弹出来盖住半屏，写字框被压在键盘底下看不见；
+        textarea 带 resize 手柄，孩子拨不动；改一个字又得关键盘，很难改。
+   做法：① 一个隐藏的探针输入框贴在键盘下沿，用 visualViewport / window.innerHeight
+          两路读键盘高度（老 WebView 没有 visualViewport 也能算）
+        ② 有键盘时 body 底部留出键盘高度的空档，页面就能滚到键盘上面
+        ③ 正在写的那个框滚到可见区域中间，并且在它下面垫一块空白，让老师头像挡住也不怕
+        ④ 固定贴底的东西（底部按钮条、问老师按钮、聊天抽屉）一起跟着抬起来
+        ⑤ 写字框改成可自动长高、关掉 resize 手柄（手柄在手机上根本拨不动）
+*/
+(function(){
+  var lastKb = 0;
+  var focusedEl = null;
+
+  function vh(){
+    if(window.visualViewport && window.visualViewport.height) return window.visualViewport.height;
+    return window.innerHeight;
+  }
+  /* 键盘高度要分两条路读，缺一条就有一个手机型号算不出来：
+     ① 新内核有 visualViewport：键盘弹出时它自己缩，document.clientHeight 不变
+        → 键盘高 = document.clientHeight - visualViewport.height
+     ② 老内核没 visualViewport：innerHeight 被键盘压小，document.clientHeight 不变
+        → 键盘高 = document.clientHeight - innerHeight
+     ③ 都不灵（部分安卓把 clientHeight 也一起缩）：拿页面最初记录的满屏高来兜底
+     注意：不要减 pageYOffset，页面滚过之后会把结果抵消成 0（实测踩过）。 */
+  var FULL_H = Math.max(
+    document.documentElement.clientHeight || 0,
+    window.innerHeight || 0
+  );
+  function kbHeight(){
+    var docH = document.documentElement.clientHeight || 0;
+    var winH = window.innerHeight || 0;
+    var vis = vh();
+    var byVisual = docH - vis;            // 路 ①
+    var byInner  = docH - winH;           // 路 ②（同样成立）
+    var byStart  = FULL_H - Math.min(winH, vis);  // 路 ③ 兜底
+    var h = Math.max(byVisual, byInner, 0);
+    if(h < 80 && byStart > 80) h = byStart;
+    if(h > 0 && Math.abs(FULL_H - Math.max(docH, winH)) > 80){
+      // 页面高度本身就变了（横竖屏切换 / 地址栏收起），重记满屏高
+      FULL_H = Math.max(docH, winH);
+      h = Math.round(Math.max(fullKbGuess(docH, winH, vis), 0));
+    }
+    return h > 80 ? Math.round(h) : 0;
+  }
+  function fullKbGuess(docH, winH, vis){
+    return Math.max(docH - vis, docH - winH, 0);
+  }
+
+  function isTextField(el){
+    if(!el) return false;
+    var t = el.tagName;
+    if(t === 'TEXTAREA') return true;
+    if(t === 'INPUT'){
+      var ty = (el.getAttribute('type') || 'text').toLowerCase();
+      return ty === 'text' || ty === 'search' || ty === '' ;
+    }
+    return false;
+  }
+
+  // 自动长高：写的内容多了框跟着长，孩子不用在一个小框里挤
+  function autoGrow(el){
+    if(!el || el.tagName !== 'TEXTAREA') return;
+    el.style.height = 'auto';
+    var h = el.scrollHeight + 2;
+    el.style.height = Math.min(Math.max(h, 76), 260) + 'px';
+  }
+
+  function place(){
+    var kb = kbHeight();
+    var changed = Math.abs(kb - lastKb) > 8;
+    lastKb = kb;
+
+    // ② body 底部留空档（数据来自样式表，改一处全生效）
+    document.body.style.setProperty('--kb', kb + 'px');
+    var sh = document.getElementById('sheet');
+    if(sh) sh.style.setProperty('--kb', kb + 'px');
+
+    if(kb <= 0){
+      document.body.classList.remove('kb-up');
+      return;
+    }
+    document.body.classList.add('kb-up');
+
+    // ③ 把正在写的框顶到看得见的地方
+    var el = focusedEl;
+    if(!el || !isTextField(el)) return;
+    if(!changed && el.getBoundingClientRect().bottom <= vh() - 8) return;
+
+    var topGuard = 76;            // 顶部橙色标题栏高度
+    var r = el.getBoundingClientRect();
+    var room = vh() - topGuard - 16;
+    var want = r.top - topGuard - Math.max(24, (room - r.height) / 2);
+    if(r.bottom > vh() - 8 || r.top < topGuard + 8 || changed){
+      window.scrollBy({ top: want, behavior: changed ? 'auto' : 'smooth' });
+    }
+  }
+
+  var raf = null;
+  function schedule(){
+    if(raf) return;
+    raf = setTimeout(function(){ raf = null; place(); }, 60);
+  }
+
+  document.addEventListener('focusin', function(e){
+    var el = e.target;
+    if(isTextField(el)){
+      focusedEl = el;
+      autoGrow(el);
+      el.classList.add('editing');
+      var p = el.closest ? el.closest('.q') : null;
+      if(p) p.classList.add('editing');
+      // 等键盘真正弹出来（约 300ms）再定位，不然量到的是没键盘的位置
+      setTimeout(schedule, 120);
+      setTimeout(schedule, 340);
+      setTimeout(schedule, 620);
+    }
+  }, true);
+
+  document.addEventListener('focusout', function(e){
+    var el = e.target;
+    if(isTextField(el)){
+      el.classList.remove('editing');
+      var p = el.closest ? el.closest('.q') : null;
+      if(p) p.classList.remove('editing');
+      setTimeout(function(){
+        if(!isTextField(document.activeElement)){
+          focusedEl = null;
+          lastKb = 0;
+          document.body.style.setProperty('--kb', '0px');
+          var sh = document.getElementById('sheet');
+          if(sh) sh.style.setProperty('--kb', '0px');
+          document.body.classList.remove('kb-up');
+        }
+      }, 200);
+    }
+  }, true);
+
+  document.addEventListener('input', function(e){
+    if(e.target && e.target.tagName === 'TEXTAREA') autoGrow(e.target);
+    if(isTextField(e.target)) schedule();
+  }, true);
+
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', schedule);
+    window.visualViewport.addEventListener('scroll', schedule);
+  }
+  window.addEventListener('resize', schedule);
+  window.addEventListener('orientationchange', function(){ setTimeout(schedule, 300); });
+
+  // 页面加载时把已有的 textarea 换成可长高的
+  document.addEventListener('DOMContentLoaded', function(){
+    var ts = document.querySelectorAll('textarea');
+    for(var i=0;i<ts.length;i++){ autoGrow(ts[i]); }
+  });
+
+  /* ===== 键盘顶上的「下一题 / 上一题」快跳条 =====
+     孩子在键盘弹着的时候就换题，不用先收键盘再找下一题的输入框。
+     Enter 也直接跳下一题（单行题没有换行需求）。 */
+  var jump = document.createElement('div');
+  jump.id = 'jumpBar';
+  jump.innerHTML = '<button type="button" class="jp" id="jpPrev">↑ 上一题</button>' +
+                   '<span class="pos" id="jpPos"></span>' +
+                   '<button type="button" class="jp main" id="jpNext">下一题 ↓</button>' +
+                   '<button type="button" class="jp done" id="jpDone">✓ 收起键盘</button>';
+  document.body.appendChild(jump);
+
+  function fieldList(){
+    var all = document.querySelectorAll('input[type=text],textarea');
+    var out = [];
+    for(var i=0;i<all.length;i++){
+      var el = all[i];
+      if(el.id === 'talkInput') continue;          // 聊天框不算题目
+      if(el.offsetParent === null) continue;       // 隐藏的（结果框里）不算
+      out.push(el);
+    }
+    return out;
+  }
+
+  function goTo(el){
+    if(!el) return;
+    el.scrollIntoView({behavior:'auto', block:'center'});
+    el.focus({preventScroll:true});
+    setTimeout(function(){ schedule(); refreshJump(); }, 60);
+    setTimeout(function(){ schedule(); refreshJump(); }, 260);
+  }
+
+  function step(dir){
+    var list = fieldList(), cur = document.activeElement, i = list.indexOf(cur);
+    if(i < 0) { goTo(list[0]); return; }
+    if(dir > 0){
+      if(i >= list.length - 1){ document.activeElement.blur(); return; }
+      goTo(list[i+1]);
+    }else{
+      goTo(list[Math.max(0, i-1)]);
+    }
+  }
+
+  function refreshJump(){
+    if(lastKb <= 0){ jump.classList.remove('show'); return; }
+    var list = fieldList(), cur = document.activeElement, i = list.indexOf(cur);
+    if(i < 0){ jump.classList.remove('show'); return; }
+    jump.classList.add('show');
+    document.getElementById('jpPos').textContent = '第 ' + (i+1) + ' / ' + list.length + ' 题';
+    document.getElementById('jpPrev').style.visibility = i === 0 ? 'hidden' : 'visible';
+    document.getElementById('jpNext').style.visibility = i >= list.length-1 ? 'hidden' : 'visible';
+    // 记住现在在第几题，换题时立刻刷新（不必等下一次键盘 resize）
+    jump.setAttribute('data-idx', i);
+  }
+
+  var _place = place;
+  place = function(){ _place(); refreshJump(); };
+  window.__kbPlace = place;
+
+  document.getElementById('jpPrev').addEventListener('click', function(){ step(-1); });
+  document.getElementById('jpNext').addEventListener('click', function(){ step(1); });
+  document.getElementById('jpDone').addEventListener('click', function(){
+    if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  });
+
+  // 单行输入框按 Enter = 下一题
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Enter') return;
+    var el = e.target;
+    if(el && el.tagName === 'INPUT' && isTextField(el)){ e.preventDefault(); step(1); }
+  }, true);
+
+  window.__kbPlace = place;   // 给自测用
+})();
 
 /* ===== 跟老师说话（真对话） ===== */
 let chatHistory = [];
@@ -367,7 +790,7 @@ function sayToTeacher(){
   thinking.scrollIntoView({block:'center', behavior:'smooth'});
 
   const t0 = Date.now();
-  fetch('/api/ask', {
+  fetch('api/ask', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({q:text, history:chatHistory})
@@ -377,6 +800,7 @@ function sayToTeacher(){
     thinking.remove();
     const ans = d.answer || '老师没听清，你再说一遍好不好？';
     addBubble(ans, nowTime(), 'teacher');
+    speakText(ans);
     chatHistory.push({role:'user', content:text});
     chatHistory.push({role:'assistant', content:ans});
     saveChat(text, ans);
@@ -540,6 +964,23 @@ function submitAll(){
   }
   document.getElementById('submitBtn').onclick = ()=>{ alert(txt); };
 }
+
+/* ===== 批改（接口已备好，等小龙虾的题库接进来才启用） =====
+   现在的做法：题目、标准答案全部由调用方传进来，页面不预设任何一题。
+   我硬编码的答案表已按 sandy 要求撤掉——内容归小龙虾，我只做管道。
+   接口：POST api/grade
+   入参 {items:[{id, stem, ref, ans, open}]}
+   出参 {score, right, total, summary, missed, items:[{id, ok, say, ans}]}
+*/
+function gradeWith(items){
+  return fetch('api/grade', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({items: items})
+  }).then(r=>r.json());
+}
+
+
 
 // 回去继续做：隐藏结果框、恢复提交按钮、滚回第一题
 function backToWork(){
