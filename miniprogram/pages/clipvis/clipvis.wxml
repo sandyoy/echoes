@@ -1,0 +1,44 @@
+<!--
+  pages/clipvis/clipvis.wxml —— 哪段能给别人看
+  大字友好：一行一段，右边一个大开关；不出现「设置/权限」等字眼。
+-->
+<view class="container ui-{{uiMode}}">
+
+  <view class="page-title">哪段能给别人看</view>
+  <view class="page-sub">{{storyTitle || '这一段'}}</view>
+
+  <view class="tip">
+    做成图、给别人看的内容，得先在这里点一下。
+    没点的，只有你自己能看见。
+  </view>
+
+  <view class="err" wx:if="{{err}}">{{err}}</view>
+  <view class="loading" wx:elif="{{loading}}">正在打开…</view>
+
+  <block wx:if="{{!loading && !err}}">
+    <view class="empty" wx:if="{{clips.length === 0}}">
+      这一段里还没有能拿出来的内容。先回去说一段、或者传张照片。
+    </view>
+
+    <view class="row" wx:for="{{clips}}" wx:key="clip_id">
+      <view class="row-main">
+        <view class="row-kind">{{item.kind_label}}</view>
+        <view class="row-text">{{item.preview}}</view>
+      </view>
+      <view
+        class="switch {{item.is_public ? 'on' : ''}}"
+        data-id="{{item.clip_id}}"
+        bindtap="onToggle">
+        {{item.is_public ? '别人能看' : '只有我'}}
+      </view>
+    </view>
+
+    <view class="count" wx:if="{{clips.length > 0}}">
+      现在有 {{publicCount}} 段是别人能看的
+    </view>
+
+    <view class="big-btn" bindtap="onBackToCard">改好了，接着做</view>
+    <view class="sb-btn" bindtap="onBackToCard">先这样</view>
+  </block>
+
+</view>

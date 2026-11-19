@@ -29,6 +29,7 @@ Page({
 
     checking: false,
     checkError: '',         // 体检失败的人话（如：这篇没有能公开的内容）
+    needPublic: false,      // 全私有：给一条「去点一下」的出路
     checked: false,
     width: 0,
     height: 0,
@@ -111,6 +112,8 @@ Page({
         this.setData({
           checking: false,
           checked: true,
+          needPublic: false,
+          checkError: '',
           width: Number(dd.width || 0),
           height: Number(dd.height || 0),
           bytes: Number(dd.bytes || 0),
@@ -121,10 +124,17 @@ Page({
       })
       .catch((err) => {
         // not_shareable / not_found / render_unavailable 都由后端给中文人话
+        const msg = (err && err.message) || '';
+        const code = (err && err.code) || '';
+        // 全私有 → 不是死路：直接把人领到「哪段能给别人看」
+        const needPublic = code === 'not_shareable' || /公开/.test(msg);
         this.setData({
           checking: false,
           checked: false,
-          checkError: (err && err.message) || '这张图现在做不了，请稍后再试'
+          needPublic: needPublic,
+          checkError: needPublic
+            ? '这段现在只有你自己能看，想让别人看到，先在下面点一下。'
+            : (msg || '这张图现在做不了，请稍后再试')
         });
       });
   },
@@ -177,6 +187,19 @@ Page({
     } catch (e) {
       return '';
     }
+  },
+
+  /** 全私有 → 去把某一段点成「别人能看」，改完回来接着做 */
+  onGoClipVis() {
+    const d = this.data;
+    const sid = d.kind === 'story' ? d.targetId : '';
+    wx.navigateTo({
+      url: '/pages/clipvis/clipvis?story_id=' + encodeURIComponent(sid) +
+           '&title=' + encodeURIComponent(d.title || '') + '&from=card',
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
+    });
   },
 
   /** 存到相册 */

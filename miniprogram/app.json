@@ -9,7 +9,8 @@
     "pages/family/family",
     "pages/card/card",
     "pages/story/story",
-    "pages/choose/choose"
+    "pages/choose/choose",
+    "pages/clipvis/clipvis"
   ],
   "tabBar": {
     "color": "#9a8f83",

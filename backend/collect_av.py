@@ -36,6 +36,194 @@ import math
 from permissions import attach_clip, can_add_clip, can_view_story
 from models import ClipType
 
+
+def _sync_raw_content_from_clips(db, story_id: str) -> None:
+    """把这条故事下所有素材的原话按顺序拼进 stories.raw_content。
+
+    ★ 2026-11-18 新增（治「故事正文永远为空」）
+    规则：
+      1) **只补空位，不覆盖已加工内容**——raw_content 已有字就只在末尾追加
+         本次新增的段落；绝不整段重写（避免冲掉用户/润色改过的正文）。
+      2) **幂等**——同一段原话已经在正文里就不再追加。判据用「该段是否
+         已作为子串存在」，重复调用不会叠出两遍。
+      3) 顺序按 clips.sort_order，保证「先说的在前」。
+      4) 空白转写跳过（录音没识别出字的，不塞空行）。
+    失败不抛——回写正文是锦上添花，不能反过来把「原声已存下」这件事搞挂。
+    """
+    try:
+        from models import Story, Clip
+        s = db.query(Story).filter(Story.id == story_id).first()
+        if s is None:
+            return
+        clips = (db.query(Clip)
+                   .filter(Clip.story_id == story_id)
+                   .order_by(Clip.sort_order.asc())
+                   .all())
+        base = (s.raw_content or "")
+        added = []
+        for c in clips:
+            txt = (getattr(c, "text", "") or getattr(c, "transcript", "") or "").strip()
+            if not txt:
+                continue
+            # 幂等：这段原话已经在正文里了 → 跳过
+            if txt in base or txt in "\n".join(added):
+                continue
+            added.append(txt)
+        if not added:
+            return
+        joined = "\n".join(added)
+        s.raw_content = (base.rstrip() + "\n" + joined) if base.strip() else joined
+        db.commit()
+    except Exception:
+        # 静默不抛，但不能吞得毫无痕迹：留给日志
+        try:
+            import logging
+            logging.getLogger(__name__).warning(
+                "sync raw_content 失败 story_id=%s", story_id, exc_info=True)
+        except Exception:
+            pass
+
+
+def _make_title(raw: str) -> str:
+    """从原话里提炼一句能当标题的人话。
+
+    规则（宁缺毋滥，编不出来就返回空，让界面显示「还没起名字」）：
+      1) 剥掉口语起手式（「我是」「我出生在」「现在呢」「我觉得」…），
+         这些词占了标题位却不带信息。
+      2) 取第一句，长度控制在 6~16 字。
+      3) 太短（<4 字，如「我们家是砖房」被剥完只剩俩字）就保留原句。
+      4) 剥完啥也不剩 → 返回原句前 16 字。
+    **绝不添加原文里没有的词**——标题的每个字都必须来自老人自己说的话。
+    """
+    import re
+    text = (raw or "").strip()
+    if not text:
+        return ""
+    first = text.split("\n")[0].strip()
+
+    # 只剥起手式，不碰后面的内容
+    leaders = (
+        "我是", "我出生在", "我出生", "我生在", "我来自",
+        "现在呢", "现在", "然后呢", "然后", "就是", "其实",
+        "我觉得", "我记得", "应该说", "所以", "后来",
+    )
+    body = first
+    changed = True
+    while changed:
+        changed = False
+        for ld in leaders:
+            if body.startswith(ld) and len(body) > len(ld) + 3:
+                body = body[len(ld):]
+                changed = True
+
+    # 截到第一个句读
+    for sep in ("。", "，", "！", "？", "；"):
+        if sep in body:
+            body = body.split(sep)[0]
+            break
+    body = body.strip(" ，。！？；、")
+
+    # 按句读切成小块，再逐块拼接（避免「1973年」这种纯时间占标题位）
+    pieces = [p.strip() for p in re.split(r"[，。！？；]", first) if p.strip()]
+
+    # 剥掉开头的信息量极低的块：纯年份/纯「属牛的」这类短语
+    def _low_value(p):
+        # 纯年份 / 纯岁数
+        if re.fullmatch(r"\d{4}\s*年?", p):
+            return True
+        if re.fullmatch(r"\d{1,2}\s*岁", p):
+            return True
+        # 「1973年生的」「1973年出生的」这类：带年份但不带任何事
+        if re.search(r"\d{4}\s*年(出生|生|出生在)?(的)?$", p) and len(p) <= 12:
+            return True
+        # 纯口语填充词
+        if p in ("现在", "现在呢", "然后", "然后呢", "我觉得", "就是", "其实", "所以", "后来"):
+            return True
+        return False
+
+    while pieces and _low_value(pieces[0]):
+        pieces = pieces[1:]
+
+    if pieces:
+        body = pieces[0]
+    else:
+        body = first
+
+    # 尾巴上的连词/未完成语气词 → 去掉（「…但是」「…所以」「…的话」）
+    for tail in ("但是", "所以", "然后", "而且", "因为", "的话", "就是", "并且"):
+        if body.endswith(tail):
+            body = body[: -len(tail)].rstrip(" ，、")
+
+    # 太短 ⇒ 用原句（剥过头了）
+    if len(body) < 4:
+        body = first
+        for sep in ("。", "，", "！", "？", "；"):
+            if sep in body:
+                body = body.split(sep)[0]
+                break
+        body = body.strip(" ，。！？；、")
+
+    if not body:
+        return ""
+    if len(body) > 16:
+        return body[:16]
+    return body
+
+
+def _enrich_story_meta(db, story_id: str) -> None:
+    """给故事补「时间」和「标题」——录完话就自动做，不等用户手填。
+
+    ★ 2026-11-18 新增（治「（无题）· 时间待定」）
+    铁律（sandy 定的口径，逐条执行）：
+      1) **不编年份**。时间一律走 timeline.extract_time，它认不出就落
+         「时间待定」，绝不替老人凑一个年份。
+      2) **只在空位写**。用户/家人已经填过 title/time 的，一律不动。
+      3) 标题从原话里取**头一句**（截到逗号/句号，≤14 字），
+         取不到就留空——留空比编一个假标题好。
+    失败不抛。
+    """
+    try:
+        from models import Story
+        from timeline import extract_time
+        s = db.query(Story).filter(Story.id == story_id).first()
+        if s is None:
+            return
+        raw = (s.raw_content or "").strip()
+
+        # ---- 时间：只补空位 ----
+        if not (s.time_label or "").strip() and raw:
+            r = extract_time(raw)
+            if r is not None:
+                if getattr(r, "label", ""):
+                    s.time_label = r.label
+                if getattr(r, "raw", ""):
+                    s.time_raw = r.raw
+                if getattr(r, "sort_key", None) is not None:
+                    try:
+                        s.time_sort_key = int(r.sort_key)
+                    except (TypeError, ValueError):
+                        pass
+                if getattr(r, "method", ""):
+                    s.time_extract_method = str(r.method)
+
+        # ---- 标题：只补空位 ----
+        # 病根：机械截前 14 字会切出「我出生在1973年，我有一个」这种残句，
+        # 老人看了不知道这篇讲什么。标题要是一句完整的人话。
+        if not (s.title or "").strip() and raw:
+            t = _make_title(raw)
+            if t:
+                s.title = t
+
+        db.commit()
+    except Exception:
+        try:
+            import logging
+            logging.getLogger(__name__).warning(
+                "enrich story meta 失败 story_id=%s", story_id, exc_info=True)
+        except Exception:
+            pass
+
+
 # 转写引擎：整包 import asr，调 asr.recognize()。asr 内部是三级兜底，不会抛穿。
 try:
     import asr as _asr
@@ -258,6 +446,12 @@ def api_add_audio_clip(
     if tr["done"]:
         clip.transcript = tr["text"]
         db.commit()
+        # ★ 2026-11-18 补：转写成功后回写故事正文。
+        #   病根：此前只写 clips.transcript，stories.raw_content 永远空 →
+        #   成书页拿到空壳，只能显示「（无题）时间待定」，用户看到的就是
+        #   "共2篇·7段"但其实一段话都没有。原话必须在故事正文里能看见。
+        _sync_raw_content_from_clips(db, story_id)
+        _enrich_story_meta(db, story_id)
 
     data = {
         "clip_id": clip.id,

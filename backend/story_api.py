@@ -291,7 +291,21 @@ def api_get_story(db, *, story_id: str, owner_id: str, viewer_id: str) -> dict:
     d["polished_content"] = s.polished_content or ""
     d["location"] = s.location or ""
     d["tags"] = s.tags or []
-    return ok({"story": d})
+
+    # ★ 2026-11-18：详情一起带回素材（原话/录音/照片）。
+    #   病根：之前详情只回故事壳，前端进故事看不到"我说过的原话"，
+    #   用户也就无从判断"哪段能给别人看" → 公开/私有那堵墙根本点不着。
+    #   复用 collect_api.api_list_clips，公开/私有闸门自动生效，不另造字段。
+    clips = []
+    try:
+        from collect_api import api_list_clips
+        r = api_list_clips(db, story_id=story_id, owner_id=owner_id,
+                           viewer_id=viewer_id or owner_id)
+        if r.get("ok"):
+            clips = (r.get("data") or {}).get("clips") or []
+    except Exception:
+        clips = []
+    return ok({"story": d, "clips": clips, "clip_count": len(clips)})
 
 
 # ============================================================
