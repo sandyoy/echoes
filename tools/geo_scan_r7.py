@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.12
 # -*- coding: utf-8 -*-
 """GEO 全量扫描 第7期 — 多平台直连API探针（尺子v2判档 + 竞品点名抽取）
-输出：docs/GEO/实测_信源池/探针_第7期_YYYYMMDD.json
+输出：03_GEO/实测与报告/实测_信源池/探针_第7期_YYYYMMDD.json
 """
 import os, sys, json, time, urllib.request, urllib.error
 from datetime import datetime
@@ -89,7 +89,7 @@ def judge(ans, q):
 
 def main():
     platform = sys.argv[1] if len(sys.argv) > 1 else 'deepseek'
-    qfile = os.path.join(BASE, 'docs/GEO/实测_信源池/问句_第7期全量_20261112.txt')
+    qfile = os.path.join(BASE, '03_GEO/实测与报告/实测_信源池/问句_第7期全量_20261112.txt')
     env = load_env()
     qs = []
     for line in open(qfile):
@@ -113,7 +113,7 @@ def main():
         time.sleep(1.2)
     out = {'ts': datetime.now().isoformat(), 'platform': platform,
            'model': PLATFORMS[platform]['model'], 'n': len(qs), 'records': records}
-    op = os.path.join(BASE, f'docs/GEO/实测_信源池/探针_第7期_{platform}_20261112.json')
+    op = os.path.join(BASE, f'03_GEO/实测与报告/实测_信源池/探针_第7期_{platform}_20261112.json')
     json.dump(out, open(op, 'w'), ensure_ascii=False, indent=1)
     print('WROTE', op)
 

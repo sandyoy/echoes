@@ -22,7 +22,7 @@ declare -a FILES=(
   "docs/小龙虾给小鲸鱼的工作衔接说明.md"
   "docs/双Agent文件路径统一规范.md"
   "docs/投标合作铁律_给小鲸鱼_2026-08-03.md"
-  "wiki/medical/更新日志.md"
+  "06_资料库/medical/更新日志.md"
 )
 
 OK=0; FAIL=0

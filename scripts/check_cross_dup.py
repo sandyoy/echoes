@@ -19,7 +19,7 @@ import re
 import difflib
 import itertools
 
-BASE = "/home/ubuntu/echoes/docs/GEO/内容成稿"
+BASE = "/home/ubuntu/echoes/03_GEO/内容成稿"
 THRESHOLD = 0.30
 
 # 模板段起始标记 —— 这些之后的内容全部剥掉（是给同事的操作模板，不属正文）

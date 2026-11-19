@@ -1,7 +1,7 @@
 /**
  * pages/story/story.js — 故事详情页（P0-2 · B 组 STORY.DETAIL）
  *
- * 依据：docs/双Hermes/任务总表_活地图.md P0-2「首页故事列表点了只传 id，没有详情页，老人点自己录的故事打不开」
+ * 依据：05_协作与机制/双Hermes/双Hermes/任务总表_活地图.md P0-2「首页故事列表点了只传 id，没有详情页，老人点自己录的故事打不开」
  * 接口：GET /api/echoes/story/detail?story_id&owner_id&viewer_id（后端已就绪，本次前端接）
  *
  * 三条铁律（沿用时间轴/接口定义）：

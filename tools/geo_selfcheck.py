@@ -17,8 +17,8 @@ COLLECT_FULL = "智慧家康模式"
 META_FILES = ("口径卡","回应库","执行手册","排产单","框架三问","先看我","核查","主轴线","总索引")
 
 BASE_DIRS = [
-    "docs/GEO/内容成稿",
-    "docs/GEO/执行排产",
+    "03_GEO/内容成稿",
+    "03_GEO/执行排产",
 ]
 
 def channel_of(name):

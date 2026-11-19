@@ -8,7 +8,7 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
-OUT = "/home/ubuntu/echoes/docs/圆爱康/03_产出方案/心脏康复_套餐价格表_v4.1_横版_20260923.docx"
+OUT = "/home/ubuntu/echoes/02_圆爱康/心脏康复线/_产出物料/心脏康复_套餐价格表_v4.1_横版_20260923.docx"
 
 doc = Document()
 

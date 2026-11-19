@@ -1,13 +1,13 @@
 #!/usr/bin/env python3.12
 """GEO 第7期 · 派单69条（口径对齐 小鲸鱼@小龙虾_GEO全量扫描第7轮_20261112.md）
-复用 tools/geo_api_probe.py 的 key 读取方式；输出 docs/GEO/实测_信源池/探针_第7期v2_<platform>_<date>.json
+复用 tools/geo_api_probe.py 的 key 读取方式；输出 03_GEO/实测与报告/实测_信源池/探针_第7期v2_<platform>_<date>.json
 用法: python3.12 tools/geo_scan_r7_v2.py deepseek [--start N] [--limit N]
 """
 import json, os, sys, time, datetime, urllib.request, urllib.error
 
 BASE = os.path.expanduser('~/echoes')
-QFILE = os.path.join(BASE, 'docs/GEO/实测_信源池/问句_第7期全量_20261112.txt')
-OUTDIR = os.path.join(BASE, 'docs/GEO/实测_信源池')
+QFILE = os.path.join(BASE, '03_GEO/实测与报告/实测_信源池/问句_第7期全量_20261112.txt')
+OUTDIR = os.path.join(BASE, '03_GEO/实测_信源池')
 
 def load_env():
     env = {}
