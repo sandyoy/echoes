@@ -187,3 +187,41 @@
   color: #666;
   padding: var(--space);
 }
+
+/* ===== 大字版「按住说话」吸底固定（sandy 11-20 定） =====
+   要求原话：「位置太高了，最好在手机屏幕下面三分之一区间内，方便到手操作」
+   做法：position:fixed 贴底，只受底部安全区（iPhone 手势条）影响，
+        不随内容滚动、不因内容多少而位移——老人任何页面状态都一伸手够到。
+   高度核算（750rpx 设计宽 / 按 iPhone 常见 812pt 高，1pt≈2rpx）：
+        按钮 180rpx + 上下留白 28+20 + 更多 40 ≈ 268rpx ≈ 134pt
+        占屏 134/812 ≈ 16.5%，落点在下三分之一区间的正中偏下，单手拇指自然落区。 */
+.hold-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  padding: 28rpx var(--space) calc(20rpx + env(safe-area-inset-bottom));
+  background: #ffffff;
+  /* 上沿一道极淡分隔，避免按钮浮在内容上显得突兀 */
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+/* 吸底区域内的按钮：加高到 180rpx（原 160rpx），老人拇指按下不易滑出 */
+.hold-dock .big-btn.hold {
+  height: 180rpx;
+  line-height: 180rpx;
+  margin-bottom: 0;
+  border-radius: 24rpx;
+  letter-spacing: 8rpx;
+}
+.hold-dock .more-dock {
+  margin-top: 12rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #9a9a9a;
+  padding: 6rpx 0;
+}
+/* 吸底后页面底部要留出等高的空白，否则最后一段内容会被按钮盖住 */
+.container.dock-large {
+  padding-bottom: calc(300rpx + env(safe-area-inset-bottom));
+}
