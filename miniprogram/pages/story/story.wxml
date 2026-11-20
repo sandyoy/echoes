@@ -10,7 +10,7 @@
   </block>
 
   <block wx:else>
-    <view class="s-title">{{story.title || '没起名字的一段'}}</view>
+    <view class="s-title">{{story.title || '这段你还没起名，点一下起个名'}}</view>
 
     <!-- 时间：只显示 time_raw 原样老人说法，不加工（接口定义 §三-2） -->
     <view wx:if="{{story.time_raw}}" class="s-time">{{story.time_raw}}</view>

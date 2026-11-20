@@ -3,7 +3,7 @@
      ①「说话」和「留个声」他分不清 → 合成一个「说话」（原声一并留着）
      ②「照片」和「视频」并成一个框（都走图库/相机，不用隔两个入口）
      ③入口从 5 个收到 3 个 -->
-<view class="container {{type === 'voice' ? 'has-hold-dock' : ''}}">
+<view class="container {{(type === 'voice' || type === 'text' || type === 'media') ? 'has-save-dock' : ''}} {{type === 'voice' ? 'has-hold-dock' : ''}}">
 
   <!-- 类型切换（标准版显示；大字版收起为单一模式） -->
   <view wx:if="{{uiMode !== 'large'}}" class="tabs">
@@ -89,7 +89,12 @@
     <view wx:else class="clip-type">{{item.clip_type === 'original' ? '留个声' : item.clip_type}}</view>
   </view>
 
-  <view class="big-btn" bindtap="onSave">保存</view>
+  <!-- ★ 2026-11-20 sandy 真机实测：保存键必须吸底固定，不许随内容滚。
+       病根：原来在流内、排在「这件事已经有 N 项」后面 → 内容一多要拉很久才按得到 →
+             按不到 = 这段没存下来。改：position:fixed 到底部。 -->
+  <view class="save-dock">
+    <view class="save-btn" bindtap="onSave">保存</view>
+  </view>
 
   <!-- ★ 做成一张图（10-18 卡片出图通道）：有故事就能做，只放公开素材 -->
   <view wx:if="{{storyId}}" class="sb-btn" bindtap="onOpenCard">把这件事做成一张图</view>

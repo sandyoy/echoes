@@ -60,6 +60,40 @@
 /* 有吸底圆圈时给页面留出底部空间，防最后一行被圆圈压住 */
 .has-hold-dock { padding-bottom: 260rpx; }
 
+/* ============================================================
+   ★ 保存键吸底（2026-11-20 sandy 真机实测，第 N 次）
+   病根：保存键在流内、排在「这件事已经有 N 项」后面 →
+         内容一多就要往下拉很远才按得到，不打到保存 = 这一整段没存下来。
+   做法：与「按住说话」同一套吸底（position:fixed bottom:0），
+         用 padding-bottom 给流内内容让位 → 内容再长也不会压住最后一条。
+   ⚠️ 首层 .container 不设 padding-top，fixed 直接贴 kou底部，不受影响。
+   ============================================================ */
+.save-dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  padding: 16rpx var(--space) calc(16rpx + env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, rgba(245,247,250,0) 0%, rgba(245,247,250,0.97) 26%, rgba(245,247,250,1) 100%);
+}
+.save-dock .save-btn {
+  width: 100%;
+  height: var(--btn-h);
+  line-height: var(--btn-h);
+  text-align: center;
+  font-size: var(--font-base);
+  border-radius: 20rpx;
+  background: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 6rpx 18rpx rgba(0,0,0,0.12);
+}
+/* 打字/照片页给吸底键让位（说话页已有孔，不重复加） */
+.has-save-dock { padding-bottom: 220rpx; }
+/* 说话页同时有「按住说话」圆圈 + 保存键 → 两个都吸底，保存键在上 */
+.has-hold-dock.has-save-dock { padding-bottom: 420rpx; }
+.has-hold-dock.has-save-dock .save-dock { padding-bottom: 220rpx; }
+
 .text-input {
   width: 100%;
   min-height: 320rpx;

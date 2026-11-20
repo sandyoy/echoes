@@ -121,6 +121,19 @@ def api_add_text_clip(
     except ValueError as e:
         return fail(str(e), "attach_failed")
 
+    # ★ 2026-11-20 补（治「这段还没起名」/「（无题）时间待定」的老病根）：
+    #   原来「补标题+补年份」只挂在「语音转写成功」那一个入口上 →
+    #   打字保存 / 加照片保存根本不触发 → 标题永远空,界面只能显示兜底。
+    #   现在文字素材一落库就顺手补一次（只填空位，用户填过的不动）。
+    try:
+        from collect_av import _sync_raw_content_from_clips, _enrich_story_meta
+        _sync_raw_content_from_clips(db, story_id)
+        _enrich_story_meta(db, story_id)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning(
+            "文字落库后补标题失败 story_id=%s", story_id, exc_info=True)
+
     return ok({
         "clip_id": clip.id,
         "story_id": clip.story_id,
@@ -210,6 +223,17 @@ def api_add_photo_clip(
         )
     except ValueError as e:
         return fail(str(e), "attach_failed")
+
+    # ★ 2026-11-20 同 collect_api.api_add_text_clip：照片落库也补一次标题/年份。
+    #   （照片本身没有文字，但这条故事可能已经有文字素材 → 顺手把空标题补上）
+    try:
+        from collect_av import _sync_raw_content_from_clips, _enrich_story_meta
+        _sync_raw_content_from_clips(db, story_id)
+        _enrich_story_meta(db, story_id)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning(
+            "照片落库后补标题失败 story_id=%s", story_id, exc_info=True)
 
     return ok({
         "clip_id": clip.id,

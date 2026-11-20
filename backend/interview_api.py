@@ -195,6 +195,24 @@ def api_start_interview(db, *, owner_id: str, viewer_id: str = "") -> dict:
     q = _pick_anchor_question(db, owner_id=owner_id) or _fallback_question(db, owner_id=owner_id)
     missing = _missing_anchors(db, owner_id=owner_id)
 
+    # ★ 2026-11-20 sandy 定死：开场不是查户口，是聊天式倾听。
+    #   原话：「开始说唉，老人家那个你想说点什么呀，刚开始，而不是说唉，你是哪年出生的呀，
+    #           这是两个概念，就是叫聊天式的倾听式的聊天」
+    #   → 第一问一律先「把话筒递过去」，锚点（哪年出生这类）等老人自己起头后再顺出来，
+    #     不许一上来就盘问。锚点只作后台待办，不在第一句话里出现。
+    opening = "老人家，今天想说点什么呢？"
+    if not (q or {}).get("text"):
+        q = {"kind": "open", "anchor_type": "", "anchor_label": "",
+             "text": opening, "follow_up": "您慢慢说，我听着。",
+             "audio_hint": "语音播放（老人只用听）"}
+    else:
+        q = dict(q)
+        q["text"] = opening
+        q["kind"] = "open"
+        q["follow_up"] = "您慢慢说，我听着。"
+        q["anchor_type"] = ""
+        q["anchor_label"] = ""
+
     return ok({
         "question": q,
         "missing_anchors": missing,
@@ -208,7 +226,7 @@ def api_start_interview(db, *, owner_id: str, viewer_id: str = "") -> dict:
 
 
 def api_next_question(db, *, owner_id: str, viewer_id: str = "",
-                      last_answer: str = "", interrupted_question: str = "",
+                      answer_text: str = "", last_answer: str = "", interrupted_question: str = "",
                       interrupt_count: int = 0) -> dict:
     """
     老人答完 → 出下一问。
@@ -219,7 +237,10 @@ def api_next_question(db, *, owner_id: str, viewer_id: str = "",
     if not owner_id:
         return fail(BAD_REQUEST, "bad_request")
 
-    ans = _normalize(last_answer)
+    # ★ 2026-11-20：接口层传进来的字段名叫 answer_text，函数里叫 last_answer，
+    #   两边一直没对上 → 这里永远收到空字符串 → 模型/刹车全被绕过（真机「每句都换问号」的真病根）。
+    payload = last_answer or answer_text or ""
+    ans = _normalize(payload)
     pending_q = (interrupted_question or "").strip()
 
     # 被打断且老人这句没构成有效回答（空 or 含糊）→ 接回刚才的问题
@@ -255,7 +276,7 @@ def api_next_question(db, *, owner_id: str, viewer_id: str = "",
                     birth = _anchor_of(db, owner_id=owner_id, anchor_type="birth")
                     break
             follow = llm_brain.next_question_from_answer(
-                answer_text=last_answer,
+                answer_text=payload,
                 asked_question=pending_q,
                 anchor_hint=hint,
                 owner_birth_year=birth,
@@ -272,9 +293,13 @@ def api_next_question(db, *, owner_id: str, viewer_id: str = "",
                     },
                     "heard": follow.get("heard", ""),
                     "years_found": follow.get("years", []),
+                    # ★ 2026-11-20：no_ask=True = 这句是「回应/道歉/记下了」，
+                    #   不是问题。前端据此**不要立刻再拉下一问**，留出声空白，
+                    #   等老人自己接着讲（治「说一句换一个问号」）。
+                    "no_ask": bool(follow.get("no_ask")),
                     "missing_anchors": _missing_anchors(db, owner_id=owner_id),
-                    "state": "following_answer",
-                    "wait_ms": 1800,
+                    "state": "acknowledged" if follow.get("no_ask") else "following_answer",
+                    "wait_ms": 1800 if not follow.get("no_ask") else 4000,
                     "follow_digression": True,
                 })
         except Exception as e:

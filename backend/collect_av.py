@@ -149,6 +149,20 @@ def _make_title(raw: str) -> str:
     else:
         body = first
 
+    # ★ 2026-11-20：抽句只许抽**肯定句**。
+    #   "不是在村子里，是在镇上" 抽出来是"不是在村子里"——一句否定，单独看像反问，
+    #   当标题是错的。所以优先选不带"不是/没/别"的块；全是否定就退回原句整句。
+    _NEG = ("不", "没", "别", "甭")
+    if pieces and any(p.startswith(_NEG) for p in pieces[:1]) and len(pieces) > 1:
+        positive = [p for p in pieces if not p.startswith(_NEG)]
+        if positive:
+            body = positive[0]
+
+    # 块以"是/在/有"打头 = 从句，单独拿出来不成句（"是在镇上"）。
+    # 这时用**整句**（去掉开头语气词），比硬抠半句强。
+    if body.startswith(("是", "在", "有", "就", "也", "都", "才")) and len(first) <= 22:
+        body = first
+
     # 尾巴上的连词/未完成语气词 → 去掉（「…但是」「…所以」「…的话」）
     for tail in ("但是", "所以", "然后", "而且", "因为", "的话", "就是", "并且"):
         if body.endswith(tail):
@@ -163,11 +177,84 @@ def _make_title(raw: str) -> str:
                 break
         body = body.strip(" ，。！？；、")
 
-    if not body:
+    # ★ 2026-11-20 补三条（sandy 真机实测出来的坏标题）：
+    #   ① 「我是1973年出生的，我想问」——"我想问一个问题"属于**聊天过程**，
+    #      不是老人讲的事；这类"提问/抱怨/寒暄"块一律不当标题。
+    #   ② 「我爸是一就」——ASR 把「我爸是1939年出生的」切碎成「我爸是一就」，
+    #      残句当标题像系统故障；**没讲完的句子不许当标题**。
+    #   ③ 兜底：剥完还是碎块（≤5 字且不含动词/名词信息）→ 交给模型另起，
+    #      模型不可用就**宁可留空**（留空由界面引导起名），也不印一句残话。
+    _CHATTY = ("我想问", "我问一下", "我想说", "你听", "是不是", "为什么",
+               "怎么", "你说", "我不知道", "别问", "不要问")
+    def _is_chatty(p: str) -> bool:
+        return any(p.startswith(c) or c in p for c in _CHATTY)
+
+    if _is_chatty(body):
+        pieces = [p for p in pieces if not _is_chatty(p)]
+        body = pieces[0] if pieces else ""
+
+    # 残句判定：以「一就」「是」「就」这类断掉的口语收尾，或长度 < 5 且无句读
+    _BROKEN_TAILS = ("一就", "就是", "那个", "然后", "可是", "因为", "的", "了")
+    if body and (len(body) <= 5 or body.endswith(_BROKEN_TAILS)) and "，" not in first:
+        body = ""
+
+    if body:
+        return body[:16] if len(body) > 16 else body
+
+    # ★ 残句/寒暄 都剥不出标题 → 让模型起一个（只准用原话里的信息）
+    ai = _ai_title(raw)
+    return ai or ""
+
+
+def _ai_title(raw: str) -> str:
+    """★ 2026-11-20：残句/寒暄剥不出标题时，让模型另起一句。
+
+    铁律（和老标题规则一致）：**只准用原话里出现过的信息**，不许加原文没有的
+    人名/地名/年份/事件。模型不可用 → 返回空串（宁可留空让界面引导起名，
+    也不印一句残话）。
+    """
+    text = (raw or "").strip()
+    if not text:
         return ""
-    if len(body) > 16:
-        return body[:16]
-    return body
+    try:
+        import llm_brain
+        if not llm_brain.llm_available():
+            return ""
+        msgs = [
+            {"role": "system", "content":
+             "你是帮老人整理回忆的编辑。给下面这段口述起一个标题。\n"
+             "规矩：\n"
+             "1) 6~14 个字，像一句人话，不要书名号、不要引号、不要句号。\n"
+             "2) **只能用这段话里已经出现过的信息**，不许加原文没有的人名、地名、"
+             "年份、事件。\n"
+             "3) 标题要**读得通**：不许把几个词硬拼在一起。"
+             "反例（都是错的）：『1973年出生孩子10岁属牛』『有一个哥有个姐』。\n"
+             "4) 好标题长这样：『我出生在1973年』『我爸是1939年出生的』"
+             "『我们家住在镇上的砖房』。\n"
+             "5) 如果这段话本身就是没讲完的碎句、或者只是聊天（问问题、抱怨），"
+             "不要硬起，直接回两个字：留空。\n"
+             "只输出标题本身。"},
+            {"role": "user", "content": text[:400]},
+        ]
+        raw_out, _why = llm_brain._chat(msgs, temperature=0.3, max_tokens=40)
+        t = (raw_out or "").strip().strip('"').strip("“”").strip("《》")
+        t = t.split("\n")[0].strip().rstrip("。，、")
+        if not t or "留空" in t or len(t) < 4 or len(t) > 16:
+            return ""
+        # 防拼贴：模型爱把两句压成一个"读不通"的短句，如"我出生在1939年的镇上"。
+        # 判据——标题里出现"在…的…"这种把地点/时间硬塞进定语的结构，就不要了，
+        # 退回规则抽句（宁可标题朴素，也不印一句别扭的话）。
+        import re as _re
+        if _re.search(r"在\d{4}年的", t) or _re.search(r"出生在.{2,8}的(镇|村|城|家)", t):
+            return ""
+        # 防拼贴：一串名词直接怼在一起（没有动词/虚词）也判失败
+        if not _re.search(r"[是在有了到去和跟把被让给说住]", t):
+            return ""
+        return t
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("AI 起标题失败", exc_info=True)
+        return ""
 
 
 def _enrich_story_meta(db, story_id: str) -> None:
