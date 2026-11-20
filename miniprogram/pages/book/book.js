@@ -388,7 +388,9 @@ Page({
   onTapGoCapture() {
     wx.navigateTo({
       url: '/pages/capture/capture?type=voice',
-      fail: () => { /* 采集页未就绪时静默 */ }
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
     });
   },
 
@@ -413,7 +415,9 @@ Page({
     const t = encodeURIComponent(d.bookTitle || '我的书');
     wx.navigateTo({
       url: `/pages/card/card?kind=book&target_id=${encodeURIComponent(target)}&title=${t}`,
-      fail: () => { /* 卡片页未就绪时静默 */ }
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
     });
   }
 });

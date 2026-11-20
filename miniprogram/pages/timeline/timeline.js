@@ -94,8 +94,10 @@ Page({
     if (!sid || String(sid) === 'undefined') {
       // 时间待定区里"还没成篇"的碎片 → 继续补素材
       wx.navigateTo({
-        url: '/pages/capture/capture',
-        fail: () => {}
+        url: '/pages/capture/capture?type=voice',
+        fail: () => {
+          wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+        }
       });
       return;
     }

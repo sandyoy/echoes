@@ -51,7 +51,7 @@ Page({
         this.setData({
           stories: list.map((s) => ({
             id: s.story_id,
-            title: s.title || '没起名字的一段',
+            title: s.title || '这段你还没起名，点一下起个名',
             timeRaw: s.time_raw || '',
             updatedAt: s.updated_at || s.created_at || ''
           }))
@@ -174,7 +174,9 @@ Page({
   onOpenInterview() {
     wx.navigateTo({
       url: '/pages/interview/interview',
-      fail: () => { /* 采访页未就绪时静默，不打断 */ }
+      fail: () => {
+        wx.showToast({ title: '采访没打开，请再点一次', icon: 'none' });
+      }
     });
   },
 
@@ -199,7 +201,9 @@ Page({
     if (!sid) return;
     wx.navigateTo({
       url: '/pages/story/story?story_id=' + encodeURIComponent(sid),
-      fail: () => { /* 详情页未就绪时静默 */ }
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
     });
   },
 

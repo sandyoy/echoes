@@ -593,7 +593,12 @@ Page({
           else this._uploadVideo(item, f);
         });
       },
-      fail: () => {}
+      fail: (err) => {
+        // 用户主动取消不算错（wx.chooseMedia: errMsg 含 cancel）；真失败必须出声
+        const msg = (err && err.errMsg) || '';
+        if (/cancel/i.test(msg)) return;
+        wx.showToast({ title: '没能打开相册，请再点一次', icon: 'none' });
+      }
     });
   },
 
@@ -688,7 +693,9 @@ Page({
     if (!sid) { wx.showToast({ title: '还没有故事', icon: 'none' }); return; }
     wx.navigateTo({
       url: `/pages/card/card?kind=story&target_id=${encodeURIComponent(sid)}`,
-      fail: () => { /* 卡片页未就绪时静默 */ }
+      fail: () => {
+        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
+      }
     });
   }
 });
