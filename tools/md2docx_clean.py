@@ -171,8 +171,10 @@ def convert(md_path, docx_path):
     doc.save(docx_path)
 
     # ===== 交付前自动校验 =====
+    # 只取 <w:t> 正文文字，避免把 Word 自身的 XML 标签（tblPr 等）误判成正文残留
     z = zipfile.ZipFile(docx_path)
-    txt = re.sub(r'<[^>]+>', '', z.read('word/document.xml').decode('utf-8','ignore'))
+    xml = z.read('word/document.xml').decode('utf-8', 'ignore')
+    txt = re.sub(r'<[^>]+>', '', ' '.join(re.findall(r'<w:t[^>]*>(.*?)</w:t>', xml, re.S)))
     bad = {}
     for pat, n in [(r'\*\*','星号'), (r'`','反引号'), (r'[\u2600-\u27BF\uFE0F\U0001F300-\U0001FAFF]','emoji'),
                    (r'^#{1,6}\s','井号'), (r'[1-9]️⃣|🔟','圈码')]:
