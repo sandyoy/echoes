@@ -56,7 +56,7 @@ import storage_api
 import tts_api
 import print_api
 import card_render
-
+import card_render_v2
 app = FastAPI(title="往事可追忆 · 采集接口 v1")
 
 
@@ -1279,6 +1279,31 @@ def tts_status():
 # 铁律：只画公开素材（render_story_card 内部过 can_share_story 单一真相源）；
 #      全私有 → 404 not_shareable，**不出一张含私有内容的图**。
 
+def _render_card_png(db, *, kind: str, target_id: str, actor_id: str) -> bytes:
+    """出图总入口：优先家书卡 v2（自述整理+标题交模型+截图拦截），不支持才退回老渲染器。
+
+    为什么要有这一层而不是直接把路由改成 v2：
+      老渲染器还兜着 kind=book（整本书一张）等 v2 未覆盖的形态，
+      直接换掉等于把能用的功能弄坏。这里按「新优先、老兜底」走。
+    """
+    if kind == "story":
+        try:
+            return card_render_v2.render_story_card(db, story_id=target_id)
+        except card_render_v2.NeedMoreContent as e:
+            # 内容还不够做图 → 这是一句给人看的话，不是系统故障
+            raise ValueError(str(e))
+        except (AttributeError, TypeError, KeyError):
+            return card_render.render_story_card(db, story_id=target_id)
+    if kind == "book":
+        try:
+            return card_render_v2.render_book_card(db, owner_id=target_id or actor_id)
+        except card_render_v2.NeedMoreContent as e:
+            raise ValueError(str(e))
+        except (AttributeError, TypeError, KeyError):
+            return card_render.render_book_card(db, owner_id=target_id or actor_id)
+    raise ValueError(f"不认识的卡片类型：{kind}")
+
+
 @app.get("/api/echoes/card/render")
 def card_render_png(kind: str, target_id: str = "", actor_id: str = "",
                     db=Depends(get_db)):
@@ -1293,12 +1318,7 @@ def card_render_png(kind: str, target_id: str = "", actor_id: str = "",
         return bad
 
     try:
-        if kind == "story":
-            png = card_render.render_story_card(db, story_id=target_id)
-        elif kind == "book":
-            png = card_render.render_book_card(db, owner_id=target_id or actor_id)
-        else:
-            return {"ok": False, "code": "bad_kind", "error": f"不认识的卡片类型：{kind}", "data": {}}
+        png = _render_card_png(db, kind=kind, target_id=target_id, actor_id=actor_id)
     except PermissionError as e:
         return {"ok": False, "code": "not_shareable", "error": str(e), "data": {}}
     except ValueError as e:
@@ -1322,15 +1342,8 @@ def card_preview(req: CardPreviewReq, db=Depends(get_db)):
     前端可先调它决定排版；自测靠它做"不信 ok=True"的自证。
     """
     actor = _require_owner(req.actor_id)
-    out = card_render.api_render_card(db, actor_id=actor, kind=req.kind,
-                                      target_id=req.target_id)
-    if not out.get("ok"):
-        return out
     try:
-        if req.kind == "story":
-            png = card_render.render_story_card(db, story_id=req.target_id)
-        else:
-            png = card_render.render_book_card(db, owner_id=req.target_id or actor)
+        png = _render_card_png(db, kind=req.kind, target_id=req.target_id, actor_id=actor)
         chk = card_render.api_card_check(png=png)
     except (PermissionError, ValueError, RuntimeError) as e:
         return {"ok": False, "code": "render_unavailable", "error": str(e), "data": {}}
