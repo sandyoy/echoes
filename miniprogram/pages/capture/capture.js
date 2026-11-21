@@ -633,39 +633,54 @@ Page({
     this.setData({ mediaList: list });
   },
 
-  /** 照片：_uploadBytes 内已走「取址 → POST 表单上传 → confirm 登记」，此处只刷新素材筐 */
+  /**
+   * ★ 11-21 P0：照片/视频曾经的静默失败
+   *   原写法 `if (!storyId) return;` —— 新用户进采集页时 ensureStory 还在路上（弱网更慢），
+   *   chooseMedia 回来 storyId 仍是空 → 直接 return，不传、不提示、缩略图还挂在页面上，
+   *   老人以为存下了，退出后照片就没了。这违反「最小闭环」也违反「禁静默 fail」。
+   *   现在：没筐先等筐（ensureStory 幂等），筐好了照常传；真等不到才明确出声。
+   */
   _uploadPhoto(item) {
-    const { storyId } = this.data;
-    if (!storyId) return;
-    const name = (item.path || '').split('/').pop() || '';
-    const mime = /\.(png)$/i.test(name) ? 'image/png'
-      : /\.(heic)$/i.test(name) ? 'image/heic'
-      : /\.(webp)$/i.test(name) ? 'image/webp' : 'image/jpeg';
-    this._uploadBytes(item.path, name, item.size || 0, mime, 'image')
-      .then(() => this.refreshClips())
-      .catch((e) => {
-        wx.showModal({ title: '照片没存上', content: e.message || '稍后再试', showCancel: false });
-      });
+    this.ensureStory().then((sid) => {
+      if (!sid) {
+        wx.showModal({ title: '照片没存上', content: '还没连上服务器，稍等一下再选一次', showCancel: false });
+        return;
+      }
+      const name = (item.path || '').split('/').pop() || '';
+      const mime = /\.(png)$/i.test(name) ? 'image/png'
+        : /\.(heic)$/i.test(name) ? 'image/heic'
+        : /\.(webp)$/i.test(name) ? 'image/webp' : 'image/jpeg';
+      this._uploadBytes(item.path, name, item.size || 0, mime, 'image')
+        .then(() => this.refreshClips())
+        .catch((e) => {
+          wx.showModal({ title: '照片没存上', content: e.message || '稍后再试', showCancel: false });
+        });
+    });
   },
 
   /** 视频：_uploadBytes 内已走「取址 → POST 表单上传 → confirm 登记（kind=video，缩略图作 cover）」 */
   _uploadVideo(item, file) {
-    const { storyId } = this.data;
-    if (!storyId) return;
-    const name = (item.path || '').split('/').pop() || '';
-    const mime = /\.(mov)$/i.test(name) ? 'video/quicktime'
-      : /\.(m4v)$/i.test(name) ? 'video/x-m4v' : 'video/mp4';
-    wx.showLoading({ title: '上传中' });
-    this._uploadBytes(item.path, name, item.size || 0, mime, 'video')
-      .then(() => {
-        wx.hideLoading();
-        wx.showToast({ title: '视频存下了', icon: 'success' });
-        this.refreshClips();
-      })
-      .catch((e) => {
-        wx.hideLoading();
-        wx.showModal({ title: '视频没存上', content: e.message || '稍后再试', showCancel: false });
-      });
+    // ★ 11-21 同 _uploadPhoto：不许因 storyId 还没就绪就静默丢弃视频
+    this.ensureStory().then((sid) => {
+      if (!sid) {
+        wx.showModal({ title: '视频没存上', content: '还没连上服务器，稍等一下再选一次', showCancel: false });
+        return;
+      }
+      const name = (item.path || '').split('/').pop() || '';
+      const mime = /\.(mov)$/i.test(name) ? 'video/quicktime'
+        : /\.(m4v)$/i.test(name) ? 'video/x-m4v' : 'video/mp4';
+      wx.showLoading({ title: '上传中' });
+      this._uploadBytes(item.path, name, item.size || 0, mime, 'video')
+        .then(() => {
+          wx.hideLoading();
+          wx.showToast({ title: '视频存下了', icon: 'success' });
+          this.refreshClips();
+        })
+        .catch((e) => {
+          wx.hideLoading();
+          wx.showModal({ title: '视频没存上', content: e.message || '稍后再试', showCancel: false });
+        });
+    });
   },
 
   // ==================== 保存 ====================
