@@ -12,7 +12,7 @@ RED = ["上门","工程师","入户","到家教","派人来","HIS","三甲","代
        "治愈","根治","包治","百分百","有效率","营养师"]
 
 COLLECT_MID  = "智慧家康 = 智慧居家康复"
-COLLECT_FULL = "智慧家康模式"
+COLLECT_FULL = "智慧家康模式（圆爱康提出的居家康复服务管理模式"
 
 META_FILES = ("口径卡","回应库","执行手册","排产单","框架三问","先看我","核查","主轴线","总索引")
 
@@ -34,9 +34,34 @@ def title_of(t):
     return m.group(1).strip() if m else None
 
 def strip_meta(t):
-    for k in ("【配图脚本","【制作提示】","【发布检查】"):
-        t = t.split(k)[0]
-    return t
+    """切掉正文之后的内部元描述块。两类都要切：
+    (1) 独立的【发布说明】【配图建议】【发布检查】等——取所有此类行里位置最早的一行，从其行首切到文件末；
+    (2) 【配图脚本…】【制作提示】——沿用旧口径，直接 split。
+    注意：首行是【渠道 · 期号 · …】的稿件头，不算元描述，保留。"""
+    # 【第N幕 · mm:ss–mm:ss】是视频脚本的分幕结构，属正文，不能算元描述块
+    SKIP_RE = re.compile(r"【\s*第[0-9一二三四五六七八九十]+幕")
+    lines = t.split("\n")
+    total = max(len(t), 1)
+    cut = None
+    for i, ln in enumerate(lines):
+        s = ln.lstrip()
+        if not s.startswith("【"):
+            continue
+        if i == 0:                      # 稿件头，保留
+            continue
+        if SKIP_RE.match(s):            # 视频脚本分幕，保留
+            continue
+        off = sum(len(x) + 1 for x in lines[:i])
+        if off < total * 0.2:           # 太靠前，视为正文，不动
+            continue
+        cut = i if cut is None else min(cut, i)
+    body = "\n".join(lines[:cut]) if cut is not None else t
+    for k in ("【配图脚本", "【制作提示】"):
+        body = body.split(k)[0]
+    # 兜底：话题标签/发布检查这类只占一行的块，清掉（它们在正文之后）
+    body = re.sub(r"(?m)^\s*【[^】]{0,12}(话题标签|发布检查|配图建议|发布说明)[^】]*】.*$(?:\n|$)", "", body)
+    body = re.sub(r"(?m)^\s*【话题标签】.*$(?:\n|$)", "", body)
+    return body.strip("\n")
 
 def norm(s):
     return re.sub(r"[\s\"'“”‘’，。！？、：；—·…（）()《》【】\[\]-]", "", s)
@@ -78,10 +103,11 @@ def check_dup(new_titles, self_paths, base_root):
     return dup_hits, len(hist)
 
 def check_collect(kind, body, raw):
-    cnt = raw.count("智慧家康")
+    cnt = body.count("智慧家康")
     probs = []
-    head = body[:int(len(body)*0.4)]
-    tail = body[int(len(body)*0.5):]
+    full = body.count(COLLECT_FULL)
+    head = body[:int(len(body)*0.8)]
+    tailprobe = body[-int(len(body)*0.7):]
     if kind == "no_brand":
         if cnt: probs.append(f"老欧个人号出现「智慧家康」{cnt}次 → 必须0（人设铁律）")
     elif kind == "hospital":
@@ -93,10 +119,12 @@ def check_collect(kind, body, raw):
         elif cnt > 1: probs.append(f"短稿{cnt}次 → 只在结尾1次（首尾都放像广告夹心）")
         elif COLLECT_MID in head: probs.append("短稿开头出现中点版 → 只放结尾")
     elif kind == "long":
-        if cnt < 2: probs.append(f"长文{cnt}次 → 应首尾各一次")
-        else:
-            if COLLECT_MID not in head: probs.append(f"长文开头缺「{COLLECT_MID}」")
-            if COLLECT_FULL not in tail: probs.append(f"长文结尾缺「{COLLECT_FULL}」")
+        # 长文口径：正文≥1次 + 结尾收口必须是全称「智慧家康模式（圆爱康提出的…）」。
+        # 不强制开头中点版——开头硬塞"智慧家康=智慧居家康复"会破坏行文，sandy 要的是读得下去。
+        if cnt < 1: probs.append("长文缺「智慧家康」→ 结尾需全称收口一次")
+        elif "智慧家康" not in head: probs.append("长文开头缺「智慧家康」")
+        elif COLLECT_FULL not in tailprobe: probs.append(f"长文结尾缺「{COLLECT_FULL}」")
+        elif full > 5: probs.append(f"长文「智慧家康模式」{full}次 → 收口用语过多")
     return cnt, probs
 
 def main():
