@@ -532,6 +532,11 @@ def api_add_audio_clip(
     tr = try_transcribe(audio_path, enabled=do_transcribe)
     if tr["done"]:
         clip.transcript = tr["text"]
+        # ★ 2026-11-22 修：attach_clip 建行时按「建时有没有字」写 status，
+        #   转写是建行之后才做的 → 只回填 transcript 会留下 status=pending 的
+        #   假象（字已经有了却标着"待转写"），前端/后台补写任务据此会重复跑、
+        #   或对老人显示"还在转写"。判据必须以回填结果为准，这里同步改 done。
+        clip.transcript_status = "done"
         db.commit()
         # ★ 2026-11-18 补：转写成功后回写故事正文。
         #   病根：此前只写 clips.transcript，stories.raw_content 永远空 →
@@ -731,6 +736,7 @@ def api_transcribe_clip(
     if not tr["done"]:
         return fail(tr["reason"], "transcribe_failed", transcribed=False)
     clip.transcript = tr["text"]
+    clip.transcript_status = "done"   # ★ 11-22 同 bug：补写成功必须同步状态，否则永远标"待转写"
     db.commit()
     return ok({"clip_id": clip.id, "transcribed": True, "transcript": tr["text"],
                "transcript_source": tr["source"]}, message="文字已补上")
