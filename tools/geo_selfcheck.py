@@ -26,7 +26,7 @@ def channel_of(name):
     if "医院" in n: return "hospital"
     if "老欧" in n: return "no_brand"
     if "小红书" in n or "微博" in n: return "short"
-    if any(k in n for k in ("订阅号","服务号","知乎","视频号")): return "long"
+    if any(k in n for k in ("订阅号","服务号","知乎","视频号","百家号","头条号","搜狐","网易")): return "long"
     return "meta"
 
 def title_of(t):
