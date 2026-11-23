@@ -18,8 +18,14 @@
     <view class="hint">按住说话，松开就记下了</view>
     <view class="hold-dock">
       <view class="hold-circle {{recording ? 'recording' : ''}}"
-            bindtouchstart="onHoldStart" bindtouchend="onHoldEnd">
+            bindtouchstart="onHoldStart" bindtouchend="onHoldEnd"
+            bindtouchcancel="onHoldEnd">
         {{recording ? '松 开' : '按住说话'}}
+      </view>
+      <!-- ★ 11-23 补：最小闭环第一步「屏幕出秒数（知道在录）」——原来只有按钮文字变，
+           老人不知道到底录上了没。现在按住期间实时出秒数 + 红点。 -->
+      <view wx:if="{{recording}}" class="rec-timer">
+        <view class="rec-dot"></view>{{recSecText}}
       </view>
     </view>
   </block>

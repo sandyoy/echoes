@@ -51,6 +51,8 @@ Page({
     actorId: '',
     text: '',
     recording: false,
+    recSec: 0,
+    recSecText: '00:00',
     mediaList: [],     // 本地已选/已录素材（仅展示用）
     clips: [],         // 后端素材筐（已排序，直接渲染）
     ownerId: '',       // 书的主人（权限判定的根）；空＝用 actorId 顶上（自述场景）
@@ -275,13 +277,60 @@ Page({
     }
     this._recStart = Date.now();
     this._recStopped = false;   // ★ 2026-10-31 补：松手标志，防 rm.onStop 重复触发把同一段记两遍
-    this.setData({ recording: true });
+    this.setData({ recording: true, recSec: 0, recSecText: '00:00' });
     wx.vibrateShort && wx.vibrateShort();
+    // ★ 11-23 补：秒数计时（最小闭环第一步）。每 200ms 对齐一次「按住时长」而不是自增，
+    //   避免 setInterval 被后台挂起后秒数走偏；停止时一律清掉。
+    this._clearRecTimer();
+    this._recTimer = setInterval(() => {
+      if (!this.data.recording) { this._clearRecTimer(); return; }
+      const sec = Math.floor((Date.now() - (this._recStart || Date.now())) / 1000);
+      const was = this.data.recSec || 0;
+      if (sec !== was || !this.data.recSecText) {
+        const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+        const ss = String(sec % 60).padStart(2, '0');
+        this.setData({ recSec: sec, recSecText: mm + ':' + ss });
+      }
+    }, 200);
     const rm = wx.getRecorderManager && wx.getRecorderManager();
     if (!rm) { this._recSupported = false; return; }
     this._recSupported = true;
     this._onStop = (res) => this._handleRecordStop(res);
+    // ★ 11-23 修（真机高风险）：RecorderManager 是全局单例，每次按下都 onStop 注册一次会累积，
+    //   第 N 次按住时同一段录音的回调会跑 N 次。先 off 掉上一次再注册。
+    if (rm.offStop && this._boundStop) { try { rm.offStop(this._boundStop); } catch (e) {} }
+    this._boundStop = this._onStop;
     rm.onStop(this._onStop);
+    // ★ 11-23 补（真机高风险）：来电/切后台/被其他 App 抢麦克风 → 录音被系统掐断，
+    //   此时 touchend 不会来也不会有 onStop。不处理就会卡在「松开」、秒数一直跑、老人以为还在录。
+    //   处理：立刻把界面收起、清计时器、明说这段停下了（不静默）。
+    if (rm.onInterruptionBegin) {
+      if (rm.offInterruptionBegin && this._boundInterrupt) { try { rm.offInterruptionBegin(this._boundInterrupt); } catch (e) {} }
+      this._boundInterrupt = () => {
+        if (!this.data.recording) return;
+        this.setData({ recording: false, recSec: 0, recSecText: '00:00' });
+        this._clearRecTimer();
+        this._recStart = 0;
+        this._recDiscardNext = true;   // 掐断的这段不完整，别当正常录音上传
+        this.setData({ notice: '刚才被别的事打断了，再按住说一次' });
+      };
+      rm.onInterruptionBegin(this._boundInterrupt);
+    }
+    // ★ 11-23 补：录音器报错（没授权麦克风/被占用）必须让老人看见，不能只有按钮在变
+    if (rm.onError) {
+      if (rm.offError && this._boundRecErr) { try { rm.offError(this._boundRecErr); } catch (e) {} }
+      this._boundRecErr = (err) => {
+        this.setData({ recording: false, recSec: 0, recSecText: '00:00' });
+        this._clearRecTimer();
+        this._recStart = 0;
+        const msg = (err && /auth|deny|permission/i.test(String(err.errMsg || '')))
+          ? '手机没允许用麦克风，去设置里打开就能录'
+          : '录音没开起来，再试一次';
+        this.setData({ notice: msg });
+        wx.showToast({ title: msg, icon: 'none' });
+      };
+      rm.onError(this._boundRecErr);
+    }
     rm.start({
       duration: 15 * 60 * 1000,          // 15 分钟上限（超了后端给分段 notice）
       sampleRate: 16000, numberOfChannels: 1,
@@ -293,6 +342,7 @@ Page({
   onHoldEnd() {
     if (!this.data.recording) return;
     this.setData({ recording: false });
+    this._clearRecTimer();
     // ★ 2026-10-31 补：真机触点太短（<0.5s）时 onStop 的 duration 可能为 0，
     //   用按住时长兜底判「误碰」，避免把误碰当正常录音上传
     if (this._recStart && Date.now() - this._recStart < MIN_AUDIO_SEC * 1000) {
@@ -382,7 +432,16 @@ Page({
     }
   },
 
+  /** ★ 11-23：秒数计时器清理（松手/误碰/页面卸载都必须清，否则后台一直跑） */
+  _clearRecTimer() {
+    if (this._recTimer) {
+      clearInterval(this._recTimer);
+      this._recTimer = null;
+    }
+  },
+
   onUnload() {
+    this._clearRecTimer();
     Object.keys(this._players || {}).forEach((k) => {
       try { this._players[k].destroy(); } catch (e) {}
     });

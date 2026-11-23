@@ -316,6 +316,10 @@ Page({
     }, 500);
 
     this._onStop = (res) => this._handleRecStop(res);
+    // ★ 11-23 修（真机高风险）：RecorderManager 是全局单例，每轮问答都 onStop 注册一次会累积，
+    //   第 N 轮回答时同一段录音的回调跑 N 次（=重复上传/重复接话）。先 off 上一次再注册。
+    if (rm.offStop && this._boundStop) { try { rm.offStop(this._boundStop); } catch (e) {} }
+    this._boundStop = this._onStop;
     rm.onStop(this._onStop);
     rm.start({
       duration: 5 * 60 * 1000,        // 一次回答最长 5 分钟，够了
