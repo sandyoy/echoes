@@ -60,6 +60,31 @@
 /* 有吸底圆圈时给页面留出底部空间，防最后一行被圆圈压住 */
 .has-hold-dock { padding-bottom: 260rpx; }
 
+/* ★ 11-23 补：录音中秒数（最小闭环第一步「屏幕出秒数」）。大字、醒目、给老人看得清 */
+.rec-timer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20rpx;
+  font-size: 44rpx;
+  font-weight: 600;
+  color: #c0392b;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2rpx;
+}
+.rec-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: #c0392b;
+  margin-right: 14rpx;
+  animation: rec-blink 1s infinite;
+}
+@keyframes rec-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}
+
 /* ============================================================
    ★ 保存键吸底（2026-11-20 sandy 真机实测，第 N 次）
    病根：保存键在流内、排在「这件事已经有 N 项」后面 →
