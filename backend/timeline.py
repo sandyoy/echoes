@@ -124,6 +124,17 @@ RE_OTHER_AGE_YEAR = re.compile(
 # 光秃秃的 "8岁那年"（无主语）→ 不猜，走待定
 RE_NAKED_AGE_YEAR = re.compile(r"(?<![我俺儿子女儿岁])\s*(\d{1,2}|[一二三四五六七八九十]{1,3})\s*岁(?:那|的)?(?:一)?年")
 
+# ★ 2026-11-23 新增：**句首省略主语**的「十七岁那年」
+#   病根（11-23 sandy 真机 + selftest_group_api T1 双双暴露）：
+#     老人真口语是「我八岁那年上学。十七岁那年就去当兵了。」——第二句主语全省了。
+#     RE_AGE_YEAR 强制要求「我/俺/自己」→ 第二个时间点整条丢失 → 段落切不开。
+#   铁律：只在**句子开头**（文本起头 / 句末标点后 / 逗号分号后）才认定主语=讲述人；
+#     句中出现的「N岁那年」仍走 RE_NAKED_AGE_YEAR 待定，绝不硬挂到讲述人身上
+#     （防「我儿子8岁那年」被吃成「我8岁」的老坑，11-17 修过一次，不许回退）。
+RE_LEADING_AGE_YEAR = re.compile(
+    r"(?:^|(?<=[。！？!?；;，,\n]))\s*(\d{1,2}|[一二三四五六七八九十]{1,3})\s*岁(?:那|的)?(?:一)?年"
+)
+
 RE_MARRIAGE_N = re.compile(r"(?:嫁过来|结婚|过门)(?:的)?第\s*(\d{1,2}|[一二三四五六七八九十]{1,3})\s*年")
 RE_MOVE_N = re.compile(r"(?:搬|迁)(?:到|来)(?:这|那)?(?:儿|里)?(?:的)?第\s*(\d{1,2})\s*年")
 
@@ -352,6 +363,30 @@ def extract_time(text: str, anchors: Optional[dict] = None) -> TimeResult:
             precision=Precision.FUZZY.value, sort_key=None,
             method=Method.LIFE_ANCHOR.value,
             evidence=m.group(0), confidence=0.4,
+            note=f"⚠️ 缺出生年锚点，无法换算 → 时间待定（不猜）",
+        )
+
+    # ★ 2026-11-23 新增：句首省略主语的「十七岁那年」→ 主语按讲述人算
+    #   只能放在「我N岁」之后：显式主语的表述优先，本分支只兜老人口语省主语的情况。
+    #   位置锚定在句首，句中「N岁那年」不在此处理（走 RE_NAKED_AGE_YEAR 待定）。
+    m_lead = RE_LEADING_AGE_YEAR.search(t)
+    if m_lead:
+        age = _cn2int(m_lead.group(1))
+        birth = anchors.get('birth_year')
+        if age is not None and birth:
+            y = birth + age
+            return TimeResult(
+                raw=m_lead.group(0).strip(), label=f"{y}年（老人说的「{age}岁那年」）",
+                precision=Precision.YEAR.value, sort_key=y, start_year=y, end_year=y,
+                method=Method.LIFE_ANCHOR.value,
+                evidence=m_lead.group(0).strip(), confidence=0.82,
+                note=f"句首省略主语 → 按讲述人出生年 {birth} + {age} 岁推算",
+            )
+        return TimeResult(
+            raw=m_lead.group(0).strip(), label=f"老人说的「{age}岁那年」",
+            precision=Precision.FUZZY.value, sort_key=None,
+            method=Method.LIFE_ANCHOR.value,
+            evidence=m_lead.group(0).strip(), confidence=0.38,
             note=f"⚠️ 缺出生年锚点，无法换算 → 时间待定（不猜）",
         )
 

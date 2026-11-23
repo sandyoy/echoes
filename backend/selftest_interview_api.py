@@ -70,12 +70,16 @@ mk_user(OWNER)
 mk_user(OTHER)
 mk_user(VIEWER)
 
-# --- ① 开始采访：无锚点 → 优先问出生年 ---
+# --- ① 开始采访：★11-20 sandy 定「开场是把话筒递过去，不是查户口」---
+#   原断言（要求第一句就报出生年）与 11-20 口径冲突，已按定稿口径改：
+#   第一句必须是开放提问，锚点只作后台待办（missing_anchors 里必须还挂着 birth）。
 r = I.api_start_interview(db, owner_id=OWNER, viewer_id=OWNER)
 check("①开始采访 ok", r.get("ok") is True, r)
 q = r["data"]["question"]
-check("①优先问人生锚点(出生)", q["kind"] == "anchor" and q["anchor_type"] == "birth",
+check("①开场是聊天式倾听(非查户口)", q["kind"] == "open" and q["anchor_type"] == "",
       q)
+check("①锚点仍挂在后台待办(出生)", "birth" in (r["data"].get("missing_anchors") or []),
+      r["data"].get("missing_anchors"))
 check("①问完留等待(不连珠炮)", r["data"]["wait_ms"] > 0, r["data"])
 check("①允许跑题", r["data"]["follow_digression"] is True, r["data"])
 
@@ -106,8 +110,13 @@ check("④原样接回刚才那问", r["data"]["question"]["text"] == "您是哪
 r = I.api_next_question(db, owner_id=OWNER, viewer_id=OWNER,
                         last_answer="1972年结的婚，那天下了大雨",
                         interrupted_question="您是哪年结的婚呀？")
-check("④答清了→不 resume", r["data"]["state"] in ("asking", "following_answer"), r["data"])
-check("④答清了→一定还给出下一问", bool(r["data"]["question"].get("text")), r["data"])
+check("④答清了→不 resume", r["data"]["state"] in ("asking", "following_answer", "acknowledged"), r["data"])
+# ★11-20：no_ask=True（这句是「记下了/我听着」而非提问）时前端**不该**追下一问，
+#   故「一定给出下一问」只在非 no_ask 时成立。
+if r["data"].get("no_ask"):
+    check("④答清了→no_ask时不硬追下一问", r["data"]["wait_ms"] >= 4000, r["data"])
+else:
+    check("④答清了→一定还给出下一问", bool(r["data"]["question"].get("text")), r["data"])
 
 # --- ⑤ ★打断判定 ---
 r = I.api_barge_in(db, energy_db=-10.0)   # 大声 = 老人出声

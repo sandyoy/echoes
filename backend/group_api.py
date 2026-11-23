@@ -84,14 +84,16 @@ _CLAUSE_SPLIT = re.compile(r"(?<=[，,])")
 # 不判具体年份——具体解析仍走 timeline.extract_time，不另造一套算法）。
 from timeline import (  # noqa: E402
     RE_YEAR_FULL, RE_YEAR_MONTH, RE_YEAR_MONTH_DAY,
-    RE_DECADE_CN, RE_AGE_YEAR, RE_MARRIAGE_N, RE_CHILD_YEAR,
+    RE_DECADE_CN, RE_AGE_YEAR, RE_LEADING_AGE_YEAR, RE_MARRIAGE_N, RE_CHILD_YEAR,
     HISTORY_EVENTS, extract_time,
 )
 
 # 所有"能定位到位置"的时间线索正则（用于切分找切点）
+# ★ 2026-11-23：补 RE_LEADING_AGE_YEAR（句首省主语的「十七岁那年」），
+#   否则「我八岁那年上学。十七岁那年就当兵了」只找到一个时间点 → 不切段。
 _TIME_LOCATORS = [
     RE_YEAR_MONTH_DAY, RE_YEAR_MONTH, RE_YEAR_FULL,
-    RE_DECADE_CN, RE_AGE_YEAR, RE_MARRIAGE_N, RE_CHILD_YEAR,
+    RE_DECADE_CN, RE_AGE_YEAR, RE_LEADING_AGE_YEAR, RE_MARRIAGE_N, RE_CHILD_YEAR,
 ]
 
 # 历史事件词表（无位置正则，靠 str.find 定位）
