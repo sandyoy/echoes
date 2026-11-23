@@ -80,6 +80,9 @@ Page({
 
     // ★ 收尾确认（P0-2 · D 组 recap_confirm，§7.6 C 方案）
     qaPairs: [],            // [{"q":..,"a":..}] 本轮一问一答，收尾时交给后端理顺
+    chatIntoView: '',       // ★ 11-23 对话流自动滚到最新一句
+    polishing: false,       // ★ 11-23 收尾后正在捋成一段话
+    polishedDone: false,
 
     // ★ 11-10 sandy 实测「没有编导」→ 加一条编导进度骨（像书的目录，一段一格）
     scriptSteps: [],        // [{key,name,state:'done'|'now'|'todo',done}]
@@ -229,6 +232,17 @@ Page({
       // 播完留 wait_ms 再开始听（AI 主动让路，别连珠炮）
       const ms = this.data.waitMs || 0;
       setTimeout(() => { this.startListening(); }, ms);
+    });
+  },
+
+  /** ★ 11-23：对话流滚到最新一句（微信那种一直看得到刚说完的话）
+   *  用 scroll-into-view 让 scroll-view 自己滚——比算页面坐标稳，
+   *  不会被吸底圆圈/键盘高度搅乱。 */
+  scrollChatToEnd() {
+    wx.nextTick && wx.nextTick(() => {
+      this.setData({ chatIntoView: '' }, () => {
+        this.setData({ chatIntoView: 'chatEnd' });
+      });
     });
   },
 
@@ -505,8 +519,9 @@ Page({
       .then((data) => {
         // ★ 把这一组问答存下来，收尾时一并交给 recap_confirm 理顺成一段话
         const pairs = this.data.qaPairs.slice();
-        if (q || answer) pairs.push({ q: q, a: answer });
+        if (q || answer) pairs.push({ idx: pairs.length, q: q, a: answer });
         this.setData({ submitting: false, lastAnswer: '', interruptCount: 0, qaPairs: pairs });
+        this.scrollChatToEnd();             // ★ 11-23：像微信一样，新一句出现就滚到最新
         this.showQuestion(data);            // state=resumed 时会原样接回刚才那问
       })
       .catch((err) => {
@@ -628,6 +643,20 @@ Page({
         wx.showToast({ title: dd.apply_error || '话记好了，但没存进故事', icon: 'none' });
       } else {
         wx.showToast({ title: '记下来了', icon: 'none' });
+        // ★★ 11-23 sandy 真机：「一句话问一句，根本没润色」。
+        //   病根：润色接口后端一直有、能用，但前端从来没调过一次（全仓零调用）。
+        //   现在老人点了「对」= 认可这段内容 → 立刻把这篇捋成一篇完整自述体（不再是一问一答）。
+        //   失败不打扰老人（都记下来了），只留个日志：绝不因为润色失败让老人以为白说了。
+        const sid = dd.story_id || this.data.storyId;
+        if (sid) {
+          this.setData({ polishing: true });
+          api.polishStory(sid, true).then((pr) => {
+            this.setData({ polishing: false, polishedDone: !!(pr && pr.ok) });
+          }).catch((e) => {
+            this.setData({ polishing: false });
+            console.warn('[interview] 润色没成，但内容已存', e && e.message);
+          });
+        }
       }
     }).catch((err) => {
       this.setData({ recapBusy: false });

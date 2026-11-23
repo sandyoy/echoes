@@ -101,11 +101,12 @@ Page({
     });
   },
 
-  /** 删这条故事 —— 二次确认，真删在后端，前端不自己从列表里偷删 */
+  /** 删这条故事 —— 二次确认，真删在后端，前端不自己从列表里偷删
+   *  ★ 11-23 修：原来 ownerId 取页面参数 q.owner_id（可能是空的或别人的），
+   *    后端据此判「不是主人」→ 本人删自己的故事被拒。现在一律用当前登录人。 */
   onDelete() {
-    const story = this.data.story || {};
-    const ownerId = this.data.ownerId;
-    const actorId = (app.globalData && app.globalData.userId) || ownerId;
+    const ownerId = (app.globalData && app.globalData.userId) || this.data.ownerId;
+    const actorId = ownerId;
     wx.showModal({
       title: '删掉这条故事？',
       content: '删了就找不回来了',

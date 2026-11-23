@@ -52,6 +52,25 @@
         <view class="q-resumed" wx:if="{{state === 'resumed'}}">（接着刚才那句问）</view>
       </view>
 
+      <!-- ★★ 11-23 sandy 真机：「只能展示当前的说话，连对话都展示不出来，
+           跟人对话的过程了，像微信一样」。
+           病根：qaPairs 一直在存（每轮 q+a 都 push），但 wxml 里从没画过它 →
+                 屏幕上永远只有「当前这一问」，上一句被顶没了，看不出是场对话。
+           做法：微信式对话流——老人说的靠右（绿气泡），AI 问的靠左（白气泡），
+                 新的一句追加到底部并自动滚到最新。只显示说过的话，不占地方也不打扰。 -->
+      <scroll-view class="chat-flow" scroll-y scroll-into-view="{{chatIntoView}}"
+                   scroll-with-animation wx:if="{{qaPairs.length > 0}}">
+        <block wx:for="{{qaPairs}}" wx:key="idx">
+          <view class="chat-row me">
+            <view class="chat-bubble me">{{item.a}}</view>
+          </view>
+          <view class="chat-row ai">
+            <view class="chat-bubble ai">{{item.q}}</view>
+          </view>
+        </block>
+        <view class="chat-anchor" id="chatEnd"></view>
+      </scroll-view>
+
       <!-- ★打断提示（老人一出声就显示） -->
       <view wx:if="{{bargeTip}}" class="barge-tip">{{bargeTip}}</view>
 
@@ -122,8 +141,9 @@
   <!-- ===== 收尾完成 ===== -->
   <view wx:if="{{finished}}" class="mask" catchtap="noop"></view>
   <view wx:if="{{finished}}" class="sheet" catchtap="noop">
-    <view class="sheet-read">记下来了</view>
-    <view class="sheet-ask">您讲的这段，我给您存好了。</view>
+    <view class="sheet-read">{{polishing ? '正在给您理顺成一段话…' : '记下来了'}}</view>
+    <view class="sheet-ask" wx:if="{{polishing}}">您讲的这段已经存好，我在把它捋顺成一篇。</view>
+    <view class="sheet-ask" wx:else>您讲的这段，我给您存好了。整理成一篇了，就在您书里。</view>
     <view class="sheet-btn" bindtap="onBackHome">回首页</view>
   </view>
 

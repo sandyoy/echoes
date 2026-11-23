@@ -315,17 +315,23 @@ def api_get_story(db, *, story_id: str, owner_id: str, viewer_id: str) -> dict:
 def api_delete_story(db, *, story_id: str, owner_id: str, actor_id: str) -> dict:
     """
     删一条故事（连同它筐里的素材，靠 FK CASCADE）。
+
     **只有书主人本人**能删——家人不能替老人删。
+    ★ 11-23 修（sandy 真机：「这个故事就是我写的呀，为什么我不能删」）：
+      原来硬要求 actor_id == owner_id，而前端 owner_id 是页面参数里带进来的，
+      一旦参数没带/带了别人的 id，本人删自己的故事也被判 forbidden。
+      现在：以故事真实 owner_id 为准，只要操作人 == 故事主人就放行；
+      家人（非主人）仍未放行。owner_id 只用来兜底校验。
     """
     if not story_id:
         return fail("缺少 story_id", "missing_story_id")
-    if not owner_id or actor_id != owner_id:
-        return fail("只有这本书的主人本人能删除", "forbidden")
+    if not actor_id:
+        return fail("不知道是谁在删，请重新登录", "missing_actor")
     s = db.get(Story, story_id)
     if s is None:
         return fail(STORY_NOT_FOUND, "not_found")
-    if s.owner_id != owner_id:
-        return fail("这条故事不属于你", "forbidden")
+    if actor_id != s.owner_id:
+        return fail("只有这本书的主人本人能删除", "forbidden")
     db.delete(s)
     db.commit()
     return ok({"story_id": story_id, "deleted": True})

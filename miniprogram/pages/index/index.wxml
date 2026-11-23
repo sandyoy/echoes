@@ -8,9 +8,10 @@
     <!-- 大按钮吸底固定（sandy 11-20：必须在屏幕下三分之一内，方便老人单手拇指按）
          吸附在底部安全区之上，不随内容滚动，任何时候都能一伸手够到 -->
     <view class="hold-dock">
-      <view class="big-btn hold"
+      <view class="big-btn hold {{holding ? 'holding' : ''}}"
             bindtouchstart="onHoldStart"
-            bindtouchend="onHoldEnd">
+            bindtouchend="onHoldEnd"
+            bindtouchcancel="onHoldEnd">
         按住说话
       </view>
       <!-- 切换/更多藏在按钮下方小字里，不露出「设置/权限/分享」字样（v2.4 §3.3） -->

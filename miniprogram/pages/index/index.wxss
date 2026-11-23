@@ -207,6 +207,10 @@
   box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
 }
 /* 吸底区域内的按钮：加高到 180rpx（原 160rpx），老人拇指按下不易滑出 */
+.hold-dock .big-btn.hold.holding {
+  background: #a8402f;
+  transform: scale(0.97);
+}
 .hold-dock .big-btn.hold {
   height: 180rpx;
   line-height: 180rpx;

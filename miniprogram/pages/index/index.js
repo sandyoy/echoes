@@ -19,6 +19,7 @@ const api = require('../../utils/api.js');
 Page({
   data: {
     uiMode: 'standard',
+    holding: false,
     stories: [],            // 故事列表（当前本地占位；P0-2 接 /story/list 后换真数据）
     mentionedCount: 0,      // 有 N 篇故事提到了你（后端算，前端只显示）
     loginReady: false,      // 登录是否已成功（真登录态）
@@ -148,15 +149,19 @@ Page({
     this.setData({ uiMode: next });
   },
 
-  /** 大字版主入口：按住说话 → 采集页 */
+  /** 大字版主入口：按住说话 → 采集页（录音在采集页真做）
+   *  ★ 11-23 修：原来只有 bindtouchstart 跳页、没有任何反馈，老人手指按下去
+   *    页面就跳走了，感觉「按了没反应 / 说不了话」。现在按下给震动+按钮变红，
+   *    松手才跳，跳过去的采集页圆圈已修好（不再被保存键盖住）。 */
   onHoldStart() {
-    // TODO(接口): 录音 + ASR（后端 B/C 线，小鲸鱼负责）
-    // 第1期先跳采集页，录音能力等接口定义
-    wx.navigateTo({ url: '/pages/capture/capture?type=voice' });
+    this.setData({ holding: true });
+    wx.vibrateShort && wx.vibrateShort({ type: 'medium' });
   },
 
   onHoldEnd() {
-    // 按住结束占位；真实录音 stop 由 ASR 接口接入后实现
+    if (!this.data.holding) return;
+    this.setData({ holding: false });
+    wx.navigateTo({ url: '/pages/capture/capture?type=voice' });
   },
 
   /** 卡1「现在就说」→ 进采集页（语音）。进门默认语音，其余录法在采集页里选 */

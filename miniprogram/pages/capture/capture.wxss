@@ -11,12 +11,13 @@
 .big-btn.recording { background: #c0392b; }
 
 /* ============================================================
-   ★ 按住说话：固定屏幕底部（11-08 sandy 真机实测铁律）
-   病根：原来是普通流内元素，内容一长按钮就被顶下去 / 被键盘遮挡，
-         老人找不到、按不稳。
-   做法：dock 吸底（不随内容滚），圆圈直径 160rpx（>120rpx 拇指够按），
-         外面留安全区给 iPhone 底条。
-   ⚠️ 所有「按住说话」的页面统一用这一套（capture / interview）。
+   ★ 11-23 修：按住说话圆圈 + 保存键【叠在一起】导致圆圈被完全盖住
+   病根：两个都是 position:fixed; bottom:0，保存键是整屏宽横条、
+         z-index 相同但后渲染 → 圆圈被压到底下看不见。
+         老人点进来只看到「按住说话」四个字和一个「保存」键，
+         根本没有可以按的地方 → 录不上 → 保存时报「还没录上」。
+   做法：把两者收进同一个吸底容器，竖向排列——圆圈在上、保存键在下，
+         一个容器贴底，不再互相遮挡。
    ============================================================ */
 .hold-dock {
   position: fixed;
@@ -24,9 +25,6 @@
   right: 0;
   bottom: 0;
   z-index: 90;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   padding: 16rpx 0 calc(24rpx + env(safe-area-inset-bottom));
   /* 底色带一点向上渐隐，内容滚到底也不压字 */
   background: linear-gradient(to bottom, rgba(245,247,250,0) 0%, rgba(245,247,250,0.96) 30%, rgba(245,247,250,1) 100%);
@@ -93,6 +91,16 @@
          用 padding-bottom 给流内内容让位 → 内容再长也不会压住最后一条。
    ⚠️ 首层 .container 不设 padding-top，fixed 直接贴 kou底部，不受影响。
    ============================================================ */
+/* ============================================================
+   ★ 11-23 修：保存键不再自己吸底，改由 .hold-dock 容器统一管
+   病根（2026-11-20 起的真机问题）：保存键自己 position:fixed; bottom:0，
+         而「按住说话」圆圈也是 fixed; bottom:0 → 整屏宽的保存键把圆圈
+         完全盖住。老人点进「说话」页看到「按住说话，松开就记下了」这行字，
+         却找不到任何能按的圆圈 → 按保存时报「还没录上」。
+   做法：说话页里保存键放进 .hold-dock 内部、取消 fixed（静态排列），
+         圆圈在上、保存键在下，一个容器贴底。
+         打字/照片页没有圆圈，保存键仍自己吸底（下面 .save-dock 规则保留）。
+   ============================================================ */
 .save-dock {
   position: fixed;
   left: 0;
@@ -101,6 +109,12 @@
   z-index: 90;
   padding: 16rpx var(--space) calc(16rpx + env(safe-area-inset-bottom));
   background: linear-gradient(to bottom, rgba(245,247,250,0) 0%, rgba(245,247,250,0.97) 26%, rgba(245,247,250,1) 100%);
+}
+/* ★ 说话页（同时有圆圈）：保存键回到流内，跟圆圈一起被 .hold-dock 贴着 */
+.hold-dock .save-dock {
+  position: static;
+  padding: 12rpx var(--space) 0;
+  background: transparent;
 }
 .save-dock .save-btn {
   width: 100%;

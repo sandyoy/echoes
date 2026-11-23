@@ -16,6 +16,9 @@
   <!-- ⚠️ 铁律（11-08 sandy 真机实测）：按住说话固定屏幕底部，不随内容滚；所有采集页统一 -->
   <block wx:if="{{type === 'voice'}}">
     <view class="hint">按住说话，松开就记下了</view>
+    <!-- ★ 11-23 修：圆圈 + 保存键放进同一个吸底容器，竖向排列。
+         原来两者各自 fixed;bottom:0 → 整屏宽的保存键把圆圈完全盖住，
+         老人只看到一行字和一个「保存」，没地方按 → 报「还没录上」。 -->
     <view class="hold-dock">
       <view class="hold-circle {{recording ? 'recording' : ''}}"
             bindtouchstart="onHoldStart" bindtouchend="onHoldEnd"
@@ -26,6 +29,9 @@
            老人不知道到底录上了没。现在按住期间实时出秒数 + 红点。 -->
       <view wx:if="{{recording}}" class="rec-timer">
         <view class="rec-dot"></view>{{recSecText}}
+      </view>
+      <view class="save-dock">
+        <view class="save-btn" bindtap="onSave">保存</view>
       </view>
     </view>
   </block>
@@ -97,8 +103,10 @@
 
   <!-- ★ 2026-11-20 sandy 真机实测：保存键必须吸底固定，不许随内容滚。
        病根：原来在流内、排在「这件事已经有 N 项」后面 → 内容一多要拉很久才按得到 →
-             按不到 = 这段没存下来。改：position:fixed 到底部。 -->
-  <view class="save-dock">
+             按不到 = 这段没存下来。改：position:fixed 到底部。
+       ★ 11-23 修：说话页已经有圆圈、保存键已并进同一个吸底容器（见上方），
+         这里只给打字/照片页出保存键，避免钉两个重叠的保存键。 -->
+  <view wx:if="{{type !== 'voice'}}" class="save-dock">
     <view class="save-btn" bindtap="onSave">保存</view>
   </view>
 

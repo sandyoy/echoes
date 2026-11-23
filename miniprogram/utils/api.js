@@ -364,6 +364,22 @@ const INTERVIEW = {
   PREF: '/api/echoes/interview/pref'
 };
 
+// ★ 11-23 补：润色成文口（原来前端一次都没调过，所以「聊完还是一句问一句」）
+const POLISH = {
+  STORY: '/api/echoes/polish/story',
+  OWNER: '/api/echoes/polish/owner'
+};
+
+/** 把一条故事里攒下的口述理顺成一篇自述体成文 */
+function polishStory(storyId, force) {
+  return post(POLISH.STORY, { story_id: storyId, force: !!force });
+}
+
+/** 把这个人的所有故事都润一遍（采访收尾用不着，留给「我的书」一键整理） */
+function polishOwner(ownerId, force) {
+  return post(POLISH.OWNER, { owner_id: ownerId, force: !!force });
+}
+
 /** 开始采访：AI 主动出第一问（优先问人生锚点） */
 function interviewStart(ownerId, viewerId) {
   return post(INTERVIEW.START + '?owner_id=' + encodeURIComponent(ownerId || '') +
@@ -869,6 +885,7 @@ module.exports = {
   INTERVIEW,
   interviewStart, interviewNext, interviewBargeIn,
   interviewAskClassify, interviewClassifyAnswer, interviewPref,
+  POLISH, polishStory, polishOwner,
   TTS,
   ttsSpeak, ttsStatus,
   BOOK,
