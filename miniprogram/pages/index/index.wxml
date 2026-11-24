@@ -49,33 +49,31 @@
       有 {{mentionedCount}} 篇故事提到了你
     </view>
 
-    <!-- 主区三块：橙卡「自己说」/ 青卡「有人问我」/ 第三块拆「时间轴」+「我的书」两小卡
-         三块视觉平级（同大同形），颜色只用来区分，不用大小区分主次 -->
+    <!-- 主区三块：严格照《当前结论 v1 §四》——
+         ①自己说（橙）②采访（青）③时间轴（暖）
+         三块【同大同形、靠颜色分、各自独立成卡】，不许把「自己说」放大成主按钮，
+         不许把第三块拆成两张半宽小卡（那样第三块就不是平级了）。
+         ★ 11-24 改：进度 2026-11-24「三块平级」落实。 -->
     <view class="cards">
-      <!-- 卡1 · 橙 · 自己说 -->
+      <!-- ① · 橙 · 自己说：点进去才展开 说话／文字／拍照／视频 -->
       <view class="card card-orange" bindtap="onCaptureVoice">
         <view class="card-title">自己说</view>
         <view class="card-sub">想到啥说啥，按住就说</view>
         <view class="card-btn">现在就说</view>
       </view>
 
-      <!-- 卡2 · 青 · 有人问我 -->
+      <!-- ② · 青 · 采访：AI 陪着聊 -->
       <view class="card card-teal" bindtap="onOpenInterview">
-        <view class="card-title">有人问我</view>
+        <view class="card-title">采访</view>
         <view class="card-sub">我一问，您就想起来了</view>
         <view class="card-btn">开始聊</view>
       </view>
 
-      <!-- 卡3 · 同一个格子里并排两张小卡 -->
-      <view class="card card-pair">
-        <view class="mini mini-warm" bindtap="onOpenTimeline">
-          <view class="mini-title">时间轴</view>
-          <view class="mini-sub">看看故事排在哪</view>
-        </view>
-        <view class="mini mini-soft" bindtap="onOpenBook">
-          <view class="mini-title">我的书</view>
-          <view class="mini-sub">这一辈子，成一本书</view>
-        </view>
+      <!-- ③ · 暖 · 时间轴：按时间看已经留下的（与前两块同大同形） -->
+      <view class="card card-sand" bindtap="onOpenTimeline">
+        <view class="card-title">时间轴</view>
+        <view class="card-sub">按年月看看留下的事</view>
+        <view class="card-btn">去看看</view>
       </view>
     </view>
 

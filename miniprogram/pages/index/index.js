@@ -212,15 +212,11 @@ Page({
     });
   },
 
-  /** 卡3「我的书」→ 成书页（★ book 也在 tabBar 里，必须 switchTab，否则静默失败） */
-  onOpenBook() {
-    wx.switchTab({
-      url: '/pages/book/book',
-      fail: () => {
-        wx.showToast({ title: '没打开，请再点一次', icon: 'none' });
-      }
-    });
-  },
+  /**
+   * ★ 11-24：原「卡3 我的书」入口已按《当前结论 v1 §四》撤掉——
+   *   首页主区只留三块（自己说／采访／时间轴），成书页走底部 tabBar 的「我的故事」。
+   *   别再往首页塞第四块，也别把「我的书」塞回第三块里面。
+   */
 
   /** 家人页（v3.0 §2.2/§2.3）：family 在 tabBar 里 → switchTab */
   onOpenFamily() {

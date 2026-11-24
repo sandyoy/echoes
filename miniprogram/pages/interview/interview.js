@@ -776,6 +776,17 @@ Page({
   },
 
   onTapBack() {
-    wx.navigateBack({ fail: () => wx.redirectTo({ url: '/pages/index/index' }) });
+    // ★ 11-24 修：原来 fallback 用 redirectTo('/pages/index/index')，而 index 是 tabBar 页，
+    //   redirectTo 跳 tabBar 页【必然失败】。场景：老人从分享/扫码直接进采访页，
+    //   页面栈里没有上一页 → navigateBack 失败 → fallback 也失败 → 点「返回」纹丝不动。
+    //   铁律：回首页只能 switchTab（失败再 reLaunch 兜底）。
+    wx.navigateBack({
+      fail: () => {
+        wx.switchTab({
+          url: '/pages/index/index',
+          fail: () => wx.reLaunch({ url: '/pages/index/index' })
+        });
+      }
+    });
   }
 });

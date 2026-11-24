@@ -105,6 +105,9 @@
 }
 .card-orange { background: #e6914e; color: #fff; }
 .card-teal   { background: #6fb0aa; color: #fff; }
+/* 第三块·时间轴：暖沙色。与前两块同 min-height/同圆角，只靠颜色区分（§四） */
+.card-sand   { background: #f6e3cd; color: #8a5a2b; }
+.card-sand .card-btn { background: rgba(255, 255, 255, 0.9); }
 
 .card-title {
   font-size: var(--font-title);
@@ -126,35 +129,8 @@
   font-weight: 600;
 }
 
-/* 第三块：与前两块同高度同圆角，内部两张小卡并排 */
-.card-pair {
-  flex-direction: row;
-  align-items: stretch;
-  padding: 0;
-  background: transparent;
-  gap: var(--space);
-}
-.mini {
-  flex: 1 1 0;
-  min-width: 0;
-  border-radius: 28rpx;
-  padding: var(--space);
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.mini-warm { background: #f6e3cd; color: #8a5a2b; }   /* 暖沙：时间轴 */
-.mini-soft { background: #dfeeec; color: #2f615c; }   /* 浅青：我的书 */
-.mini-title {
-  font-size: var(--font-title);
-  font-weight: 600;
-}
-.mini-sub {
-  font-size: var(--font-base);
-  opacity: 0.85;
-  margin-top: 8rpx;
-}
+/* ★ 11-24：原「第三块内嵌两张小卡」样式已删——按 §四 第三块改回与①②平级的整卡。
+   若日后要恢复并排小卡，别复活这一段，先看《当前结论 v1 §四》。 */
 
 /* —— 我的故事列表 —— */
 .list-title {
