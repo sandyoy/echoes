@@ -87,4 +87,8 @@
     <view class="switch" bindtap="onToggleMode">切换大字版</view>
   </block>
 
+  <!-- ★ 隐私授权闸门（2026-11-26）：没同意《隐私指引》→ 录音/相册/播放等隐私接口
+       会被微信直接禁用，最小闭环第一步就断。浮在最上层。 -->
+  <privacy-gate id="pg" bind:agree="onPrivacyAgree" />
+
 </view>

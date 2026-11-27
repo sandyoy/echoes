@@ -1,0 +1,34 @@
+<!--
+  components/privacy-gate —— 隐私授权闸门（2026-11-26 小鲸鱼加）
+
+  为什么必须有：
+    微信自 2023-10-17 起强制「隐私协议同步」。若用户没同意《用户隐私保护指引》，
+    wx.getRecorderManager().start() / wx.chooseMedia / innerAudioContext 播放本地录音
+    等隐私接口会被【直接禁用】——表现就是：老人按住说话，按钮变了、秒数在跑，
+    但松手后什么也存不下；或在采集页点了没反应。
+    这是真机上「整条最小闭环断掉」的**第一个可能断点**，比任何页面样式都优先。
+
+  做法（照官方文档《小程序隐私协议开发指南》）：
+    1. 首页 onLoad 调 wx.getPrivacySetting → res.needAuthorization
+    2. needAuthorization=true → 弹本组件
+    3. 用户点 <button open-type="agreePrivacyAuthorization"> → 微信记下同意 → 回调里关弹窗
+    4. 老人在大字版也不能看到「设置/权限/分享」三个词 → 文案改说「允许我记住您说的话」
+
+  注意：本组件只管「弹窗+同意」，不碰录音逻辑；录音在 capture 页自己 start。
+-->
+<view wx:if="{{show}}" class="pg-mask" catchtouchmove="noop">
+  <view class="pg-card">
+    <view class="pg-title">先说一声</view>
+    <view class="pg-body">
+      您说的话要记下来、放给您听，得先请您同意。
+      我们只用来给您做这本书，不给别人看。
+    </view>
+    <view class="pg-link" bindtap="onOpenContract">看看详细说明</view>
+    <button
+      class="pg-ok"
+      id="agree-btn"
+      open-type="agreePrivacyAuthorization"
+      bindagreeprivacyauthorization="onAgree">同意，开始说</button>
+    <view class="pg-later" bindtap="onLater">等会儿再说</view>
+  </view>
+</view>

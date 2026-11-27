@@ -1,0 +1,50 @@
+.pg-mask {
+  position: fixed;
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pg-card {
+  width: 620rpx;
+  background: #fffaf4;
+  border-radius: 28rpx;
+  padding: 48rpx 40rpx 36rpx;
+  box-sizing: border-box;
+}
+.pg-title {
+  font-size: 42rpx;
+  font-weight: 600;
+  color: #3d3630;
+  text-align: center;
+}
+.pg-body {
+  margin-top: 28rpx;
+  font-size: 34rpx;
+  line-height: 1.7;
+  color: #5a5148;
+}
+.pg-link {
+  margin-top: 24rpx;
+  font-size: 30rpx;
+  color: #c4956a;
+  text-decoration: underline;
+}
+.pg-ok {
+  margin-top: 40rpx;
+  background: #e6914e;
+  color: #fff;
+  font-size: 36rpx;
+  border-radius: 999rpx;
+  padding: 18rpx 0;
+  line-height: 1.5;
+}
+.pg-ok::after { border: none; }
+.pg-later {
+  margin-top: 24rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: #9a8f83;
+}

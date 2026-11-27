@@ -37,6 +37,9 @@ const TYPES = ['voice', 'media', 'text'];   // ★ 11-10 sandy 定：5 入口收
 const MAX_AUDIO_MB = 20;
 const MAX_VIDEO_MB = 200;
 const MIN_AUDIO_SEC = 0.5;
+// ★ 2026-11-27：一次按住的硬上限（15 分钟）。写在常量里，start 和秒数计时共用同一个数，
+//   免得两边各写一份、上限到了却没人把"还在录"的状态收回。
+const MAX_REC_MS = 15 * 60 * 1000;
 
 /** 统一请求：只看 ok，error 直显；code 留给调用方分支（实现在 utils/api.js） */
 const callApi = api.request;
@@ -62,7 +65,14 @@ Page({
     last_answer: ''
   },
 
+  /** 隐私同意后：老人可能就是从「同意」直接按下去说的，这里不做任何阻塞 */
+  onPrivacyAgree() {},
+
   onLoad(query) {
+    // ★ 2026-11-26：采集页是真正调录音的地方。从分享/扫码直接落进来的老人，
+    //   没走首页 → 也必须在这里查一次隐私授权，否则按住说完全是白按。
+    const pg0 = this.selectComponent('#pg');
+    if (pg0 && pg0.check) pg0.check();
     const type = TYPES.indexOf(query.type) >= 0 ? query.type : 'voice';
     const g = app.globalData;
     this.setData({
@@ -261,6 +271,29 @@ Page({
   /** 按住说话：开始录音（语音=要转文字；原声=只留声音） */
   onHoldStart() {
     if (this.data.type !== 'voice') return;
+    // ★ 2026-11-26：没同意隐私政策时，微信会直接禁用录音 → 按下去等于白按。
+    //   这里先查一次：还缺同意就把弹窗顶上来，并明说一句人话，不让老人对着没反应的按钮干按。
+    if (wx.getPrivacySetting) {
+      wx.getPrivacySetting({
+        success: (r) => {
+          if (r && r.needAuthorization) {
+            const pg = this.selectComponent('#pg');
+            if (pg && pg.check) pg.check();
+            this.setData({ notice: '请先点「同意，开始说」，我才能记住您说的话' });
+            wx.showToast({ title: '先点同意再说话', icon: 'none' });
+          } else {
+            this._startRecording();
+          }
+        },
+        fail: () => this._startRecording()   // 查不到就照常录，不拦老人
+      });
+    } else {
+      this._startRecording();
+    }
+  },
+
+  /** 真正开录（原来是 onHoldStart 的正文，2026-11-26 拆出来给隐私检查复用） */
+  _startRecording() {
     // ★ 2026-10-31 P0：不再 `if (!this.requireLogin()) return;`
     //   登录未就绪也照样开录；只把「登录在后台推进」这件事做掉，不挡录音。
     if (!this.data.actorId) {
@@ -284,6 +317,14 @@ Page({
     this._clearRecTimer();
     this._recTimer = setInterval(() => {
       if (!this.data.recording) { this._clearRecTimer(); return; }
+      // ★ 2026-11-27：老人常按到 15 分钟上限被系统自动停（onStop 已处理并落库），
+      //   但页面 recording 还是 true、秒数继续往上爬 → 看着像"还在录"，其实早断了。
+      //   上限一到就把状态收回，让老人知道这一句已经存下了。
+      if (Date.now() - (this._recStart || Date.now()) >= MAX_REC_MS) {
+        this.setData({ recording: false });
+        this._clearRecTimer();
+        return;
+      }
       const sec = Math.floor((Date.now() - (this._recStart || Date.now())) / 1000);
       const was = this.data.recSec || 0;
       if (sec !== was || !this.data.recSecText) {
@@ -332,7 +373,7 @@ Page({
       rm.onError(this._boundRecErr);
     }
     rm.start({
-      duration: 15 * 60 * 1000,          // 15 分钟上限（超了后端给分段 notice）
+      duration: MAX_REC_MS,              // 15 分钟上限（超了后端给分段 notice）；与秒数计时同一个常量
       sampleRate: 16000, numberOfChannels: 1,
       encodeBitRate: 48000, format: 'mp3'
     });
@@ -442,6 +483,14 @@ Page({
 
   onUnload() {
     this._clearRecTimer();
+    // ★ 2026-11-27：正在录时被返回/切页带走 → 录音管理器还在跑，且没人会来接这条结果。
+    //   不主动停，下一次按住会被上一次的 onStop 抢先触发，老人看到的是"上一段"的字。
+    if (this.data.recording) {
+      this._recDiscardNext = true;             // 这条录音没人要了，别登记
+      this.setData({ recording: false });
+      const rm0 = wx.getRecorderManager && wx.getRecorderManager();
+      if (rm0 && this._recSupported) { try { rm0.stop(); } catch (e) {} }
+    }
     Object.keys(this._players || {}).forEach((k) => {
       try { this._players[k].destroy(); } catch (e) {}
     });

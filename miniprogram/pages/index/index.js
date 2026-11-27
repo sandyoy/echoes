@@ -31,6 +31,22 @@ Page({
     busy: false
   },
 
+  /**
+   * ★ 2026-11-26：进首页先查隐私授权。
+   *   没同意《用户隐私保护指引》→ 微信会【直接禁用】录音/相册等隐私接口，
+   *   老人按住说话按钮变了、秒数也跑，但松手什么都没存下 —— 最小闭环第一个断点就在这。
+   *   组件自己在 check() 里判 needAuthorization，只需要不挡路（低版本没有该 API 就跳过）。
+   */
+  onLoad() {
+    const pg = this.selectComponent('#pg');
+    if (pg && pg.check) pg.check();
+  },
+
+  /** 隐私同意后：正常进首页，不需要重载页面（微信已记住同意态） */
+  onPrivacyAgree() {
+    this.setData({ busy: false });
+  },
+
   onShow() {
     this.setData({ uiMode: app.getUiMode() });
     this.refreshMentioned();

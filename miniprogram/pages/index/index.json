@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "往事可追忆",
-  "usingComponents": {}
+  "usingComponents": {
+    "privacy-gate": "/components/privacy-gate/privacy-gate"
+  }
 }

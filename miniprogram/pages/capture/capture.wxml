@@ -112,4 +112,9 @@
 
   <!-- ★ 做成一张图（10-18 卡片出图通道）：有故事就能做，只放公开素材 -->
   <view wx:if="{{storyId}}" class="sb-btn" bindtap="onOpenCard">把这件事做成一张图</view>
+
+  <!-- ★ 隐私授权闸门（2026-11-26）：没同意《隐私指引》→ 微信会直接禁用录音接口，
+       老人按住说话等于白按。放页面最外层，浮在最上面。 -->
+  <privacy-gate id="pg" bind:agree="onPrivacyAgree" />
+
 </view>
