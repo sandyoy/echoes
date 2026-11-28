@@ -356,12 +356,31 @@ Page({
       this.setData({ recSec: Math.floor(ms / 1000) });
     }, 500);
 
-    this._onStop = (res) => this._handleRecStop(res);
-    // ★ 11-23 修（真机高风险）：RecorderManager 是全局单例，每轮问答都 onStop 注册一次会累积，
-    //   第 N 轮回答时同一段录音的回调跑 N 次（=重复上传/重复接话）。先 off 上一次再注册。
+    // ★ 11-23 修（真机高风险）：RecorderManager 是全局单例，onStop/onError 每轮都注册一次会累积，
+    //   第 N 轮时同一段录音的回调跑 N 次（=重复上传/重复接话）。
+    // ★ 11-28 修：原版只在"开录前"off 上一轮 → 本轮结束/中途 return 时监听仍挂着，
+    //   下轮开录瞬间若上一轮迟到的 onStop 才回来，就会打到新一轮的 recording/上传上。
+    //   改成 onStop 与 onError 一律先 offStop/offError 再挂，且本函数内任何提前 return 都不会留下陈旧监听。
     if (rm.offStop && this._boundStop) { try { rm.offStop(this._boundStop); } catch (e) {} }
+    if (rm.offError && this._boundError) { try { rm.offError(this._boundError); } catch (e) {} }
+    this._onStop = (res) => this._handleRecStop(res);
     this._boundStop = this._onStop;
     rm.onStop(this._onStop);
+    if (rm.onError) {
+      this._onRecError = (err) => {
+        // 录音失败（多为隐私未授权/无麦克风权限）：停秒表 + 退回打字，不让老人对着"在听"发呆
+        clearInterval(this._secTimer);
+        this._secTimer = null;
+        this._recStopped = true;
+        this._recDiscard = true;
+        this.setData({ recording: false, recSec: 0, typeAnswer: true,
+          error: '这台设备没能录音，用打字说也一样' });
+        if (rm.offError && this._boundError) { try { rm.offError(this._boundError); } catch (e) {} }
+        this._boundError = null;
+      };
+      this._boundError = this._onRecError;
+      rm.onError(this._onRecError);
+    }
     rm.start({
       duration: 5 * 60 * 1000,        // 一次回答最长 5 分钟，够了
       sampleRate: 16000, numberOfChannels: 1,
