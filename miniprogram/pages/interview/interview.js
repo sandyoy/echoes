@@ -319,13 +319,13 @@ Page({
   onHoldStart() {
     if (this.data.answerBusy) return;
     // ★ 2026-11-28：未同意隐私指引时微信禁用录音 → 先提示再录，不让老人对空按钮白按。
+    // ★ 2026-11-28 修：check() 是异步的，原来紧接着读 pg.data.show 永远是旧值 false，
+    // 而且顺便弹窗会盖在按住按钮上挡掉 touchend → 这里只做一次异步复查，不拦路：
+    // 真没同意时微信会走 onError 静默/失败分支（下面已有打字兜底）。
     const pg = this.selectComponent('#pg');
-    if (pg && pg.check) {
+    if (pg && pg.check && !this._privacyChecked) {
+      this._privacyChecked = true;
       try { pg.check(); } catch (e) {}
-      if (pg.data && pg.data.show) {
-        wx.showToast({ title: '先点「同意」，才能说话', icon: 'none' });
-        return;
-      }
     }
     const rm = wx.getRecorderManager && wx.getRecorderManager();
     if (!rm) {
