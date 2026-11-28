@@ -140,6 +140,8 @@
 
   <!-- ===== 收尾完成 ===== -->
   <view wx:if="{{finished}}" class="mask" catchtap="noop"></view>
+  <privacy-gate id="pg" bind:agree="onPrivacyAgree" />
+
   <view wx:if="{{finished}}" class="sheet" catchtap="noop">
     <view class="sheet-read">{{polishing ? '正在给您理顺成一段话…' : '记下来了'}}</view>
     <view class="sheet-ask" wx:if="{{polishing}}">您讲的这段已经存好，我在把它捋顺成一篇。</view>

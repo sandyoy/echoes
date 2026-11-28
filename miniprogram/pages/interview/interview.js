@@ -113,6 +113,11 @@ Page({
   },
 
   onLoad() {
+    // ★ 2026-11-28：采访页是第三个「按住说话」入口（首页／采集页 11-26 已加）。
+    //   从分享/扫码直达采访页的老人没走首页 → 未同意《隐私指引》时微信直接禁用录音，
+    //   老人按住、秒数照跑、录出来是空文件，下一句永远接不上。必须在本页也查一次。
+    const pg0 = this.selectComponent('#pg');
+    if (pg0 && pg0.check) pg0.check();
     const g = app.globalData;
     const ownerId = (this.options && this.options.owner_id) ? this.options.owner_id : (g.userId || '');
     const viewerId = g.userId || ownerId;
@@ -307,9 +312,21 @@ Page({
 
   // ============ ★11-06 按住说话（真录音 → 转文字 → 自动接话） ============
 
+  /** 隐私闸门点「同意，开始说」后的回调（组件自己已收起弹窗，这里无需额外动作） */
+  onPrivacyAgree() {},
+
   /** 按住：开录。录音期间把 TTS 停掉（别让自己的声音录进去） */
   onHoldStart() {
     if (this.data.answerBusy) return;
+    // ★ 2026-11-28：未同意隐私指引时微信禁用录音 → 先提示再录，不让老人对空按钮白按。
+    const pg = this.selectComponent('#pg');
+    if (pg && pg.check) {
+      try { pg.check(); } catch (e) {}
+      if (pg.data && pg.data.show) {
+        wx.showToast({ title: '先点「同意」，才能说话', icon: 'none' });
+        return;
+      }
+    }
     const rm = wx.getRecorderManager && wx.getRecorderManager();
     if (!rm) {
       this.setData({ typeAnswer: true });
@@ -325,8 +342,18 @@ Page({
     // 秒数跳动：老人得看见"它在听"
     clearInterval(this._secTimer);
     this._secTimer = setInterval(() => {
-      const s = Math.floor((Date.now() - this._recStart) / 1000);
-      this.setData({ recSec: s });
+      const ms = Date.now() - this._recStart;
+      // ★ 2026-11-28：录音上限 5 分钟（与下面 rm.start 的 duration 同值）。
+      //   到点后 RecorderManager 会自己停并回调 onStop，但秒表若继续跑，老人看到
+      //   「还在录、已经 6 分钟了」= 又在装作在录。到上限就自己收，交给 onStop 去处理。
+      if (ms >= 5 * 60 * 1000) {
+        clearInterval(this._secTimer);
+        this._secTimer = null;
+        this._recLimitHit = true;
+        if (this.data.recording) { try { rm.stop(); } catch (e) {} }
+        return;
+      }
+      this.setData({ recSec: Math.floor(ms / 1000) });
     }, 500);
 
     this._onStop = (res) => this._handleRecStop(res);
